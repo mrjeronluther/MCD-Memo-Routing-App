@@ -1,0 +1,36 @@
+=LET(
+  reviewers, {"GMC", "RCS", "MGL", "JE", "NOE","KMV", "LDA", "JAYE", "BRIX" , "JOY", "ALEX", "AU", "MAR", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "JG","MA","ANNALEE","ARRA","DULCE","AIZELLE","VIA","OAUIE","MICH","FATIMA","MELANIE","STEPH","PAT","ROSA","JANICE","CAMSY","MIKEE","VAN","TYRON"},
+  names, {"Graham Coates", "Rosalyn Segura", "Michael Lao","Jeremy Rodriguez", "Noe Versoza","Tinay Villanueva", "Lorence Aurello", "Jaye Trich Pizarro", "Brix Valdenarro", "Joy Melitante", "Alex Flores", "Aurora Pastolero", "Mariano Caleja", "Ernesto Andrade", "Dustin Sta. Maria", "Jenel Ann Cruzgarcia", "Doreen Penilla", "Frances Armian", "Denisse Malong", "Kevin Lin", "Juvi Masilungan", "Jhoanalyn Gatdula", "Mary Arceo","Annalee Pine ","Arralen Batallones","Ma Dulce Cuenca ","Aizelle Anne Yalong","Henedina Viado","Oauie Banagan","Michelle Ong","Ma Fatima Bausin","Melanie Lingon","Stephen Sumilang","Patricia Mari Quierez","Rosa Cecilia Salvador","Janice Cadog","Camsy Elvina","Mikee Vivo","Vanessa Vicente","Tyron Tan"},
+
+  approvers, MAP(reviewers, names, LAMBDA(sheet, name,
+    LET(
+      jRange, INDIRECT(sheet & "!J:J"),
+      aRange, INDIRECT(sheet & "!A:A"),
+      bRange, INDIRECT(sheet & "!B:B"),
+      cRange, INDIRECT(sheet & "!C:C"),
+      matchRow, XMATCH(J2, jRange),
+      IF(ISNUMBER(matchRow),
+        IF(INDEX(aRange, matchRow) = "Approved",
+          name & " (Remarks: " & INDEX(bRange, matchRow) & 
+          ", Date: " & TEXT(INDEX(cRange, matchRow), "mmm d, yyyy") & ")",
+          ""),
+        "")
+    )
+  )),
+
+  pendings, MAP(reviewers, names, LAMBDA(sheet, name,
+    LET(
+      jRange, INDIRECT(sheet & "!J:J"),
+      aRange, INDIRECT(sheet & "!A:A"),
+      matchRow, XMATCH(J2, jRange),
+      IF(ISNUMBER(matchRow),
+        IF(INDEX(aRange, matchRow) = "",
+          name,
+          ""),
+        "")
+    )
+  )),
+
+  "Approved: " & TEXTJOIN(", ", TRUE, approvers) &
+  " Pending: " & TEXTJOIN(", ", TRUE, pendings)
+)
