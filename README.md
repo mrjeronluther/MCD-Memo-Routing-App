@@ -1,6 +1,5 @@
 # MCD-Memo-Routing-Web-App
 
-Of course. Here is a comprehensive documentation for the "MCD Document Routing" application built on Google Apps Script.
 
 Documentation: MCD Document Routing System
 1. Overview
