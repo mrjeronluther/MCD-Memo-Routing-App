@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_top" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MCD Memo Routing</title>
+    
+    <!-- Using Vue 3 Production build for performance -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    
+    <!-- Bootstrap CSS for styling -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: white; /* A light background color */
+            margin: 0;
+            padding-bottom: 2rem;
+        }
+
+        header {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header-logo {
+            max-width: 300px;
+            height: auto;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Slightly larger min-width for better spacing */
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .memo-card {
+            background: #fff;
+            border: 1px solid #e9ecef; /* A subtle border */
+            border-radius: 12px; /* Slightly more rounded corners */
+            padding: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* Softer shadow */
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Ensures button aligns at the bottom */
+        }
+
+        .memo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px franchising.com12px rgba(0, 0, 0, 0.08);
+        }
+
+        .memo-card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #343a40;
+        }
+
+        .memo-card p {
+            color: #6c757d;
+            flex-grow: 1; /* Allows the description to take up available space */
+            margin-top: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .memo-card .btn {
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <div class="text-center mb-4">
+                <img src="https://raw.githubusercontent.com/mrjeronluther/Memo-Routing-Landing-Page/main/WhatsApp%20Image%202025-06-05%20at%2015.44.42_3fc69535.jpg" alt="Header Image" class="img-fluid" style="max-width: 100%; width: 600px" />
+            </div>
+            <h1 class="mt-3 display-5 fw-bold">MCD Document Routing</h1>
+        </header>
+
+        <main class="container">
+            <div class="card-grid">
+                <!-- v-for syntax is the same, no changes needed in the template -->
+                <div v-for="(action, index) in memoActions" :key="index" class="memo-card text-center">
+                    <div>
+                        <h2>{{ action.title }}</h2>
+                        <p>{{ action.description }}</p>
+                    </div>
+                    <a :href="action.link" class="btn btn-success" target="_blank" rel="noopener noreferrer">
+                        {{ action.button }}
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Destructure the necessary functions from the global Vue object
+        const { createApp, ref } = Vue;
+
+        // Use createApp to initialize the application
+        createApp({
+            // The `setup()` function is the entry point for the Composition API
+            setup() {
+                // Use `ref()` to declare reactive state. This replaces the `data()` option.
+                const memoActions = ref([
+                    {
+                        title: 'Submit a Document',
+                        description: 'Submit a document for approval.',
+                        link: 'https://script.google.com/a/macros/megaworld-lifestyle.com/s/AKfycbwnJnLzMNofFWuEpf9TzDAtcUfzVbRo96pXSHZ1wmx6NmweaKwzaNnwSZbm8D7zt8P1Hw/exec',
+                        button: 'Open Form',
+                    },
+                    {
+                        title: 'Approve a Document',
+                        description: 'Review documents requiring your sign-off.',
+                        link: 'https://script.google.com/a/macros/megaworld-lifestyle.com/s/AKfycbxe6h5zTCT60aKSZUQrxirg7qnyaXh-WKYRHoep0KTmsnvQgyvedcWDPRu5Mgi56JJzMg/exec',
+                        button: 'Approve Now',
+                    },
+                    {
+                        title: 'Document Finder',
+                        description: 'View the latest status of submitted document.',
+                        link: 'https://script.google.com/a/macros/megaworld-lifestyle.com/s/AKfycbzzepjlmdJdeZ2jdsvqt_NMgHlhMhG386KZ_Mz1aLQN6BLoC71re-pA622bIyueiAqa/exec',
+                        button: 'Search Document',
+                    },
+                ]);
+
+                // Return an object containing all state and methods to be used in the template
+                return {
+                    memoActions,
+                };
+            },
+        }).mount('#app');
+    </script>
+</body>
+</html>
