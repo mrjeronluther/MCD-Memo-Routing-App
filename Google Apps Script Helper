@@ -1,5 +1,80 @@
 
 
+Google Apps Script Helper
+
+onOpen()
+      
+      Runs automatically when the spreadsheet is opened.
+      
+      Creates two custom menus in the Google Sheets UI: "Generate Status" and "Generate Approval/Disapproval Page", allowing users to manually trigger scripts.
+      
+      runAutomatedProcess(), runAutomatedProcessone(), runAutomatedProcesstwo()
+      
+      These are functions scheduled to run automatically at different times of the night.
+      
+      They execute the three main status-checking scripts (checkApprovalStatus, findFirstDisapprovingSheet, and findFirstDisapprovalReason) to update the master sheet without manual intervention.
+      
+      PDF Generation & Emailing
+
+approvesda()
+
+    Generates a formatted PDF "Approval Page" for memos marked "APPROVED" or "PENDING" (under certain conditions).
+    
+    The PDF includes memo details, approver names, their digital signatures, and timestamps.
+    
+    Saves the PDF to a specific Google Drive folder and puts a link to it in the main "Conso" sheet.
+
+disapproveds()
+    
+    Functions similarly to approvesda but only for memos marked "DISAPPROVED".
+    
+    It creates a "Disapproval Page" PDF that shows the memo details and the reviewers' comments/statuses.
+
+sendApprovalEmails()
+
+    Scans for "APPROVED" memos that have not been notified yet.
+    
+    Sends a formatted HTML email to the uploader/preparer, informing them of the approval.
+    
+    Logs the email details in an "EMAIL SUMMARY" sheet to prevent duplicates.
+
+senddispprovalEmails()
+
+    Identical to the function above but for memos marked "DISAPPROVED".
+    
+    Sends a notification email about the disapproval.
+    
+    Optimized Data Processing
+
+checkApprovalStatus_Optimized()
+    
+    A high-performance function that determines the final status ("APPROVED", "PENDING", or "DISAPPROVED") for each memo.
+    
+    It does this by efficiently checking the status across all individual approver sheets and applying the business rules.
+
+findFirstDisapprovingSheet_Optimized()
+
+    An efficient function that scans all related approver sheets to find the name of the first person who disapproved a memo.
+    
+    It updates the "Conso" sheet with the name of that person.
+
+findFirstDisapprovalReason_Optimized()
+
+    A fast function that finds the specific comment or reason provided by the first person who disapproved the memo.
+    
+    It writes this remark into the "Conso" sheet.
+    
+    Helper Functions
+
+getTimestampFromSheet(), getNotes(), getTimestampFromSheett(), getNotess()
+
+    These are small, reusable helper functions.
+    
+    Their job is to look inside an individual approver's sheet and fetch specific information, like an approval/disapproval date or a remark, for a given memo.
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
 
