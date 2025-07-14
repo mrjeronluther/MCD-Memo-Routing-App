@@ -1,0 +1,1196 @@
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+
+  ui.createMenu('Generate Status')
+    .addItem('Generate Final Status', 'checkApprovalStatus_Optimized')
+    .addItem('Generate Who Disapproved', 'findFirstDisapprovingSheet_Optimized')
+    .addItem('Generate Disapproved Remarks', 'findFirstDisapprovalReason_Optimized')
+    .addToUi();
+  
+  ui.createMenu('Generate Approval/Disapproval Page')
+    .addItem('Generate Final/Ongoing Comment Page', 'approvesda')
+    .addItem('Generate Disapproval Comment Page', 'disapproveds')
+    .addItem('Email Sender(Approved)', 'sendApprovalEmails')
+    .addItem('Email Sender(Dispproved)', 'senddispprovalEmails')
+    .addToUi();
+}
+
+// Final Status Runs Every Midnight to 1am
+function runAutomatedProcess() {
+  checkApprovalStatus_Optimized();
+  Logger.log('Automated Final Status Tagging ran successfully at ' + new Date());
+}
+
+// Who Disapprove Runs Every 2am to 3am
+function runAutomatedProcessone() {
+  findFirstDisapprovingSheet_Optimized();
+  Logger.log('Automated Who Disapproved Tagging ran successfully at ' + new Date());
+}
+
+// Disapproved Remarks Runs Every 4am to 5am
+function runAutomatedProcesstwo() {
+  findFirstDisapprovalReason_Optimized();
+  Logger.log('Automated Disapproved Remarks Tagging ran successfully at ' + new Date());
+}
+
+
+function approvesda() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var mainSheet = ss.getSheetByName("Conso");
+  var data = mainSheet.getDataRange().getValues();
+
+  var folderId = '1Du8Gw9M6bilmraQ5kLX7URKez8XxffMS'; // Destination folder
+  var folder = DriveApp.getFolderById(folderId);
+
+  var conditionsAndFiles = {
+    "MGL": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MICHAEL G. LAO", department: "MOSD", role: "head", position: "SAVP & Head, MCD | MOSD" },
+    "LDA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "LORENCE D. AURELIO", department: "LEASING", role: "head", position: "VP, Central Leasing Support" },
+    "KMV": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "KRISTINA MARIE M. VILLANUEVA", department: "BCM", role: "head", position: "SAVP and Head, BCM" },
+    "RCS": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ROSALYN C. SEGURA", department: "RBG", role: "head", position: "AVP, Revenue Business Group" },
+    "JE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JEREMY S. RODRIGUEZ", department: "OD", role: "head", position: "Senior Manager, Organizational Development" },
+    "NOE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "NOE M.VERSOZA", department: "PROC", role: "head", position: "AVP & Head, Procurement" },
+
+
+
+    //MOSD
+
+    "JAYE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JAYE TRICH PIZARRO", department: "MOSD", role: "sub", position: "" },
+    "JOY": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JOCELYN MELITANTE", department: "MOSD", role: "sub", position: "" },
+    "ALEX": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ALEX FLORES", department: "MOSD", role: "sub", position: "" },
+    "AU": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "AURORA PASTOLERO", department: "MOSD", role: "sub", position: "" },
+    "BRIX": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "BRIX VALDENARRO", department: "MOSD", role: "sub", position: "" },
+    "MAR": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MARIANO CALEJA", department: "MOSD", role: "sub", position: "" },
+
+    //BCM
+    "EBA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ERNESTO ANDRADE", department: "BCM", role: "sub", position: "" },
+    "DSM": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "DUSTIN STA. MARIA", department: "BCM", role: "sub", position: "" },
+    "JAC": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JENEL ANN CRUZGARCIA", department: "BCM", role: "sub", position: "" },
+    "DP": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "DOREEN PENILLA", department: "BCM", role: "sub", position: "" },
+
+    //LEASING
+    "FA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "FRANCES ARMIAN", department: "LEASING", role: "sub", position: "" },
+    "DM": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "DENISSE MALONG", department: "LEASING", role: "sub", position: "" },
+    "KL": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "KEVIN LIN", department: "LEASING", role: "sub", position: "" },
+    "JM": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JUVI MASILUNGAN", department: "LEASING", role: "sub", position: "" },
+    "JG": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JHOANALYN GATDULA", department: "LEASING", role: "sub", position: "" },
+    "MA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MARY ARCEO", department: "LEASING", role: "sub", position: "" },
+
+    //RBG
+    "ANNALEE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ANNALEE PINE", department: "RBG", role: "sub", position: "" },
+    "ARRA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ARRALEN BATALLONES", department: "RBG", role: "sub", position: "" },
+    "DULCE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MA DULCE CUENCA", department: "RBG", role: "sub", position: "" },
+    "AIZELLE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "AIZELLE ANNE YALONG", department: "RBG", role: "sub", position: "" },
+    "VIA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "HENEDINA VIADO", department: "RBG", role: "sub", position: "" },
+    "OAUIE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "OAUIE BANAGAN", department: "RBG", role: "sub", position: "" },
+    "MICH": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MICHELLE ONG", department: "RBG", role: "sub", position: "" },
+    "FATIMA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MA FATIMA BAUSIN", department: "RBG", role: "sub", position: "" },
+    "MELANIE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MELANIE LINGON", department: "RBG", role: "sub", position: "" },
+    "STEPH": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "STEPHEN SUMILANG", department: "RBG", role: "sub", position: "" },
+    "PAT": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "PATRICIA MARI QUIEREZ", department: "RBG", role: "sub", position: "" },
+    "ROSA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ROSA CECILIA SALVADOR", department: "RBG", role: "sub", position: "" },
+    "JANICE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JANICE CADOG", department: "RBG", role: "sub", position: "" }
+
+  };
+  var departments = ["MOSD", "LEASING", "BCM", "RBG", "OD", "PROC"];
+
+  for (var i = 1; i < data.length; i++) { // Start from row 2 (index 1) to skip header
+    try {
+      var row = data[i];
+      var approvalStatus = row[0]; // Column A
+      var pdfLink = row[1]; // Column B
+
+      // --- MODIFICATION 1: Process both APPROVED and PENDING statuses ---
+      // Continue to the next row if status is not APPROVED or PENDING, or if a PDF link already exists.
+      if ((approvalStatus !== "APPROVED" && approvalStatus !== "PENDING") || pdfLink) {
+        continue;
+      }
+
+      // --- MODIFICATION 2: Check for "RCS" from Column O to CA ---
+      // Column O is index 14, Column CA is index 78. We slice from 14 up to (but not including) 79.
+      var rcsCheckRange = row.slice(14, 82);
+      var hasRCS = rcsCheckRange.includes("RCS");
+
+      // --- MODIFICATION 3: Determine the status note based on the conditions ---
+      var statusNote = ""; // Default to no note
+      if (approvalStatus === "APPROVED") {
+        // If status is APPROVED, the note is always "Final Status", regardless of "RCS"
+        statusNote = "Final Status";
+      } else if (approvalStatus === "PENDING" && hasRCS) {
+        // If status is PENDING AND it has "RCS", the note is "Ongoing Status"
+        statusNote = "Ongoing Status";
+      }
+
+      // If a note needs to be added, but the conditions aren't met to generate a PDF, skip.
+      // (e.g., PENDING without RCS does not generate a PDF based on your rules).
+      if (!statusNote) {
+        continue;
+      }
+      
+      var labelFromColumnA = row[4];
+      var subjectFromColumnF = row[10];
+
+      var departmentMap = {};
+      departments.forEach(d => departmentMap[d] = { subs: [], head: null });
+
+      var rowData = row.slice(8, 82).filter(String); // Columns I to CD
+      rowData.forEach(code => {
+        var entry = conditionsAndFiles[code];
+        if (entry) {
+          if (entry.role === "head") {
+            departmentMap[entry.department].head = { ...entry, code };
+          } else {
+            departmentMap[entry.department].subs.push({ ...entry, code });
+          }
+        }
+      });
+
+      var doc = DocumentApp.create("Generated Document - Row " + (i + 1));
+      var body = doc.getBody();
+
+      // Set narrow margins
+      body.setMarginTop(21.6).setMarginBottom(21.6).setMarginLeft(21.6).setMarginRight(21.6);
+      
+      // Add header with reference number
+      var header = doc.getHeader() || doc.addHeader();
+      header.appendParagraph(labelFromColumnA).setAlignment(DocumentApp.HorizontalAlignment.RIGHT).setFontSize(7);
+
+      // --- MODIFICATION 4: Add the status note to the PDF body ---
+      if (statusNote) {
+        var notePara = body.appendParagraph(statusNote);
+        notePara.setAlignment(DocumentApp.HorizontalAlignment.CENTER)
+                .setBold(true)
+                .setFontSize(11); // Apply common styles
+
+        // Conditionally set the text color
+        if (statusNote === "Final Status") {
+          notePara.setForegroundColor("#000000"); // Set to Black
+        } else if (statusNote === "Ongoing Status") {
+          notePara.setForegroundColor("#FF0000"); // Keep it Red for emphasis
+        }
+        
+        body.appendParagraph(""); // Add a spacer after the note
+      }
+
+      body.appendParagraph("This document is the approval page for the memo with the foregoing details: ")
+        .setFontSize(7).setBold(true);
+      body.appendParagraph("");
+
+      // ... (The rest of your code for adding memo details and tables) ...
+      var labels = ["Subject of Memo", "Date of Memo", "Upload Timestamp", "Preparer of Memo", "Preparer Email", "Uploader of Memo", "Uploader Email", "File link of Memo"];
+      var values = [row[10], row[11], row[5], row[8], row[9], row[6], row[7], row[13]];
+
+      for (var j = 0; j < values.length; j++) {
+        var para = body.appendParagraph("");
+        var labelText = para.appendText(labels[j] + ": ").setBold(true).setFontSize(7);
+        var value = values[j];
+        if (labels[j] === "Upload Timestamp" || labels[j] === "Date of Memo") {
+          var formattedTimestamp = Utilities.formatDate(new Date(value), Session.getScriptTimeZone(), "MMM d, yyyy HH:mm");
+          para.appendText(formattedTimestamp).setBold(false).setFontSize(7);
+        } else {
+          para.appendText(String(value)).setBold(false).setFontSize(7);
+        }
+      }
+
+      var excludedValues = ["CAMSY", "MIKEE", "VAN", "TYRON", "MGL","JE","NOE", "KMV", "LDA", "GMC", "RCS", "JAYE", "JOY", "ALEX", "AU", "BRIX", "MAR", "ANNALEE", "ARRA", "AIZELLE", "DULCE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "MA", "JG"];
+      var rowDatatwo = row.slice(14, 56);
+      var nonEmptyValues = [];
+      for (var k = 0; k < rowDatatwo.length; k++) {
+        if (rowDatatwo[k] === "" || rowDatatwo[k] === null) break;
+        nonEmptyValues.push(rowDatatwo[k]);
+      }
+      if (nonEmptyValues.length === rowDatatwo.length) {
+        nonEmptyValues = rowDatatwo.slice(0, 41);
+      }
+      var propertyCoverage = nonEmptyValues
+        .filter(value => value && !excludedValues.includes(String(value).trim()) && !String(value).includes('.pdf') && !String(value).includes('https'))
+        .join(", ");
+
+      var propertyParagraph = body.appendParagraph("");
+      propertyParagraph.appendText("Property/Coverage: ").setBold(true).setFontSize(7);
+      propertyParagraph.appendText(propertyCoverage).setBold(false).setFontSize(7);
+
+      body.appendParagraph("");
+
+      // ... (The rest of your table generation code) ...
+       // First table (Header table)
+      var headerTable = body.appendTable();
+      var headerRow = headerTable.appendTableRow();
+      departments.forEach(dept => {
+        var cell = headerRow.appendTableCell();
+        cell.appendParagraph(dept).setBold(true).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+        cell.setBackgroundColor('#A9A9A9');
+      });
+      headerTable.setBorderWidth(0);
+
+      // Second table (Content table)
+      var contentTable = body.appendTable();
+      var maxRows = Math.max(...departments.map(d => departmentMap[d].subs.length + (departmentMap[d].head ? 1 : 0)));
+
+      for (var r = 0; r < maxRows; r++) {
+        var tableRow = contentTable.appendTableRow();
+        departments.forEach(dept => {
+          var cell = tableRow.appendTableCell();
+          var entry = null;
+          var subs = departmentMap[dept].subs;
+          var head = departmentMap[dept].head;
+
+          if (r < subs.length) entry = subs[r];
+          else if (r === subs.length && head) entry = head;
+
+          if (entry) {
+            try {
+              var blob = DriveApp.getFileById(entry.id).getBlob();
+              cell.appendImage(blob).setWidth(50).setHeight(50).getParent().asParagraph().setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+              
+              cell.appendParagraph(String(entry.name)).setBold(true).setFontSize(6).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+
+              if (entry.position && entry.position.trim() !== "") {
+                cell.appendParagraph(String(entry.position)).setBold(false).setFontSize(6).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+              }
+              
+              var timestamp = getTimestampFromSheet(entry.code, labelFromColumnA, ss);
+              var timestampText = "Approved Date: " + (timestamp ? Utilities.formatDate(new Date(timestamp), Session.getScriptTimeZone(), "MMM d, yyyy HH:mm") : "N/A");
+              cell.appendParagraph(timestampText).setBold(false).setFontSize(6).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+
+              // *** Corrected function call from getNotess to getNotes ***
+              var notes = getNotes(entry.code, labelFromColumnA, ss);
+              var notesText = "Remarks: " + (notes ? String(notes) : "N/A");
+              cell.appendParagraph(notesText).setFontSize(6).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+
+            } catch (imgErr) {
+              cell.appendParagraph("Image error").setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+              Logger.log("Image fetch error for " + entry.name + ": " + imgErr);
+            }
+          }
+        });
+      }
+      contentTable.setBorderWidth(0);
+
+
+      doc.saveAndClose();
+
+      var pdfBlob = DriveApp.getFileById(doc.getId()).getAs(MimeType.PDF);
+      pdfBlob.setName(subjectFromColumnF + ".pdf");
+      var pdfFile = folder.createFile(pdfBlob);
+
+      // Using the mainSheet variable we already have
+      mainSheet.getRange(i + 1, 2).setValue(pdfFile.getUrl());
+
+    } catch (err) {
+      Logger.log("Error in row " + (i + 1) + ": " + err);
+      // Using the mainSheet variable we already have
+      mainSheet.getRange(i + 1, 2).setValue("Error: " + err);
+    }
+  }
+}
+
+function getTimestampFromSheet(code, refNo, ss) {
+  try {
+    var sheet = ss.getSheetByName(code);
+    if (!sheet) return null;
+
+    var values = sheet.getRange("A:BK").getValues();
+
+    for (var i = 0; i < values.length; i++) {
+      if (values[i][9] == refNo) {
+        return values[i][2] || null;
+      }
+    }
+  } catch (e) {
+    Logger.log("Timestamp fetch error from sheet " + code + ": " + e);
+  }
+  return null;
+}
+
+function getNotes(code, refNo, ss) {
+  try {
+    var sheet = ss.getSheetByName(code);
+    if (!sheet) return null;
+
+    var values = sheet.getRange("A:BM").getValues();
+
+    for (var i = 0; i < values.length; i++) {
+      if (values[i][9] == refNo) {
+        return values[i][1] || null;
+      }
+    }
+  } catch (e) {
+    Logger.log("Notes fetch error from sheet " + code + ": " + e);
+  }
+  return null;
+}
+
+
+
+function disapproveds() {
+
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var mainSheet = ss.getSheetByName("Conso");
+
+  var data = mainSheet.getDataRange().getValues();
+
+  var folderId = '1Du8Gw9M6bilmraQ5kLX7URKez8XxffMS'; // Destination folder
+  var folder = DriveApp.getFolderById(folderId);
+
+  var conditionsAndFiles = {
+     "MGL": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MICHAEL G. LAO", department: "MOSD", role: "head", position: "SAVP & Head, MCD | MOSD" },
+    "LDA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "LORENCE D. AURELIO", department: "LEASING", role: "head", position: "VP, Central Leasing Support" },
+    "KMV": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "KRISTINA MARIE M. VILLANUEVA", department: "BCM", role: "head", position: "SAVP and Head, BCM" },
+    "RCS": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ROSALYN C. SEGURA", department: "RBG", role: "head", position: "AVP, Revenue Business Group" },
+    "JE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JEREMY S. RODRIGUEZ", department: "OD", role: "head", position: "Senior Manager, Organizational Development" },
+    "NOE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "NOE M.VERSOZA", department: "PROC", role: "head", position: "AVP & Head, Procurement" },
+
+
+
+    //MOSD
+
+    "JAYE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JAYE TRICH PIZARRO", department: "MOSD", role: "sub", position: "" },
+    "JOY": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JOCELYN MELITANTE", department: "MOSD", role: "sub", position: "" },
+    "ALEX": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ALEX FLORES", department: "MOSD", role: "sub", position: "" },
+    "AU": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "AURORA PASTOLERO", department: "MOSD", role: "sub", position: "" },
+    "BRIX": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "BRIX VALDENARRO", department: "MOSD", role: "sub", position: "" },
+    "MAR": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MARIANO CALEJA", department: "MOSD", role: "sub", position: "" },
+
+    //BCM
+    "EBA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ERNESTO ANDRADE", department: "BCM", role: "sub", position: "" },
+    "DSM": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "DUSTIN STA. MARIA", department: "BCM", role: "sub", position: "" },
+    "JAC": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JENEL ANN CRUZGARCIA", department: "BCM", role: "sub", position: "" },
+    "DP": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "DOREEN PENILLA", department: "BCM", role: "sub", position: "" },
+
+    //LEASING
+    "FA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "FRANCES ARMIAN", department: "LEASING", role: "sub", position: "" },
+    "DM": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "DENISSE MALONG", department: "LEASING", role: "sub", position: "" },
+    "KL": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "KEVIN LIN", department: "LEASING", role: "sub", position: "" },
+    "JM": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JUVI MASILUNGAN", department: "LEASING", role: "sub", position: "" },
+    "JG": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JHOANALYN GATDULA", department: "LEASING", role: "sub", position: "" },
+    "MA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MARY ARCEO", department: "LEASING", role: "sub", position: "" },
+
+    //RBG
+    "ANNALEE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ANNALEE PINE", department: "RBG", role: "sub", position: "" },
+    "ARRA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ARRALEN BATALLONES", department: "RBG", role: "sub", position: "" },
+    "DULCE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MA DULCE CUENCA", department: "RBG", role: "sub", position: "" },
+    "AIZELLE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "AIZELLE ANNE YALONG", department: "RBG", role: "sub", position: "" },
+    "VIA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "HENEDINA VIADO", department: "RBG", role: "sub", position: "" },
+    "OAUIE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "OAUIE BANAGAN", department: "RBG", role: "sub", position: "" },
+    "MICH": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MICHELLE ONG", department: "RBG", role: "sub", position: "" },
+    "FATIMA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MA FATIMA BAUSIN", department: "RBG", role: "sub", position: "" },
+    "MELANIE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MELANIE LINGON", department: "RBG", role: "sub", position: "" },
+    "STEPH": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "STEPHEN SUMILANG", department: "RBG", role: "sub", position: "" },
+    "PAT": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "PATRICIA MARI QUIEREZ", department: "RBG", role: "sub", position: "" },
+    "ROSA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ROSA CECILIA SALVADOR", department: "RBG", role: "sub", position: "" },
+    "JANICE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JANICE CADOG", department: "RBG", role: "sub", position: "" }
+
+  };
+
+  // Extract all unique departments from conditionsAndFiles
+  var departments = [...new Set(Object.values(conditionsAndFiles).map(e => e.department))];
+
+  for (var i = 0; i < data.length; i++) {
+    try {
+      var approvalStatus = data[i][0]; // Column A = Status
+      var pdfLink = data[i][1];        // Column B = PDF Link
+      var approvalCol = data[i][0];    // Column A again (redundant?)
+
+      if (approvalStatus !== "DISAPPROVED" || pdfLink || approvalCol !== "DISAPPROVED") continue;
+
+      var participantCodes = data[i].slice(8, 82).filter(String); // AG to AZ = 8 to 69
+      var labelFromColumnA = data[i][4];  // Column E
+      var subjectFromColumnF = data[i][10]; // Column K
+
+      var departmentMap = {};
+      departments.forEach(d => departmentMap[d] = { subs: [], head: null });
+
+      participantCodes.forEach(code => {
+        var entry = conditionsAndFiles[code];
+        if (entry) {
+          if (entry.role === "head") {
+            departmentMap[entry.department].head = { ...entry, code };
+          } else {
+            departmentMap[entry.department].subs.push({ ...entry, code });
+          }
+        }
+      });
+
+      var doc = DocumentApp.create("Generated Document - Row " + (i + 1));
+      var body = doc.getBody();
+
+      body.setMarginTop(21.6);
+      body.setMarginBottom(21.6);
+      body.setMarginLeft(21.6);
+      body.setMarginRight(21.6);
+
+      var header = doc.getHeader();
+      if (!header) header = doc.addHeader();
+      header.appendParagraph(labelFromColumnA).setAlignment(DocumentApp.HorizontalAlignment.RIGHT).setFontSize(7);
+
+      body.appendParagraph("The memo with details below is DISAPPROVED: See comments of reviewer that needs to be addressed")
+        .setFontSize(7)
+        .setBold(true);
+      body.appendParagraph(""); // Spacer line remains unchanged
+
+      var labels = ["Subject of Memo", "Date of Memo", "Upload Timestamp", "Preparer of Memo", "Preparer Email", "Uploader of Memo", "Uploader Email", "File link of Memo"];
+      var values = [data[i][10], data[i][11], data[i][5], data[i][8], data[i][9], data[i][6], data[i][7], data[i][13]];
+
+      for (var j = 0; j < values.length; j++) {
+        var para = body.appendParagraph("");
+
+        // Add label (bold)
+        var labelText = para.appendText(labels[j] + ": ");
+        labelText.setBold(true).setFontSize(7);
+
+        // Add value (not bold)
+        var valueText;
+        if (labels[j].includes("Timestamp") || labels[j].includes("Date")) {
+          var formatted = Utilities.formatDate(new Date(values[j]), Session.getScriptTimeZone(), "MMM d, yyyy HH:mm");
+          valueText = para.appendText(formatted);
+        } else {
+          valueText = para.appendText(String(values[j]));
+        }
+        valueText.setBold(false).setFontSize(7); // explicitly set to not bold
+      }
+
+      // Property/Coverage
+
+        var excludedValues = [
+          "CAMSY", "MIKEE", "VAN", "TYRON", "MGL", "KMV", "LDA", "GMC", "RCS", "JE","NOE",
+          "JAYE", "JOY", "ALEX", "AU", "BRIX", "MAR", "ANNALEE", "ARRA", "AIZELLE",
+          "DULCE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA",
+          "JANICE", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "MA", "JG"
+        ];
+
+        var coverageValues = data[i].slice(14, 56); // Columns O to AO
+        var properties = [];
+
+        for (var c = 0; c < coverageValues.length; c++) {
+          var value = coverageValues[c];
+          if (!value) break;
+
+          var trimmed = value.trim();
+
+          // Skip if in excludedValues OR contains ".pdf" or "https"
+          if (
+            excludedValues.includes(trimmed) ||
+            trimmed.toLowerCase().includes('.pdf') ||
+            trimmed.toLowerCase().includes('https')
+          ) {
+            continue;
+          }
+
+          properties.push(trimmed);
+        }
+
+        var coveragePara = body.appendParagraph("");
+        var labelText = coveragePara.appendText("Property/Coverage: ");
+        labelText.setBold(true).setFontSize(7);
+
+        var valueText = coveragePara.appendText(properties.join(", "));
+        valueText.setBold(false).setFontSize(7);
+
+
+
+
+
+      body.appendParagraph("");
+
+      var headerTable = body.appendTable();
+      var headerRow = headerTable.appendTableRow();
+      departments.forEach(dept => {
+        var cell = headerRow.appendTableCell();
+        cell.appendParagraph(dept).setBold(true).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+        cell.setBackgroundColor('#A9A9A9');
+      });
+      headerTable.setBorderWidth(0);
+
+      var contentTable = body.appendTable();
+      var maxRows = Math.max(...departments.map(d => departmentMap[d].subs.length + (departmentMap[d].head ? 1 : 0)));
+
+      for (var r = 0; r < maxRows; r++) {
+        var row = contentTable.appendTableRow();
+        departments.forEach(dept => {
+          var cell = row.appendTableCell();
+          var entry = (r < departmentMap[dept].subs.length) ? departmentMap[dept].subs[r]
+            : (r === departmentMap[dept].subs.length ? departmentMap[dept].head : null);
+
+          if (entry) {
+            try {
+              var blob = DriveApp.getFileById(entry.id).getBlob();
+              var image = cell.appendImage(blob).setWidth(0).setHeight(0); // Fixed image size
+              image.getParent().asParagraph().setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+
+              // Add name in bold
+              var namePara = cell.appendParagraph("");
+              namePara.setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+              namePara.appendText(entry.name).setBold(true).setFontSize(6);
+
+              // Add position (not bold)
+              if (entry.position) {
+                var posPara = cell.appendParagraph(entry.position);
+                posPara.setFontSize(6).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+              }
+
+              var ts = getTimestampFromSheett(entry.code, labelFromColumnA, ss);
+              var tsLabel = ts && ts.status === "DISAPPROVED" ? "DISAPPROVED DATE: " : "Approved Date: ";
+              var tsValue = ts && ts.timestamp ? Utilities.formatDate(new Date(ts.timestamp), Session.getScriptTimeZone(), "MMM d, yyyy HH:mm") : "N/A";
+
+              var tsPara = cell.appendParagraph(tsLabel + tsValue);
+              tsPara.setFontSize(6).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+
+              var remarks = getNotess(entry.code, labelFromColumnA, ss);
+              var remarksPara = cell.appendParagraph("Remarks: " + (remarks || "N/A"));
+              remarksPara.setFontSize(6).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+
+            } catch (imgErr) {
+              cell.appendParagraph("Image error").setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+              Logger.log("Image fetch error for " + entry.name + ": " + imgErr);
+            }
+          }
+
+        });
+      }
+      contentTable.setBorderWidth(0);
+
+      doc.saveAndClose();
+      var pdfBlob = DriveApp.getFileById(doc.getId()).getAs(MimeType.PDF);
+      pdfBlob.setName(subjectFromColumnF);
+      var pdfFile = folder.createFile(pdfBlob);
+      ss.getSheetByName('Conso').getRange(i + 1, 2).setValue(pdfFile.getUrl());
+
+    } catch (err) {
+      Logger.log("Error in row " + (i + 1) + ": " + err);
+      mainSheet.getRange(i + 1, 2).setValue("Error: " + err);
+    }
+  }
+}
+
+function getTimestampFromSheett(code, refNo, ss) {
+  try {
+    var sheet = ss.getSheetByName(code);
+    if (!sheet) return null;
+    var values = sheet.getRange("A:BK").getValues();
+    for (var i = 0; i < values.length; i++) {
+      if (values[i][9] == refNo) {
+        return { status: values[i][0], timestamp: values[i][2] || null };
+      }
+    }
+  } catch (e) {
+    Logger.log("Timestamp fetch error from sheet " + code + ": " + e);
+  }
+  return null;
+}
+
+function getNotess(code, refNo, ss) {
+  try {
+    var sheet = ss.getSheetByName(code);
+    if (!sheet) return null;
+    var values = sheet.getRange("A:BM").getValues();
+    for (var i = 0; i < values.length; i++) {
+      if (values[i][9] == refNo) {
+        return values[i][1] || null;
+      }
+    }
+  } catch (e) {
+    Logger.log("Notes fetch error from sheet " + code + ": " + e);
+  }
+  return null;
+}
+
+function sendApprovalEmails() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Conso");
+  var summarySheet = ss.getSheetByName("EMAIL SUMMARY");
+
+  if (!summarySheet) {
+    summarySheet = ss.insertSheet("EMAIL SUMMARY");
+    summarySheet.appendRow([
+      "Date Emailed",
+      "Recipient Name",
+      "To Email",
+      "CC Email",
+      "Reference Number",
+      "Upload Timestamp",
+      "Subject of Memo"
+    ]);
+  }
+
+  var data = sheet.getDataRange().getValues();
+  var summaryData = summarySheet.getDataRange().getValues();
+
+  // Create a set of already emailed reference numbers from EMAIL SUMMARY (col E = index 4)
+  var emailedRefNumbers = new Set();
+  for (var i = 1; i < summaryData.length; i++) {
+    emailedRefNumbers.add(summaryData[i][4]);
+  }
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] === "APPROVED") { // Col A
+      var referenceNumber = data[i][4]; // Col E
+      var colHValue = data[i][7]; // Col H
+
+      // If already emailed AND col H is TRUE, skip
+      if (emailedRefNumbers.has(referenceNumber) && colHValue === true) {
+        continue;
+      }
+
+      var toEmail = data[i][7]; // Col H
+      var ccEmail = data[i][9]; // Col J
+      var recipientName = data[i][6]; // Col G
+      var uploadTimestamp = data[i][5]; // Col F
+      var subjectOfMemo = data[i][10]; // Col K
+      var fileUrl = "https://script.google.com/macros/s/AKfycbwdtLmaxc61t1jsPprCz8XBEkUTSaldhHR3qeJ45VHXTYxWF9W0Sn2QhTzriMw9ykpXkg/exec";
+
+      var subject = `📨 Memo Submitted - Reference: ${referenceNumber}`;
+      var body =
+      '<div style="background-color: #ffffff; padding: 24px; font-family: Arial, sans-serif; color: #222; line-height: 1.6;">' +
+        '<table width="100%" style="margin-bottom: 20px;">' +
+          '<tr>' +
+            '<td align="center">' +
+              '<img src="https://raw.githubusercontent.com/mrjeronluther/Memo-Routing-Landing-Page/main/WhatsApp%20Image%202025-06-05%20at%2015.44.42_3fc69535.jpg" ' +
+              'alt="Header Image" style="max-width: 600px; width: 100%; height: auto; display: block;">' +
+            '</td>' +
+          '</tr>' +
+        '</table>' +
+
+        `<p>Dear ${recipientName},</p>` +
+        '<p>Your submitted memo has been <b>APPROVED</b>. The approval page is now ready to download in our Memo Finder App.</p>' +
+        '<p>Attach the approval page to the original copy of the memo and submit this as necessary.</p>' +
+
+        '<table style="border-collapse: collapse; margin-top: 20px;">' +
+          `<tr><td style="padding: 6px 12px; font-weight: bold;">REFERENCE NUMBER:</td><td style="padding: 6px 12px;">${referenceNumber}</td></tr>` +
+          `<tr><td style="padding: 6px 12px; font-weight: bold;">UPLOAD TIMESTAMP:</td><td style="padding: 6px 12px;">${uploadTimestamp}</td></tr>` +
+          `<tr><td style="padding: 6px 12px; font-weight: bold;">SUBJECT OF THE MEMO:</td><td style="padding: 6px 12px;">${subjectOfMemo}</td></tr>` +
+        '</table>' +
+
+        `<p style="margin-top: 16px;">Link to Memo Finder App: <a href="${fileUrl}" target="_blank">Click here</a>.</p>` +
+
+        '<p style="margin-top: 30px;">Thank you,<br><strong>MCD Document Routing System</strong></p>' +
+
+        '<hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;">' +
+        '<small style="color: #888;">This is an automated message. Please do not reply to this email.</small>' +
+      '</div>';
+
+
+
+      if (toEmail && ccEmail) {
+        MailApp.sendEmail({
+          to: toEmail,
+          cc: ccEmail,
+          subject: subject,
+          htmlBody: body,
+          name: "MCD Memo Submission Notification"
+        });
+
+        summarySheet.appendRow([
+          new Date(),
+          recipientName,
+          toEmail,
+          ccEmail,
+          referenceNumber,
+          uploadTimestamp,
+          subjectOfMemo
+        ]);
+      }
+    }
+  }
+}
+
+
+function senddispprovalEmails() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Conso");
+  var summarySheet = ss.getSheetByName("EMAIL SUMMARY");
+
+  if (!summarySheet) {
+    summarySheet = ss.insertSheet("EMAIL SUMMARY");
+    summarySheet.appendRow([
+      "Date Emailed",
+      "Recipient Name",
+      "To Email",
+      "CC Email",
+      "Reference Number",
+      "Upload Timestamp",
+      "Subject of Memo"
+    ]);
+  }
+
+  var data = sheet.getDataRange().getValues();
+  var summaryData = summarySheet.getDataRange().getValues();
+
+  // Create a set of already emailed reference numbers from EMAIL SUMMARY (col E = index 4)
+  var emailedRefNumbers = new Set();
+  for (var i = 1; i < summaryData.length; i++) {
+    emailedRefNumbers.add(summaryData[i][4]);
+  }
+
+  for (var i = 1; i < data.length; i++) {
+    if (data[i][0] === "DISAPPROVED") { // Col A
+      var referenceNumber = data[i][4]; // Col E
+      var colHValue = data[i][7]; // Col H
+
+      // If already emailed AND col H is TRUE, skip
+      if (emailedRefNumbers.has(referenceNumber) && colHValue === true) {
+        continue;
+      }
+
+      var toEmail = data[i][7]; // Col H
+      var ccEmail = data[i][9]; // Col J
+      var recipientName = data[i][6]; // Col G
+      var uploadTimestamp = data[i][5]; // Col F
+      var subjectOfMemo = data[i][10]; // Col K
+      var fileUrl = "https://script.google.com/macros/s/AKfycbwdtLmaxc61t1jsPprCz8XBEkUTSaldhHR3qeJ45VHXTYxWF9W0Sn2QhTzriMw9ykpXkg/exec";
+
+      var subject = `📨 Memo Submitted - Reference: ${referenceNumber}`;
+      var body =
+  '<div style="background-color: #ffffff; padding: 24px; font-family: Arial, sans-serif; color: #222; line-height: 1.6;">' +
+
+    '<table width="100%" style="margin-bottom: 20px;">' +
+      '<tr>' +
+        '<td align="center">' +
+          '<img src="https://raw.githubusercontent.com/mrjeronluther/Memo-Routing-Landing-Page/main/WhatsApp%20Image%202025-06-05%20at%2015.44.42_3fc69535.jpg" ' +
+          'alt="Header Image" style="max-width: 600px; width: 100%; height: auto; display: block;">' +
+        '</td>' +
+      '</tr>' +
+    '</table>' +
+
+    `<p>Dear ${recipientName},</p>` +
+    '<p>Your submitted memo has been <b>DISAPPROVED</b>. You may now download the disapproval page to review the reason for disapproval and any notes provided by reviewers and approvers.</p>' +
+
+    '<table style="border-collapse: collapse; margin-top: 20px;">' +
+      `<tr><td style="padding: 6px 12px; font-weight: bold;">REFERENCE NUMBER:</td><td style="padding: 6px 12px;">${referenceNumber}</td></tr>` +
+      `<tr><td style="padding: 6px 12px; font-weight: bold;">UPLOAD TIMESTAMP:</td><td style="padding: 6px 12px;">${uploadTimestamp}</td></tr>` +
+      `<tr><td style="padding: 6px 12px; font-weight: bold;">SUBJECT OF THE MEMO:</td><td style="padding: 6px 12px;">${subjectOfMemo}</td></tr>` +
+    '</table>' +
+
+    `<p style="margin-top: 16px;">Link to Memo Finder App: <a href="${fileUrl}" target="_blank">Click here</a>.</p>` +
+
+    '<p style="margin-top: 30px;">Thank you,<br><strong>MCD Document Routing System</strong></p>' +
+
+    '<hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;">' +
+    '<small style="color: #888;">This is an automated message. Please do not reply to this email.</small>' +
+  '</div>';
+
+
+      if (toEmail && ccEmail) {
+        MailApp.sendEmail({
+          to: toEmail,
+          cc: ccEmail,
+          subject: subject,
+          htmlBody: body,
+          name: "MCD Memo Submission Notification"
+        });
+
+        summarySheet.appendRow([
+          new Date(),
+          recipientName,
+          toEmail,
+          ccEmail,
+          referenceNumber,
+          uploadTimestamp,
+          subjectOfMemo
+        ]);
+      }
+    }
+  }
+}
+
+
+
+/**
+ * A high-performance function to check approval statuses across multiple sheets for very large datasets.
+ * It uses a caching strategy to minimize API calls and process data in memory.
+ *
+ * How it works:
+ * 1.  Caches Data: It first loops through all potential source sheets ('GMC', 'RCS', etc.) and reads
+ *     their key data (Column J for lookup, Column A for status) into an efficient JavaScript Map.
+ *     This is done only once.
+ * 2.  Reads Main Sheet: It reads the entire relevant data range from the main "Conso" sheet in one go.
+ * 3.  Processes in Memory: It loops through the "Conso" data *in memory*, using the cached Maps for
+ *     instant lookups. This avoids any spreadsheet API calls inside the main loop.
+ * 4.  Writes in Bulk: It collects all the calculated final statuses and writes them back to Column A
+ *     in a single `setValues()` operation, which is dramatically faster than writing cell-by-cell.
+ */
+function checkApprovalStatus_Optimized() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const mainSheetName = "Conso"; // It's better to reference the sheet by name for clarity
+  const sheet = ss.getSheetByName(mainSheetName);
+
+  if (!sheet) {
+    SpreadsheetApp.getUi().alert(`Sheet "${mainSheetName}" not found!`);
+    return;
+  }
+  
+  // Start a timer to measure performance
+  console.time("Execution Time");
+
+  try {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      console.log("No data to process.");
+      return; // No data
+    }
+
+    // --- Define Your Configuration ---
+    const validSheets = ["GMC", "RCS", "MGL", "KMV", "LDA", "JAYE", "BRIX", "JOY", "ALEX", "AU", "MAR", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "JG", "MA", "ANNALEE", "ARRA", "DULCE", "AIZELLE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "CAMSY", "MIKEE", "VANESSA", "TYRON"];
+    const coreSheets = ["GMC", "MGL", "RCS", "KMV", "LDA", "CAMSY", "MIKEE", "VANESSA", "TYRON"];
+    
+    // --- STEP 1: CACHE DATA FROM ALL SOURCE SHEETS ---
+    console.log("Caching data from source sheets...");
+    const sheetDataCache = {}; // This will hold our data: { sheetName: Map(lookupValue -> status), ... }
+
+    for (const sheetName of validSheets) {
+      const targetSheet = ss.getSheetByName(sheetName);
+      if (!targetSheet) {
+        console.warn(`Sheet "${sheetName}" not found. Skipping.`);
+        continue;
+      }
+
+      // Get all data from columns A and J in one read operation
+      const targetLastRow = targetSheet.getLastRow();
+      if (targetLastRow < 2) continue; // Skip empty sheets
+
+      const targetData = targetSheet.getRange(1, 1, targetLastRow, 10).getValues(); // A to J
+
+      // Create a fast lookup map for this sheet
+      const lookupMap = new Map();
+      // Start from row 1 to skip header if it exists
+      for (let i = 1; i < targetData.length; i++) {
+        const lookupValue = targetData[i][9]; // Column J (index 9)
+        const statusValue = targetData[i][0]; // Column A (index 0)
+        if (lookupValue) { // Only add if lookup value is not empty
+          lookupMap.set(lookupValue, statusValue);
+        }
+      }
+      sheetDataCache[sheetName] = lookupMap;
+    }
+    console.log("Caching complete.");
+
+    // --- STEP 2: READ MAIN SHEET DATA ---
+    // Read all the data we need from the main sheet in one go
+    console.log(`Reading data from "${mainSheetName}"...`);
+    const mainDataRange = sheet.getRange(2, 5, lastRow - 1, 80); // Columns E to BX (Col 5 to 80)
+    const mainData = mainDataRange.getValues();
+    const finalStatuses = []; // This array will hold the new values for column A
+
+    // --- STEP 3: PROCESS DATA IN MEMORY ---
+    console.log("Processing data in memory...");
+    for (let i = 0; i < mainData.length; i++) {
+      const val = mainData[i][0]; // Value from Column E (index 0 in our mainData array)
+      if (!val) {
+        finalStatuses.push([""]); // Keep cell empty if E is empty
+        continue;
+      }
+      
+      const sheetRowRefs = mainData[i].slice(10, 70); // Sheet refs from O to BX (index 10 to 69 in mainData)
+      
+      // Filter sheets based on this row's references
+      const availableSheets = validSheets.filter(s => sheetRowRefs.includes(s));
+      const existingCoreSheets = coreSheets.filter(s => availableSheets.includes(s));
+      
+      // Get results using the super-fast cached maps
+      const allResults = availableSheets.map(sheetName => {
+        const lookupMap = sheetDataCache[sheetName];
+        // Use the map to get the status. If not found, return empty string.
+        return (lookupMap && lookupMap.has(val)) ? lookupMap.get(val) : "";
+      });
+
+      const coreResults = existingCoreSheets.map(sheetName => {
+        const lookupMap = sheetDataCache[sheetName];
+        return (lookupMap && lookupMap.has(val)) ? lookupMap.get(val) : "";
+      });
+
+      // --- Apply the approval logic (this is the same as your original code) ---
+      const disapprovedCount = allResults.filter(res => res === "DISAPPROVED").length;
+      const approvedCoreCount = coreResults.filter(res => res === "APPROVED").length;
+      const totalCoreCount = existingCoreSheets.length;
+
+      let finalStatus = "";
+      if (disapprovedCount > 0) {
+        finalStatus = "DISAPPROVED";
+      } else if (totalCoreCount > 0) {
+        finalStatus = (approvedCoreCount === totalCoreCount) ? "APPROVED" : "PENDING";
+      } else {
+        // Handle case where there are no "core" sheets available for this row, but maybe others
+        const allPending = allResults.every(res => res === "PENDING" || res === "");
+        const anyApproved = allResults.some(res => res === "APPROVED");
+        if (!anyApproved && allPending) {
+             finalStatus = "PENDING";
+        } else if (allResults.length > 0 && allResults.every(res => res === "APPROVED")) {
+             // Optional: If you want non-core to also trigger approval if all are approved
+             finalStatus = "APPROVED";
+        } else {
+             finalStatus = "PENDING";
+        }
+      }
+      
+      finalStatuses.push([finalStatus]); // Add to our results array
+    }
+
+    // --- STEP 4: WRITE DATA IN BULK ---
+    if (finalStatuses.length > 0) {
+      console.log("Writing results back to the sheet...");
+      sheet.getRange(2, 1, finalStatuses.length, 1).setValues(finalStatuses);
+      console.log("Update complete!");
+    } else {
+      console.log("No results to write.");
+    }
+    
+  } catch (e) {
+    // Log any errors that occur
+    console.error(`An error occurred: ${e.message}\nStack: ${e.stack}`);
+    SpreadsheetApp.getUi().alert(`An error occurred. Check logs for details. Error: ${e.message}`);
+  } finally {
+    // Log the total time taken
+    console.timeEnd("Execution Time");
+  }
+}
+
+
+/**
+ * A high-performance function to find the first "disapproving" sheet for each row.
+ * This script is an optimized replacement for the complex array formula.
+ *
+ * How it works:
+ * 1.  Caches Data: It reads all potential source sheets (defined in `validSheets`) and caches
+ *     their lookup data (Column J and Column A) into an efficient JavaScript Map. This is the most
+ *     important optimization step.
+ * 2.  Reads Main Sheet: It reads the lookup values (Col E) and sheet references (Cols P:BP) from
+ *     the main sheet in a single bulk operation.
+ * 3.  Processes in Memory: It iterates through each row of data in memory. For each row, it loops
+ *     through its specified sheets and uses the fast cache to find the first one with a
+ *     "DISAPPROVED" status. It then stops searching for that row and moves to the next.
+ * 4.  Writes in Bulk: It writes all the results back to the sheet in a single `setValues()` call.
+ *
+ * @param {string} resultColumnLetter The column to write the results to (e.g., "C").
+ */
+function findFirstDisapprovingSheet_Optimized(resultColumnLetter = 'C') {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const mainSheetName = "Conso"; // The name of your main sheet
+  const sheet = ss.getSheetByName(mainSheetName);
+
+  if (!sheet) {
+    SpreadsheetApp.getUi().alert(`Sheet "${mainSheetName}" not found!`);
+    return;
+  }
+  
+  // --- Configuration ---
+  const LOOKUP_VALUE_COLUMN = 5; // Column E
+  const SHEET_REFS_START_COLUMN = 16; // Column P
+  const SHEET_REFS_END_COLUMN = 68; // Column BP
+  const resultColumnIndex = resultColumnLetter.toUpperCase().charCodeAt(0) - 64;
+
+  console.time("Execution Time (findFirstDisapprovingSheet)");
+  
+  try {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      console.log("No data to process.");
+      return;
+    }
+    
+    // Using the same sheet list as the previous script for consistency.
+    // This is more efficient than scanning the sheet for all unique names.
+    const validSheets = ["GMC", "RCS", "MGL", "KMV", "LDA", "JAYE", "BRIX", "JOY", "ALEX", "AU", "MAR", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "JG", "MA", "ANNALEE", "ARRA", "DULCE", "AIZELLE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "CAMSY", "MIKEE", "VANESSA", "TYRON"];
+
+    // --- STEP 1: CACHE DATA (Identical to the previous function's caching logic) ---
+    console.log("Caching data from source sheets...");
+    const sheetDataCache = {};
+    for (const sheetName of validSheets) {
+      const targetSheet = ss.getSheetByName(sheetName);
+      if (!targetSheet) continue;
+
+      const targetLastRow = targetSheet.getLastRow();
+      if (targetLastRow < 1) continue;
+      
+      const targetData = targetSheet.getRange(1, 1, targetLastRow, 10).getValues(); // A to J
+      const lookupMap = new Map();
+      for (const row of targetData) {
+        const lookupValue = row[9]; // Column J (index 9)
+        const statusValue = row[0]; // Column A (index 0)
+        if (lookupValue) {
+          lookupMap.set(lookupValue, statusValue);
+        }
+      }
+      sheetDataCache[sheetName] = lookupMap;
+    }
+    console.log("Caching complete.");
+
+    // --- STEP 2: READ MAIN SHEET DATA ---
+    // Read from the first relevant column (E) to the last (BP)
+    const rangeWidth = SHEET_REFS_END_COLUMN - LOOKUP_VALUE_COLUMN + 1;
+    const mainData = sheet.getRange(2, LOOKUP_VALUE_COLUMN, lastRow - 1, rangeWidth).getValues();
+    const finalResults = [];
+
+    // --- STEP 3: PROCESS DATA IN MEMORY ---
+    console.log("Processing data to find first disapproving sheet...");
+    for (const rowData of mainData) {
+      const lookupVal = rowData[0]; // Value from Column E (index 0 in our rowData array)
+      if (!lookupVal) {
+        finalResults.push([""]); // No lookup value, so result is blank
+        continue;
+      }
+      
+      // Get the sheet names from this row's data (P to BP) and filter out empty cells
+      // Index for P in rowData = P(16) - E(5) = 11
+      const sheetRefs = rowData.slice(SHEET_REFS_START_COLUMN - LOOKUP_VALUE_COLUMN).filter(String);
+      
+      let disapprovingSheet = ""; // Default to blank
+
+      // Loop through the sheets for this specific row
+      for (const sheetName of sheetRefs) {
+        const lookupMap = sheetDataCache[sheetName];
+        // Check if the sheet exists in cache AND the value exists in the map
+        if (lookupMap && lookupMap.has(lookupVal)) {
+          const status = lookupMap.get(lookupVal);
+          if (status === "DISAPPROVED") {
+            disapprovingSheet = sheetName;
+            break; // Found the first one, no need to check other sheets for this row.
+          }
+        }
+      }
+      finalResults.push([disapprovingSheet]);
+    }
+    
+    // --- STEP 4: WRITE DATA IN BULK ---
+    if (finalResults.length > 0) {
+      console.log(`Writing ${finalResults.length} results to column ${resultColumnLetter}...`);
+      sheet.getRange(2, resultColumnIndex, finalResults.length, 1).setValues(finalResults);
+      console.log("Update complete!");
+    } else {
+      console.log("No results to write.");
+    }
+    
+  } catch (e) {
+    console.error(`An error occurred: ${e.message}\nStack: ${e.stack}`);
+    SpreadsheetApp.getUi().alert(`An error occurred. Check logs for details. Error: ${e.message}`);
+  } finally {
+    console.timeEnd("Execution Time (findFirstDisapprovingSheet)");
+  }
+}
+
+/**
+ * A high-performance function to find the first "disapproval reason" from a series of sheets.
+ * The disapproval reason is sourced from Column B of the target sheet.
+ *
+ * How it works:
+ * 1.  Caches Data: It reads all potential source sheets and caches their key data:
+ *     Column J (lookup ID), Column A (status), and Column B (reason). This data is stored
+ *     in an efficient JavaScript Map for instant access.
+ * 2.  Reads Main Sheet: It reads the lookup values (Col E) and sheet references (Cols L:BF) from
+ *     the main sheet in one bulk operation.
+ * 3.  Processes in Memory: It iterates through each row in memory. For each row, it checks its
+ *     list of sheets, using the cache to find the first one with a "DISAPPROVED" status. When found,
+ *     it grabs the corresponding reason from the cache and stops searching for that row.
+ * 4.  Writes in Bulk: It writes all the collected reasons back to the specified result column
+ *     in a single operation.
+ *
+ * @param {string} resultColumnLetter The column to write the results to (e.g., "D").
+ */
+function findFirstDisapprovalReason_Optimized(resultColumnLetter = 'D') {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const mainSheetName = "Conso";
+  const sheet = ss.getSheetByName(mainSheetName);
+
+  if (!sheet) {
+    SpreadsheetApp.getUi().alert(`Sheet "${mainSheetName}" not found!`);
+    return;
+  }
+  
+  // --- Configuration ---
+  const LOOKUP_VALUE_COLUMN = 5;      // Column E
+  const SHEET_REFS_START_COLUMN = 12; // Column L
+  const SHEET_REFS_END_COLUMN = 58;   // Column BF
+  const resultColumnIndex = resultColumnLetter.toUpperCase().charCodeAt(0) - 64;
+  
+  console.time("Execution Time (findFirstDisapprovalReason)");
+
+  try {
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      console.log("No data to process.");
+      return;
+    }
+
+    // This list should contain all possible sheets that could ever be referenced.
+    const validSheets = ["GMC", "RCS", "MGL", "KMV", "LDA", "JAYE", "BRIX", "JOY", "ALEX", "AU", "MAR", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "JG", "MA", "ANNALEE", "ARRA", "DULCE", "AIZELLE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "CAMSY", "MIKEE", "VANESSA", "TYRON"];
+
+    // --- STEP 1: CACHE DATA FROM SOURCE SHEETS (Now includes Column B) ---
+    console.log("Caching Status and Reason data from source sheets...");
+    const sheetDataCache = {};
+    for (const sheetName of validSheets) {
+      const targetSheet = ss.getSheetByName(sheetName);
+      if (!targetSheet) {
+        console.warn(`Sheet "${sheetName}" not found. Skipping.`);
+        continue;
+      }
+      const targetLastRow = targetSheet.getLastRow();
+      if (targetLastRow < 1) continue;
+      
+      const targetData = targetSheet.getRange(1, 1, targetLastRow, 10).getValues(); // Read A:J
+      
+      // Create a map where key is the lookup value and value is an object {status, reason}
+      const lookupMap = new Map();
+      for (const row of targetData) {
+        const lookupValue = row[9]; // Column J (index 9)
+        if (lookupValue) {
+          lookupMap.set(lookupValue, {
+            status: row[0], // Column A (index 0)
+            reason: row[1]  // Column B (index 1)
+          });
+        }
+      }
+      sheetDataCache[sheetName] = lookupMap;
+    }
+    console.log("Caching complete.");
+
+    // --- STEP 2: READ MAIN SHEET DATA ---
+    // Read from the first needed column (E) to the last needed column (BF)
+    const rangeWidth = SHEET_REFS_END_COLUMN - LOOKUP_VALUE_COLUMN + 1;
+    const mainData = sheet.getRange(2, LOOKUP_VALUE_COLUMN, lastRow - 1, rangeWidth).getValues();
+    const finalResults = [];
+
+    // --- STEP 3: PROCESS DATA IN MEMORY ---
+    console.log("Processing data to find first disapproval reason...");
+    const sheetRefSliceIndex = SHEET_REFS_START_COLUMN - LOOKUP_VALUE_COLUMN;
+
+    for (const rowData of mainData) {
+      const lookupVal = rowData[0]; // Value from Column E
+      if (!lookupVal) {
+        finalResults.push([""]);
+        continue;
+      }
+      
+      const sheetRefs = rowData.slice(sheetRefSliceIndex).filter(String);
+      let disapprovalReason = ""; // Default to blank
+
+      // Loop through the sheets listed for this row
+      for (const sheetName of sheetRefs) {
+        const lookupMap = sheetDataCache[sheetName];
+        
+        // Use the cache to check for disapproval
+        if (lookupMap && lookupMap.has(lookupVal)) {
+          const cachedData = lookupMap.get(lookupVal);
+          if (cachedData.status === "DISAPPROVED") {
+            disapprovalReason = cachedData.reason; // Found it! Get the reason from Col B.
+            break; // Stop searching for this row, we have our answer.
+          }
+        }
+      }
+      finalResults.push([disapprovalReason]);
+    }
+    
+    // --- STEP 4: WRITE DATA IN BULK ---
+    if (finalResults.length > 0) {
+      console.log(`Writing ${finalResults.length} results to column ${resultColumnLetter}...`);
+      sheet.getRange(2, resultColumnIndex, finalResults.length, 1).setValues(finalResults);
+      console.log("Update complete!");
+    } else {
+      console.log("No results to write.");
+    }
+
+  } catch (e) {
+    console.error(`An error occurred: ${e.message}\nStack: ${e.stack}`);
+    SpreadsheetApp.getUi().alert(`An error occurred. Check logs for details. Error: ${e.message}`);
+  } finally {
+    console.timeEnd("Execution Time (findFirstDisapprovalReason)");
+  }
+}
