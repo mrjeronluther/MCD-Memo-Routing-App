@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8" />
+      <base target="_top" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+      <style>
+         body {
+            font-family: "Segoe UI", sans-serif;
+            background-color: white;
+            padding-bottom: 60px;
+         }
+         .app-wrapper {
+            max-width: 800px;
+            margin: auto;
+            padding: 1rem;
+         }
+         .section-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+         }
+         .card {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+         }
+         .form-control,
+         .form-check-input {
+            font-size: 0.95rem;
+         }
+         .form-label {
+            font-weight: 500;
+         }
+         .badge-label {
+            font-size: 0.85rem;
+            padding: 0.35em 0.6em;
+         }
+         .list-group-sm .list-group-item {
+            font-size: 0.95rem;
+            padding: 0.4rem 0.75rem;
+         }
+         @media (max-width: 576px) {
+            h1 {
+               font-size: 1.3rem;
+            }
+            .section-header {
+               font-size: 1.1rem;
+            }
+            .card {
+               padding: 1rem;
+            }
+         }
+      </style>
+   </head>
+   <body>
+      <div id="app" class="app-wrapper">
+         <div class="text-center mb-4">
+            <img
+               src="https://raw.githubusercontent.com/mrjeronluther/Memo-Routing-Landing-Page/main/WhatsApp%20Image%202025-06-05%20at%2015.44.42_3fc69535.jpg"
+               alt="Header"
+               class="img-fluid rounded"
+               style="max-width: 100%; height: auto;"
+            />
+         </div>
+         <div class="text-center mb-4">
+            <h1>MCD Document Submission</h1>
+            <h2 class="h5 text-muted">(For Approval of Department Head/s and CGM/s)</h2>
+         </div>
+         <div class="card p-4">
+            <div class="section-header"><i class="bi bi-person-lines-fill"></i> Requestor Information</div>
+            <div class="mb-3"><label class="form-label">Uploader Name</label><input type="text" class="form-control" v-model="formData.name" placeholder="Enter your full name" /></div>
+            <div class="mb-3"><label class="form-label">Uploader Email Address</label><input type="email" class="form-control" v-model="formData.email" placeholder="name@example.com" /></div>
+            <div class="mb-3"><label class="form-label">Memo Preparer</label><input type="text" class="form-control" v-model="formData.memoType" placeholder="Enter preparer name" /></div>
+            <div class="mb-3"><label class="form-label">Memo Preparer Email Address</label><input type="email" class="form-control" v-model="formData.email1" placeholder="name@example.com" /></div>
+            <div class="mb-3"><label class="form-label">Date Indicated in the Memo</label><input type="date" class="form-control" v-model="formData.dateType" /></div>
+            <div class="mb-3">
+               <label class="form-label">Subject of the Memo</label>
+               <textarea class="form-control" v-model="formData.additionalMemoInfo" rows="2" placeholder="Enter Subject of the Memo..." maxlength="500"></textarea>
+               <div class="d-flex justify-content-between mt-1">
+                  <small class="text-muted"> Can't find the subject of the memo? <a href="https://drive.google.com/file/d/1e1PDhbhzyGe-mheH-JBZSlYX91IIxgJH/view?usp=sharing" target="_blank">Click here</a> </small>
+                  <small class="text-muted">{{ formData.additionalMemoInfo.length }} / 500</small>
+               </div>
+            </div>
+         </div>
+         <div class="card p-4">
+            <div class="section-header"><i class="bi bi-building"></i> Select Property/Coverage of a Document</div>
+            <div class="row">
+               <div class="col-md-4 mb-2" v-for="option in extraOptions" :key="option.value">
+                  <div class="form-check">
+                     <input class="form-check-input" type="checkbox" :id="option.value" :value="option.value" v-model="selectedExtras" /><label class="form-check-label" :for="option.value">{{ option.label }}</label>
+                  </div>
+               </div>
+            </div>
+            <div class="mt-3"><label class="form-label">Other (if not listed above)</label><input type="text" class="form-control" v-model="otherExtraOption" placeholder="Specify other department or team..." /></div>
+         </div>
+         <div class="card p-4">
+            <div class="section-header"><i class="bi bi-diagram-3"></i> Memo Routing Path For CGM/s</div>
+            <p class="text-muted mb-3">Select the CGM/s who need to approve this document:</p>
+            <div v-for="item in mainCheckboxescgm" :key="item.value" class="form-check mb-2">
+               <input class="form-check-input" type="checkbox" :id="'cgm-' + item.value" :value="item.value" v-model="selectedCGM" :disabled="selectedCGM.includes(naValue) && item.value !== naValue" />
+               <label class="form-check-label fw-semibold" :for="'cgm-' + item.value">{{ item.label }}</label>
+            </div>
+         </div>
+         <div class="card p-4">
+            <div class="section-header"><i class="bi bi-diagram-3"></i> Memo Routing Path for Department Head/s</div>
+            <p class="text-muted mb-3">Select the department head/s who need to approve this document:</p>
+            <div v-for="item in mainCheckboxes" :key="item.value" class="form-check mb-2">
+               <input class="form-check-input" type="checkbox" :id="'dept-' + item.value" :value="item.value" v-model="selectedDept" :disabled="selectedDept.includes(naValue) && item.value !== naValue" />
+               <label class="form-check-label fw-semibold" :for="'dept-' + item.value">{{ item.label }}</label>
+            </div>
+         </div>
+         <div class="card p-4">
+            <div class="section-header"><i class="bi bi-diagram-3"></i> Memo Routing Path for Division Head/s</div>
+            <p class="text-muted mb-3">Select the division head/s who need to approve this document:</p>
+            <div v-for="item in mainCheckboxesdivhead" :key="item.value" class="form-check mb-2">
+               <input class="form-check-input" type="checkbox" :id="'div-' + item.value" :value="item.value" v-model="selectedDiv" :disabled="selectedDiv.includes(naValue) && item.value !== naValue" />
+               <label class="form-check-label fw-semibold" :for="'div-' + item.value">{{ item.label }}</label>
+            </div>
+         </div>
+         <div class="card p-4">
+            <div class="section-header"><i class="bi bi-upload"></i> Upload Memo Document</div>
+            <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="resubmissionCheck" v-model="isResubmission" /><label class="form-check-label" for="resubmissionCheck">Resubmission for approval?</label></div>
+            <div class="mb-3">
+               <label class="form-label">Attach Memo document</label>
+               <input type="file" class="form-control" accept="application/pdf,image/*" @change="handleFileUpload" /><small class="text-muted">Only PDF or Image files up to 32MB are allowed.</small>
+            </div>
+            <div class="mb-3" v-if="isResubmission">
+               <label class="form-label">Attach Disapproval Page Document</label>
+               <input type="file" class="form-control" accept="application/pdf,image/*" @change="handleRevisedFileUpload" /><small class="text-muted">Only PDF or Image files up to 32MB are allowed.</small>
+            </div>
+            <div v-if="fileError" class="alert alert-danger py-2">{{ fileError }}</div>
+
+            <!-- NEW: Real-time validation error display -->
+            <div v-if="!isFormValid && validationErrors.length > 0" class="alert alert-warning p-2 mt-2">
+               <small>
+                  <ul class="mb-0 ps-3">
+                     <li v-for="error in validationErrors" :key="error">{{ error }}</li>
+                  </ul>
+               </small>
+            </div>
+
+            <div v-if="loading" class="d-flex align-items-center text-primary mb-3">
+               <div class="spinner-border me-2" role="status"></div>
+               <strong>Submitting memo, please wait...</strong>
+            </div>
+            <button class="btn btn-primary w-100" :disabled="loading || !isFormValid" @click="submitForm">
+               <span v-if="!loading"><i class="bi bi-send"></i> Submit Approval Request</span>
+               <span v-else><i class="bi bi-clock-history"></i> Submitting...</span>
+            </button>
+         </div>
+         <div v-if="generatedRefNumber" class="alert alert-success mt-3"><strong>Reference Number:</strong> {{ generatedRefNumber }}</div>
+      </div>
+      <script>
+         const { createApp, ref, reactive, computed, watch } = Vue;
+
+         const NA_VALUE = "N/A";
+         const MAIN_CHECKBOXES = [
+            { label: "Michael Lao", value: "MGL", email: "jecastro@megaworld-lifestyle.com", cc: ["cc.mgl@example.com", "assistant.mgl@example.com"] },
+            { label: "Jeremy Rodriguez", value: "JE", email: "JeremyRodriguez@gmail.com", cc: ["cc.jeremy@example.com"] },
+            { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com" },
+            { label: "Lorence Aurelio", value: "LDA", email: "lorence.aurelio@example.com" },
+            { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com" },
+            { label: "N/A", value: NA_VALUE, email: null },
+         ];
+         const MAIN_CHECKBOXES_CGM = [
+            { label: "Camille Elvina", value: "CAMSY", email: "camille.elvina@example.com", cc: ["cc.camsy@example.com"] },
+            { label: "Mikee Vivo", value: "MIKEE", email: "mikee.vivo@example.com" },
+            { label: "Vanessa Vicente", value: "VAN", email: "vanessa.vicente@example.com" },
+            { label: "Tyron Tan", value: "TYRON", email: "tyron.tan@example.com" },
+            { label: "N/A", value: NA_VALUE, email: null },
+         ];
+         const MAIN_CHECKBOXES_DIVHEAD = [
+            { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["cc.graham@example.com"] },
+            { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com" },
+            { label: "N/A", value: NA_VALUE, email: null },
+         ];
+         const EXTRA_OPTIONS = [
+            { label: "Alabang West Parade", value: "AW" },
+            { label: "Arcovia City", value: "AC" },
+            { label: "Broadway Centrum", value: "BC" },
+            { label: "Boracay Newcoast", value: "BN" },
+            { label: "California Garden Square", value: "CGS" },
+            { label: "The Clubhouse at Temple Drive", value: "CTD" },
+            { label: "Clark Cityfront", value: "CCF" },
+            { label: "Capital Town", value: "CT" },
+            { label: "Eastwood City", value: "EWC" },
+            { label: "Forbes Town", value: "FT" },
+            { label: "Iloilo Business Park", value: "IBP" },
+            { label: "Lucky Chinatown Mall", value: "LCT" },
+            { label: "McKinley Hill", value: "MKH" },
+            { label: "Maple Grove", value: "MG" },
+            { label: "Newport City", value: "NP" },
+            { label: "Paseo Center", value: "PC" },
+            { label: "San Antonio Place", value: "SAP" },
+            { label: "Three Central", value: "TCM" },
+            { label: "San Lorenzo Place", value: "SLP" },
+            { label: "Southwoods Mall", value: "SW" },
+            { label: "Twin Lakes", value: "TL" },
+            { label: "The Mactan Newtown", value: "TMN" },
+            { label: "The Upper East", value: "TUE" },
+            { label: "Uptown Bonifacio", value: "UB" },
+            { label: "Village Square Alabang", value: "VS" },
+            { label: "Westside City", value: "WSC" },
+         ];
+
+         createApp({
+            setup() {
+               const formData = reactive({ name: "", email: "", email1: "", memoType: "", dateType: "", additionalMemoInfo: "" });
+               const selectedCGM = ref([]);
+               const selectedDept = ref([]);
+               const selectedDiv = ref([]);
+               const selectedExtras = ref([]);
+               const otherExtraOption = ref("");
+               const isResubmission = ref(false);
+               const uploadedFile = ref(null);
+               const revisedFile = ref(null);
+               const fileError = ref("");
+               const loading = ref(false);
+               const timedOut = ref(false);
+               const generatedRefNumber = ref("");
+               const mainCheckboxes = ref(MAIN_CHECKBOXES);
+               const mainCheckboxescgm = ref(MAIN_CHECKBOXES_CGM);
+               const mainCheckboxesdivhead = ref(MAIN_CHECKBOXES_DIVHEAD);
+               const extraOptions = ref(EXTRA_OPTIONS);
+               const naValue = NA_VALUE;
+
+               watch(selectedCGM, (newVal) => applyNaRule(newVal, selectedCGM));
+               watch(selectedDept, (newVal) => applyNaRule(newVal, selectedDept));
+               watch(selectedDiv, (newVal) => applyNaRule(newVal, selectedDiv));
+
+               // NEW: A computed property that returns an array of user-friendly error messages.
+               const validationErrors = computed(() => {
+                  const errors = [];
+                  if (formData.name.trim() === "") errors.push("Uploader Name is required.");
+                  if (!formData.email.trim().includes("@")) errors.push("A valid Uploader Email is required.");
+                  if (formData.memoType.trim() === "") errors.push("Memo Preparer is required.");
+                  if (!formData.email1.trim().includes("@")) errors.push("A valid Preparer Email is required.");
+                  if (formData.dateType === "") errors.push("Date from Memo is required.");
+                  if (formData.additionalMemoInfo.trim() === "") errors.push("Subject of the Memo is required.");
+                  if (formData.additionalMemoInfo.length > 500) errors.push("Subject of the Memo cannot exceed 500 characters.");
+                  if (!(selectedExtras.value.length > 0 || otherExtraOption.value.trim() !== "")) errors.push("Select at least one Property/Coverage or specify 'Other'.");
+                  if (selectedCGM.value.length === 0) errors.push("At least one CGM must be selected.");
+                  if (selectedDept.value.length === 0) errors.push("At least one Department Head must be selected.");
+                  if (selectedDiv.value.length === 0) errors.push("At least one Division Head must be selected.");
+                  const naCount = [selectedCGM.value, selectedDept.value, selectedDiv.value].filter((g) => g.includes(naValue)).length;
+                  if (naCount >= 3) errors.push("You cannot select 'N/A' for all approver groups.");
+                  if (isResubmission.value ? !revisedFile.value : !uploadedFile.value) errors.push("A Memo document is required.");
+                  if (isResubmission.value && !revisedFile.value) errors.push("The Disapproval Page document is required for resubmission.");
+                  return errors;
+               });
+
+               const isFormValid = computed(() => validationErrors.value.length === 0);
+
+               const applyNaRule = (newVal, modelRef) => {
+                  if (newVal.includes(naValue) && newVal.some((val) => val !== naValue)) {
+                     modelRef.value = [naValue];
+                  }
+               };
+               const handleFileUpload = (e) => handleFile(e, uploadedFile);
+               const handleRevisedFileUpload = (e) => handleFile(e, revisedFile);
+
+               const handleFile = (event, fileModelRef) => {
+                  const file = event.target.files[0];
+                  fileError.value = "";
+                  if (!file) {
+                     fileModelRef.value = null;
+                     return;
+                  }
+                  if (file.type !== "application/pdf" && !file.type.startsWith("image/")) {
+                     fileError.value = "Invalid file type. Only PDF or image files are allowed.";
+                     fileModelRef.value = null;
+                     event.target.value = "";
+                  } else if (file.size > 32 * 1024 * 1024) {
+                     fileError.value = "File exceeds the 32MB size limit.";
+                     fileModelRef.value = null;
+                     event.target.value = "";
+                  } else {
+                     fileModelRef.value = file;
+                  }
+               };
+               const submitForm = () => {
+                  if (!isFormValid.value) {
+                     alert("Please complete all required fields correctly. See error list for details.");
+                     return;
+                  }
+                  loading.value = true;
+                  timedOut.value = false;
+
+                  // NEW: Warn user before they leave the page during submission.
+                  window.onbeforeunload = () => "A submission is in progress. Are you sure you want to leave?";
+
+                  const failSafeTimeout = setTimeout(() => {
+                     if (loading.value) {
+                        timedOut.value = true;
+                        loading.value = false;
+                        window.onbeforeunload = null; // NEW: Clear the warning
+                        alert("Submission timed out. Please check your connection and try again.");
+                     }
+                  }, 180000);
+
+                  const readFileAsBase64 = (file) =>
+                     new Promise((resolve, reject) => {
+                        if (!file) return resolve(null);
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result.split(",")[1]);
+                        reader.onerror = (error) => reject(error.message);
+                        reader.readAsDataURL(file);
+                     });
+
+                  Promise.all([readFileAsBase64(uploadedFile.value), readFileAsBase64(revisedFile.value)])
+                     .then(([originalBase64, revisedBase64]) => {
+                        if (timedOut.value) return;
+                        if (!originalBase64 && !isResubmission.value) throw new Error("Could not read the primary file.");
+
+                        const allApproverOptions = [...mainCheckboxescgm.value, ...mainCheckboxes.value, ...mainCheckboxesdivhead.value];
+                        const approversToNotify = [...selectedCGM.value, ...selectedDept.value, ...selectedDiv.value]
+                           .map((value) => allApproverOptions.find((opt) => opt.value === value))
+                           .filter((a) => a && a.email)
+                           .map((a) => ({ name: a.label, email: a.email, cc: a.cc || [], value: a.value }));
+
+                        const payload = {
+                           ...formData,
+                           otherExtraOption: otherExtraOption.value,
+                           selectedCGM: selectedCGM.value,
+                           selectedDept: selectedDept.value,
+                           selectedDiv: selectedDiv.value,
+                           additionalOptions: selectedExtras.value,
+                           fileName: uploadedFile.value?.name || (isResubmission.value && revisedFile.value?.name),
+                           fileMimeType: uploadedFile.value?.type || (isResubmission.value && revisedFile.value?.type),
+                           fileData: originalBase64 || revisedBase64, // simplified logic, server should decide
+                           isResubmission: isResubmission.value,
+                           revisedFileName: isResubmission.value ? revisedFile.value?.name : "",
+                           revisedFileMimeType: isResubmission.value ? revisedFile.value?.type : "",
+                           revisedFileData: isResubmission.value ? revisedBase64 : null,
+                           originalFileName: isResubmission.value ? uploadedFile.value?.name : "", // Send both on resubmit
+                           originalFileMimeType: isResubmission.value ? uploadedFile.value?.type : "",
+                           originalFileData: isResubmission.value ? originalBase64 : null,
+                           approversToNotify,
+                        };
+
+                        google.script.run
+                           .withSuccessHandler((result) => {
+                              if (timedOut.value) return;
+                              clearTimeout(failSafeTimeout);
+                              window.onbeforeunload = null;
+                              loading.value = false;
+                              generatedRefNumber.value = result.refNumber;
+                              alert(`Memo submitted successfully!\n\nPlease save this Memo Reference Number: ${result.refNumber}`);
+                              Object.assign(formData, { name: "", email: "", email1: "", memoType: "", dateType: "", additionalMemoInfo: "" });
+                              otherExtraOption.value = "";
+                              selectedCGM.value = [];
+                              selectedDept.value = [];
+                              selectedDiv.value = [];
+                              selectedExtras.value = [];
+                              uploadedFile.value = null;
+                              revisedFile.value = null;
+                              isResubmission.value = false;
+                              document.querySelectorAll("input[type=file]").forEach((el) => (el.value = "")); // Reset file inputs
+                           })
+                           .withFailureHandler((error) => {
+                              if (timedOut.value) return;
+                              clearTimeout(failSafeTimeout);
+                              window.onbeforeunload = null;
+                              loading.value = false;
+                              alert("Submission failed: " + error.message);
+                           })
+                           .processFormData(payload);
+                     })
+                     .catch((error) => {
+                        if (timedOut.value) return;
+                        clearTimeout(failSafeTimeout);
+                        window.onbeforeunload = null;
+                        loading.value = false;
+                        console.error("File reading or submission failed:", error);
+                        alert("Operation failed: " + error);
+                     });
+               };
+
+               return {
+                  formData,
+                  selectedCGM,
+                  selectedDept,
+                  selectedDiv,
+                  selectedExtras,
+                  otherExtraOption,
+                  isResubmission,
+                  fileError,
+                  loading,
+                  generatedRefNumber,
+                  naValue,
+                  mainCheckboxes,
+                  mainCheckboxescgm,
+                  mainCheckboxesdivhead,
+                  extraOptions,
+                  isFormValid,
+                  validationErrors,
+                  handleFileUpload,
+                  handleRevisedFileUpload,
+                  submitForm,
+               };
+            },
+         }).mount("#app");
+      </script>
+   </body>
+</html>
