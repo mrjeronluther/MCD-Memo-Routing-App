@@ -679,34 +679,76 @@
                };
                const formatDateCell = (value) => (!value ? "" : new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }));
                const calculateDaysDifference = (dateStr) => (!dateStr ? "" : `${Math.floor((Date.now() - new Date(dateStr).getTime()) / 864e5)} day(s)`);
+               // Replace your old formatCellWithLineBreaks function with this new one
+
                const formatCellWithLineBreaks = (text) => {
-                  if (typeof text !== "string" || !text.trim()) return "";
-                  let processedText = text.replace(/\bApproved:/g, "<br><strong>Approved:</strong>").replace(/\bPending:/g, "<br><strong>Pending:</strong>");
-                  let approvedBlock = "",
-                     pendingBlock = "";
-                  const approvedMatch = processedText.match(/<strong>Approved:<\/strong>([\s\S]*?)(?=<br><strong>Pending:<\/strong>|$)/);
-                  if (approvedMatch && approvedMatch[1]) approvedBlock = approvedMatch[1];
-                  const pendingMatch = processedText.match(/<strong>Pending:<\/strong>([\s\S]*)/);
-                  if (pendingMatch && pendingMatch[1]) pendingBlock = pendingMatch[1];
-                  let foundApprovedNames = false,
-                     foundPendingNames = false;
-                  FORMATTER_NAMES.forEach((name) => {
-                     const regex = new RegExp(`\\b(${name.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")})\\b`, "g");
-                     const replacement = "<br>• <strong>$1</strong>";
-                     if (approvedBlock.match(regex)) {
-                        foundApprovedNames = true;
-                        approvedBlock = approvedBlock.replace(regex, replacement);
+                  // 1. Handle empty or invalid input immediately
+                  if (typeof text !== "string" || !text.trim()) {
+                     return "";
+                  }
+
+                  // 2. A reusable helper to format a list of names
+                  const formatNameList = (nameString) => {
+                     if (!nameString || !nameString.trim()) {
+                        return "<br>  • N/A";
                      }
-                     if (pendingBlock.match(regex)) {
-                        foundPendingNames = true;
-                        pendingBlock = pendingBlock.replace(regex, replacement);
+                     let formattedString = nameString;
+                     let namesFound = false;
+
+                     // Loop through all possible names and format them
+                     FORMATTER_NAMES.forEach((name) => {
+                        // Regex to find whole word, case-insensitive, global match
+                        const regex = new RegExp(`\\b(${name.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")})\\b`, "gi");
+                        if (formattedString.match(regex)) {
+                           namesFound = true;
+                           // Replace name with the formatted version
+                           formattedString = formattedString.replace(regex, `<br>  • <strong>$1</strong>`);
+                        }
+                     });
+
+                     // If the input string had text but no known names were found, display the original text formatted
+                     if (!namesFound) {
+                        return `<br>  • ${nameString.trim()}`;
                      }
-                  });
-                  if (!foundApprovedNames) approvedBlock += "<br>N/A";
-                  if (!foundPendingNames) pendingBlock += "<br>N/A";
-                  let finalHtml = `<strong>Approved:</strong>${approvedBlock}<br><strong>Pending:</strong>${pendingBlock}`;
-                  finalHtml = finalHtml.replace(/\bRemarks\b/g, "<strong>Remarks</strong>").replace(/\bDate\b/g, "<strong>Date</strong>");
-                  return finalHtml.startsWith("<br>") ? finalHtml.substring(4) : finalHtml;
+
+                     return formattedString;
+                  };
+
+                  // 3. Deconstruct the input string into logical parts
+                  let remainingText = text;
+                  let approvedSection = "";
+                  let pendingSection = "";
+
+                  // Use a non-greedy match to find text between keywords
+                  const approvedMatch = remainingText.match(/Approved:(.*?)(Pending:|Remarks:|$)/is);
+                  const pendingMatch = remainingText.match(/Pending:(.*?)(Approved:|Remarks:|$)/is);
+
+                  if (approvedMatch) approvedSection = approvedMatch[1].trim();
+                  if (pendingMatch) pendingSection = pendingMatch[1].trim();
+
+                  // If neither keyword is found, assume the entire text is a list of pending reviewers
+                  if (!approvedMatch && !pendingMatch) {
+                     pendingSection = remainingText.trim();
+                  }
+
+                  // 4. Build the final HTML string from the formatted parts
+                  let finalHtml = "";
+                  if (approvedMatch || (approvedSection && !pendingMatch)) {
+                     finalHtml += `<strong>Approved:</strong>${formatNameList(approvedSection)}`;
+                  }
+                  if (pendingMatch || (pendingSection && !approvedMatch)) {
+                     if (finalHtml) finalHtml += "<br><br>"; // Add space between sections
+                     finalHtml += `<strong>Pending:</strong>${formatNameList(pendingSection)}`;
+                  }
+
+                  // Handle remarks separately
+                  const remarksMatch = text.match(/Remarks:([\s\S]*)/i);
+                  if (remarksMatch && remarksMatch[1].trim()) {
+                     if (finalHtml) finalHtml += "<br><br>";
+                     finalHtml += `<strong>Remarks:</strong><br><span style="padding-left:10px;">${remarksMatch[1].trim()}</span>`;
+                  }
+
+                  return finalHtml;
                };
                watch(activeAction, (newVal) => {
                   if (newVal.type) nextTick(() => actionFormsRef.value?.scrollIntoView({ behavior: "smooth", block: "center" }));
