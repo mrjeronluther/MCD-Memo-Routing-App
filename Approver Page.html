@@ -468,75 +468,107 @@
                   }
                };
 
-               const submitReviewerChange = async () => {
-                  if (activeAction.selected.length === 0) return;
-                  const { label: refLabel, row: rowToUpdate, type: currentActionType } = activeAction;
-                  const actionType = currentActionType === "addReviewer" ? "Add Reviewer" : "Remove Reviewer";
-                  const toastId = addToast(actionType, refLabel);
-                  isSubmitting.value = true;
-                  const rowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
-                  if (rowIndex === -1) {
-                     alert("Error: Row not found.");
-                     isSubmitting.value = false;
-                     removeToast(toastId);
-                     return;
-                  }
-                  const originalApproversText = tableData.value[rowIndex][7] || "";
-                  const selectedOptions = activeAction.selected.map((val) => allApproverOptions.value.find((opt) => opt.value === val)).filter(Boolean);
-                  const selectedLabels = selectedOptions.map((opt) => opt.label.trim());
-                  const payload = { referenceNumber: rowToUpdate[0], memoSubject: rowToUpdate[4] };
-                  let newApproversText, apiAction;
-                  if (currentActionType === "addReviewer") {
-                     newApproversText = (originalApproversText + "\n" + selectedLabels.map((label) => `${label} (Added)`).join("\n")).trim();
-                     apiAction = "submitApproverValues";
-                     payload.approverValues = selectedOptions;
-                  } else {
-                     newApproversText = originalApproversText;
-                     selectedLabels.forEach((label) => {
-                        newApproversText = newApproversText.replace(new RegExp(`\\s*•?\\s*${label.trim()}\\s*,?`, "g"), "");
-                     });
-                     newApproversText = newApproversText.replace(/,(\s*)$/, "$1").trim();
-                     apiAction = "submitRemoveApprovers";
-                     payload.removeApprovers = selectedOptions;
-                  }
-                  tableData.value[rowIndex][7] = newApproversText;
-                  cancelAction();
-                  isSubmitting.value = false;
-                  try {
-                     await runGoogleScript(apiAction, payload, user);
-                     updateToast(toastId, "success", actionType, refLabel);
-                     if (currentActionType === "addReviewer") {
-                        setTimeout(() => {
-                           const finalRowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
-                           if (finalRowIndex !== -1) {
-                              let currentText = tableData.value[finalRowIndex][7];
-                              selectedLabels.forEach((label) => {
-                                 currentText = currentText.replace(`${label} (Added)`, label.trim());
-                              });
-                              tableData.value[finalRowIndex][7] = currentText;
-                           }
-                        }, 3000);
-                     }
-                  } catch (error) {
-                     updateToast(toastId, "failure", actionType, refLabel);
-                     const failedRowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
-                     if (failedRowIndex > -1) tableData.value[failedRowIndex][7] = originalApproversText;
-                  }
-               };
+               // REPLACE this function with the new version below
+          const submitReviewerChange = async () => {
+             if (activeAction.selected.length === 0) return;
+             const { label: refLabel, row: rowToUpdate, type: currentActionType } = activeAction;
+             const actionType = currentActionType === "addReviewer" ? "Add Reviewer" : "Remove Reviewer";
+             const toastId = addToast(actionType, refLabel);
+             isSubmitting.value = true;
+
+             const rowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
+             if (rowIndex === -1) {
+                 alert("Error: Row not found.");
+                 isSubmitting.value = false;
+                 removeToast(toastId);
+                 return;
+             }
+
+             // --- Step 1: Store original state and apply optimistic update ---
+             const originalApproversText = tableData.value[rowIndex][7] || "";
+             const selectedOptions = activeAction.selected.map((val) => allApproverOptions.value.find((opt) => opt.value === val)).filter(Boolean);
+             const selectedLabels = selectedOptions.map((opt) => opt.label.trim());
+             const payload = { referenceNumber: rowToUpdate[0], memoSubject: rowToUpdate[4] };
+             let apiAction;
+
+             if (currentActionType === "addReviewer") {
+                 const optimisticText = (originalApproversText + "\n" + selectedLabels.map(label => `${label} (Added)`).join("\n")).trim();
+                 tableData.value[rowIndex][7] = optimisticText;
+                 apiAction = "submitApproverValues";
+                 payload.approverValues = selectedOptions;
+             } else { // 'removeReviewer'
+                 let newApproversText = originalApproversText;
+                 selectedLabels.forEach((label) => {
+                     const regex = new RegExp(`(^|\\n)\\s*•?\\s*${label.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")}\\s*,?`, "g");
+                     newApproversText = newApproversText.replace(regex, "");
+                 });
+                 tableData.value[rowIndex][7] = newApproversText.trim();
+                 apiAction = "submitRemoveApprovers";
+                 payload.removeApprovers = selectedOptions;
+             }
+             
+             cancelAction();
+             isSubmitting.value = false;
+
+             try {
+                 // --- Step 2: Call the server ---
+                 await runGoogleScript(apiAction, payload, user);
+                 updateToast(toastId, "success", actionType, refLabel);
+             } catch (error) {
+                 // --- Step 3 (Failure Path): Just show the error toast. Do not revert the UI yet. ---
+                 updateToast(toastId, "failure", actionType, refLabel, error);
+             } finally {
+                 // --- Step 4 (Cleanup): This runs for BOTH success and failure. ---
+                 // This ensures the UX is consistent for the "Add Reviewer" action.
+                 if (currentActionType === "addReviewer") {
+                     setTimeout(() => {
+                         const finalRowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
+                         if (finalRowIndex > -1) {
+                             // To ensure formatting is perfect, we build the final, correct string.
+                             // This handles the duplicate case by creating a unique set of names.
+                             
+                             // 1. Get a clean list of original approvers.
+                             const originalList = originalApproversText.split('\n')
+                               .map(s => s.replace(/•/g, '').trim()) // Clean up bullets and spaces
+                               .filter(Boolean); // Remove any empty lines
+
+                             // 2. Combine with the labels the user just added.
+                             const combinedList = [...originalList, ...selectedLabels];
+                             
+                             // 3. Create a unique set to automatically handle the "duplicate" case.
+                             const uniqueList = [...new Set(combinedList)];
+                             
+                             // 4. Join back into a single string for the cell.
+                             const finalCorrectText = uniqueList.join('\n');
+                             
+                             // 5. Replace the entire cell content. Vue's formatter will handle the rest.
+                             tableData.value[finalRowIndex][7] = finalCorrectText;
+                         }
+                     }, 3000);
+                 }
+             }
+         };
 
                const addToast = (actionType, refLabel) => {
                   const id = toastIdCounter++;
                   toasts.value.unshift({ id, status: "ongoing", message: `Processing ${actionType} for '${refLabel}'...` });
                   return id;
                };
-               const updateToast = (id, newStatus, actionType, refLabel) => {
+               const updateToast = (id, newStatus, actionType, refLabel, error = null) => {
                   const toast = toasts.value.find((t) => t.id === id);
                   if (toast) {
-                     toast.status = newStatus;
-                     toast.message = newStatus === "success" ? `${actionType} for '${refLabel}' was successful.` : `${actionType} for '${refLabel}' failed. The reviewer has been restored.`;
-                     setTimeout(() => removeToast(id), newStatus === "success" ? 5000 : 15000);
+                      toast.status = newStatus;
+                      if (newStatus === "success") {
+                          toast.message = `${actionType} for '${refLabel}' was successful.`;
+                      } else {
+                          // Use the specific error message from the server if available, otherwise use the generic one.
+                          toast.message = error && error.message 
+                              ? error.message 
+                              : `${actionType} for '${refLabel}' failed. The data has been restored.`;
+                      }
+                      setTimeout(() => removeToast(id), newStatus === "success" ? 5000 : 15000);
                   }
-               };
+              };
                const removeToast = (id) => {
                   toasts.value = toasts.value.filter((t) => t.id !== id);
                };
