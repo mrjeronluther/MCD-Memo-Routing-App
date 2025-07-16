@@ -27,8 +27,8 @@ function checkSheetLimit(sheet) {
   }
 }
 
-// === FINAL, COMPLETE, AND MOST ROBUST VERSION ===
-// This function uses an atomic "claim and confirm ownership" pattern to guarantee data integrity.
+// === FINAL VERSION - WRITES TO INDIVIDUAL CELLS ===
+// This version uses our robust reservation pattern to safely write variable data into separate columns.
 function processFormData(data) {
   let mainFile = null;
   let revisedFile = null;
@@ -80,51 +80,68 @@ function processFormData(data) {
     if (!sheet) throw new Error('Sheet named "Conso" does not exist.');
 
     checkSheetLimit(sheet);
-
-    const propertiesText = sanitized.additionalOptions.join(', ');
-    const approverCodesForSheet = [...sanitized.selectedCGM, ...sanitized.selectedDept, ...sanitized.selectedDiv];
-    const approversText = approverCodesForSheet.join(', ');
-
-    const dataForSheet = [
+    
+    // Combine all reviewers into a single list for writing
+    const allReviewers = [...sanitized.selectedCGM, ...sanitized.selectedDept, ...sanitized.selectedDiv];
+    
+    // Prepare the data with a FIXED structure first
+    const fixedData = [
       refNumber, new Date(), sanitized.name, sanitized.email, sanitized.memoType,
       sanitized.email1, sanitized.additionalMemoInfo, sanitized.dateType,
-      mainFile.getName(), mainFile.getUrl(), propertiesText, sanitized.otherExtraOption,
-      approversText, sanitized.isResubmission && revisedFile ? revisedFile.getName() : '',
-      sanitized.isResubmission && revisedFile ? revisedFile.getUrl() : ''
+      mainFile.getName(), mainFile.getUrl()
     ];
 
     const lock = LockService.getScriptLock();
     lock.waitLock(30000); 
 
     try {
-      // === ATOMIC ROW RESERVATION & OWNERSHIP CONFIRMATION ===
-      
-      // 1. CLAIM THE ROW: Write a unique placeholder to an unused column (Z) to atomically reserve a row.
+      // === ATOMIC ROW RESERVATION & CONFIRMATION (Unchanged) ===
       const placeholderValue = `reserving_${refNumber}_${new Date().getTime()}`;
-      const placeholderRange = sheet.getRange(sheet.getLastRow() + 1, 26); // Column Z
+      const placeholderRange = sheet.getRange(sheet.getLastRow() + 1, 4); // Column Z
       placeholderRange.setValue(placeholderValue);
-      
-      // Force all pending spreadsheet operations to complete immediately. This is crucial for the check.
       SpreadsheetApp.flush();
-
-      // 2. CONFIRM OWNERSHIP: Read the value back. If it doesn't match what we just wrote,
-      //    it means a rare concurrency issue occurred. We must stop to prevent data corruption.
       if (placeholderRange.getValue() !== placeholderValue) {
         throw new Error("Critical concurrency error: Failed to secure a unique row. Please try again.");
       }
-      
-      // If the check passes, we have verifiably claimed this row.
       const newRowNumber = placeholderRange.getRow();
 
-      // 3. WRITE THE DATA: It is now 100% safe to write to our reserved row.
-      const targetRange = sheet.getRange(newRowNumber, 5, 1, dataForSheet.length); // Start at Column E
-      targetRange.setValues([dataForSheet]);
+      // === NEW: SEQUENTIAL WRITING TO THE RESERVED ROW ===
 
-      // 4. CLEAN UP: Clear the placeholder now that the real data is written.
+      // 1. Write the fixed data starting at Column E.
+      const fixedDataRange = sheet.getRange(newRowNumber, 5, 1, fixedData.length);
+      fixedDataRange.setValues([fixedData]);
+      let lastColumn = fixedDataRange.getLastColumn();
+
+      // 2. Write the "Properties" array immediately after the fixed data.
+      if (sanitized.additionalOptions.length > 0) {
+        const propertiesRange = sheet.getRange(newRowNumber, lastColumn + 1, 1, sanitized.additionalOptions.length);
+        propertiesRange.setValues([sanitized.additionalOptions]);
+        lastColumn = propertiesRange.getLastColumn();
+      }
+      
+      // 3. Write the "Other" property next.
+      const otherPropertyRange = sheet.getRange(newRowNumber, lastColumn + 1);
+      otherPropertyRange.setValue(sanitized.otherExtraOption);
+      lastColumn = otherPropertyRange.getColumn();
+
+      // 4. Write the "Reviewers" array next.
+      if (allReviewers.length > 0) {
+        const reviewersRange = sheet.getRange(newRowNumber, lastColumn + 1, 1, allReviewers.length);
+        reviewersRange.setValues([allReviewers]);
+        lastColumn = reviewersRange.getLastColumn();
+      }
+
+      // 5. Write the resubmission files next.
+      const resubmissionRange = sheet.getRange(newRowNumber, lastColumn + 1, 1, 2);
+      resubmissionRange.setValues([[
+        sanitized.isResubmission && revisedFile ? revisedFile.getName() : '',
+        sanitized.isResubmission && revisedFile ? revisedFile.getUrl() : ''
+      ]]);
+
+      // 6. Clean up the placeholder.
       placeholderRange.clearContent();
 
     } finally {
-      // Always release the lock, no matter what happens.
       lock.releaseLock();
     }
     
@@ -133,7 +150,7 @@ function processFormData(data) {
     return { refNumber };
 
   } catch (err) {
-    // This catch block handles cleanup and sends the correct error to the user.
+    // This catch block remains unchanged and is fully functional.
     if (mainFile) {
         try { mainFile.setTrashed(true); console.log(`CLEANUP: Trashed orphaned file: ${mainFile.getName()}`); } catch(e){}
     }
@@ -149,10 +166,6 @@ function processFormData(data) {
     throw new Error("Server error during processing: " + err.message);
   }
 }
-
-// =========================================================================
-// ===                    START: MODIFIED CODE SECTION                   ===
-// =========================================================================
 
 function sendNotificationEmail(sanitized, refNumber, mainAttachment, revisedAttachment) {
     if (!sanitized.approversToNotify || sanitized.approversToNotify.length === 0) return;
