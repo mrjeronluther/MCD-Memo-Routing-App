@@ -48,8 +48,75 @@ function doGet() {
     return HtmlService.createHtmlOutputFromFile("index").setTitle("MCD Memo Approval").addMetaTag("viewport", "width=device-width, initial-scale=1").setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function submitApproverValues(data, user) {
+// REPLACE this function in your Code.gs
+function submitRemoveApprovers(data, user) {
+    const lock = LockService.getScriptLock();
     try {
+        // Wait up to 30 seconds to acquire the lock. Throws an error on timeout.
+        lock.waitLock(30000);
+
+        // --- Original logic starts here, now protected by the lock ---
+        const required = ["referenceNumber", "removeApprovers"];
+        const sanitizedData = validateAndSanitizeInputs(data, required);
+        if (!user || !isUserPrivileged(user.displayName)) {
+            throw new Error("Unauthorized: You do not have permission to remove approvers.");
+        }
+        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const sheet = spreadsheet.getSheetByName("Conso");
+        if (!sheet) throw new Error("Sheet 'Conso' not found.");
+        Logger.log("Privileged action 'submitRemoveApprovers' initiated by: %s", user.displayName);
+        const referenceNumber = sanitizedData.referenceNumber;
+        const rawApproverValues = sanitizedData.removeApprovers;
+        const normalizedApprovers = (rawApproverValues || []).map((val) => (typeof val === "string" ? val.trim() : val && typeof val.value === "string" ? val.value.trim() : null)).filter((val) => val && val !== "");
+        if (normalizedApprovers.length === 0) {
+            throw new Error("Submission aborted: No valid approvers to remove.");
+        }
+        const lastRow = sheet.getLastRow();
+        const refColumn = sheet.getRange("E2:E" + lastRow).getValues();
+        const matchRowIndex = refColumn.findIndex((row) => row[0] === referenceNumber);
+        if (matchRowIndex === -1) {
+            throw new Error(`Reference number '${referenceNumber}' not found in column E.`);
+        }
+        const actualRow = matchRowIndex + 2;
+        Logger.log("Matched reference number at row: " + actualRow);
+        const startColumn = 16;
+        const totalColumns = 60;
+        const targetRange = sheet.getRange(actualRow, startColumn, 1, totalColumns);
+        const rowData = targetRange.getValues()[0];
+        let removedCount = 0;
+        for (let i = 0; i < rowData.length; i++) {
+            if (normalizedApprovers.includes(rowData[i])) {
+                Logger.log("Removing approver: %s from column index %s", rowData[i], i + startColumn);
+                rowData[i] = "";
+                removedCount++;
+            }
+        }
+        if (removedCount === 0) {
+            throw new Error("None of the specified approvers were found.");
+        }
+        targetRange.setValues([rowData]);
+        Logger.log("✅ Successfully removed %s approver(s) from row %s.", removedCount, actualRow);
+
+    } catch (error) {
+        // This block catches errors from both the lock and the main logic.
+        Logger.log("submitRemoveApprovers ERROR: " + error.message);
+        // Propagate a clean error message to the client, which can now display it.
+        throw new Error(error.message);
+    } finally {
+        // CRITICAL: Always release the lock to prevent deadlocks.
+        lock.releaseLock();
+    }
+}
+
+
+// REPLACE this function in your Code.gs
+function submitApproverValues(data, user) {
+    const lock = LockService.getScriptLock();
+    try {
+        // Wait up to 30 seconds to acquire the lock. Throws an error on timeout.
+        lock.waitLock(30000);
+
+        // --- Original logic starts here, now protected by the lock ---
         const required = ["referenceNumber", "approverValues", "memoSubject"];
         const sanitizedData = validateAndSanitizeInputs(data, required);
 
@@ -92,7 +159,7 @@ function submitApproverValues(data, user) {
         const duplicates = normalizedApprovers.filter((a) => rowData.includes(a.value));
         if (duplicates.length > 0) {
             const duplicateLabels = duplicates.map((a) => a.label || a.value);
-            throw new Error(`Duplicate approvers found: ${duplicateLabels.join(", ")}`);
+            throw new Error(`Duplicate approvers found/Add reviewer at the same time: ${duplicateLabels.join(", ")}`);
         }
 
         let insertIndex = 0;
@@ -110,7 +177,6 @@ function submitApproverValues(data, user) {
         targetRange.setValues([rowData]);
         Logger.log("Successfully saved approvers to N:CB.");
 
-        // --- UPDATED EMAIL NOTIFICATION LOGIC FOR MULTIPLE CCs ---
         const addedBy = user.displayName;
         const memmofinder = "https://script.google.com/a/macros/megaworld-lifestyle.com/s/AKfycbymM8ffl8z24fG8zzNcE2_zSxvbR2bcP5BNxthFY9FkPremFC--A-zi3TRQOjUKh1Wq/exec";
 
@@ -139,9 +205,7 @@ function submitApproverValues(data, user) {
                         name: "MCD Memo Routing Notification",
                     };
 
-                    // Check if 'cc' is an array and has emails in it
                     if (approver.cc && Array.isArray(approver.cc) && approver.cc.length > 0) {
-                        // Join the array into a comma-separated string for MailApp
                         mailOptions.cc = approver.cc.join(',');
                     }
                     
@@ -158,10 +222,15 @@ function submitApproverValues(data, user) {
                 }
             }
         });
-        // --- END OF UPDATED EMAIL LOGIC ---
+
     } catch (error) {
+        // This block catches errors from both the lock and the main logic.
         Logger.log("submitApproverValues ERROR: " + error.message);
-        throw new Error("Submit Approver Failed: " + error.message);
+        // Propagate a clean error message to the client.
+        throw new Error(error.message);
+    } finally {
+        // CRITICAL: Always release the lock to prevent deadlocks.
+        lock.releaseLock();
     }
 }
 
@@ -406,53 +475,7 @@ function authenticateUser(username, password) {
     Logger.log(`Authenticated: ${user.displayName}`);
     return { displayName: user.displayName, sheet: user.sheet };
 }
-function submitRemoveApprovers(data, user) {
-    try {
-        const required = ["referenceNumber", "removeApprovers"];
-        const sanitizedData = validateAndSanitizeInputs(data, required);
-        if (!user || !isUserPrivileged(user.displayName)) {
-            throw new Error("Unauthorized: You do not have permission to remove approvers.");
-        }
-        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-        const sheet = spreadsheet.getSheetByName("Conso");
-        if (!sheet) throw new Error("Sheet 'Conso' not found.");
-        Logger.log("Privileged action 'submitRemoveApprovers' initiated by: %s", user.displayName);
-        const referenceNumber = sanitizedData.referenceNumber;
-        const rawApproverValues = sanitizedData.removeApprovers;
-        const normalizedApprovers = (rawApproverValues || []).map((val) => (typeof val === "string" ? val.trim() : val && typeof val.value === "string" ? val.value.trim() : null)).filter((val) => val && val !== "");
-        if (normalizedApprovers.length === 0) {
-            throw new Error("Submission aborted: No valid approvers to remove.");
-        }
-        const lastRow = sheet.getLastRow();
-        const refColumn = sheet.getRange("E2:E" + lastRow).getValues();
-        const matchRowIndex = refColumn.findIndex((row) => row[0] === referenceNumber);
-        if (matchRowIndex === -1) {
-            throw new Error(`Reference number '${referenceNumber}' not found in column E.`);
-        }
-        const actualRow = matchRowIndex + 2;
-        Logger.log("Matched reference number at row: " + actualRow);
-        const startColumn = 16;
-        const totalColumns = 60;
-        const targetRange = sheet.getRange(actualRow, startColumn, 1, totalColumns);
-        const rowData = targetRange.getValues()[0];
-        let removedCount = 0;
-        for (let i = 0; i < rowData.length; i++) {
-            if (normalizedApprovers.includes(rowData[i])) {
-                Logger.log("Removing approver: %s from column index %s", rowData[i], i + startColumn);
-                rowData[i] = "";
-                removedCount++;
-            }
-        }
-        if (removedCount === 0) {
-            throw new Error("None of the specified approvers were found.");
-        }
-        targetRange.setValues([rowData]);
-        Logger.log("✅ Successfully removed %s approver(s) from row %s.", removedCount, actualRow);
-    } catch (error) {
-        Logger.log("submitRemoveApprovers ERROR: " + error.message);
-        throw new Error("Remove Approver Failed: " + error.message);
-    }
-}
+
 function validateAndSanitizeInputs(data, requiredFields = []) {
     if (!data || typeof data !== "object") {
         throw new Error("Invalid data payload: must be an object.");
@@ -482,7 +505,3 @@ function ping() {
     Logger.log("User activity ping received at: " + new Date());
     return "backend OK";
 }
-
-
-
-
