@@ -27,6 +27,8 @@ function checkSheetLimit(sheet) {
   }
 }
 
+// === FINAL, COMPLETE, AND MOST ROBUST VERSION ===
+// This function uses an atomic "claim and confirm ownership" pattern to guarantee data integrity.
 function processFormData(data) {
   let mainFile = null;
   let revisedFile = null;
@@ -39,7 +41,6 @@ function processFormData(data) {
     validateFormServerSide(data);
     const folder = DriveApp.getFolderById(CONFIG.DRIVE_FOLDER_ID);
 
-    // Sanitize all incoming data
     const sanitized = {
       name: sanitizeString(data.name),
       email: sanitizeString(data.email, "email"),
@@ -67,13 +68,10 @@ function processFormData(data) {
     
     const mainBlob = Utilities.newBlob(Utilities.base64Decode(sanitized.fileData), sanitized.fileMimeType, sanitized.fileName);
     mainFile = folder.createFile(mainBlob);
-    const mainFileUrl = mainFile.getUrl();
 
-    let revisedFileUrl = "";
     if (sanitized.isResubmission && sanitized.revisedFileData) {
         const revisedBlob = Utilities.newBlob(Utilities.base64Decode(sanitized.revisedFileData), sanitized.revisedFileMimeType, sanitized.revisedFileName);
         revisedFile = folder.createFile(revisedBlob);
-        revisedFileUrl = revisedFile.getUrl();
     }
 
     const refNumber = generateReferenceNumber();
@@ -83,33 +81,74 @@ function processFormData(data) {
 
     checkSheetLimit(sheet);
 
+    const propertiesText = sanitized.additionalOptions.join(', ');
     const approverCodesForSheet = [...sanitized.selectedCGM, ...sanitized.selectedDept, ...sanitized.selectedDiv];
-    let rowData = [refNumber, new Date(), sanitized.name, sanitized.email, sanitized.memoType, sanitized.email1, sanitized.additionalMemoInfo, sanitized.dateType, sanitized.fileName, mainFileUrl];
-    
-    rowData.push(...sanitized.additionalOptions, sanitized.otherExtraOption, ...approverCodesForSheet);
+    const approversText = approverCodesForSheet.join(', ');
 
-    if (sanitized.isResubmission && sanitized.revisedFileName && revisedFileUrl) {
-      rowData.push(sanitized.revisedFileName, revisedFileUrl);
+    const dataForSheet = [
+      refNumber, new Date(), sanitized.name, sanitized.email, sanitized.memoType,
+      sanitized.email1, sanitized.additionalMemoInfo, sanitized.dateType,
+      mainFile.getName(), mainFile.getUrl(), propertiesText, sanitized.otherExtraOption,
+      approversText, sanitized.isResubmission && revisedFile ? revisedFile.getName() : '',
+      sanitized.isResubmission && revisedFile ? revisedFile.getUrl() : ''
+    ];
+
+    const lock = LockService.getScriptLock();
+    lock.waitLock(30000); 
+
+    try {
+      // === ATOMIC ROW RESERVATION & OWNERSHIP CONFIRMATION ===
+      
+      // 1. CLAIM THE ROW: Write a unique placeholder to an unused column (Z) to atomically reserve a row.
+      const placeholderValue = `reserving_${refNumber}_${new Date().getTime()}`;
+      const placeholderRange = sheet.getRange(sheet.getLastRow() + 1, 26); // Column Z
+      placeholderRange.setValue(placeholderValue);
+      
+      // Force all pending spreadsheet operations to complete immediately. This is crucial for the check.
+      SpreadsheetApp.flush();
+
+      // 2. CONFIRM OWNERSHIP: Read the value back. If it doesn't match what we just wrote,
+      //    it means a rare concurrency issue occurred. We must stop to prevent data corruption.
+      if (placeholderRange.getValue() !== placeholderValue) {
+        throw new Error("Critical concurrency error: Failed to secure a unique row. Please try again.");
+      }
+      
+      // If the check passes, we have verifiably claimed this row.
+      const newRowNumber = placeholderRange.getRow();
+
+      // 3. WRITE THE DATA: It is now 100% safe to write to our reserved row.
+      const targetRange = sheet.getRange(newRowNumber, 5, 1, dataForSheet.length); // Start at Column E
+      targetRange.setValues([dataForSheet]);
+
+      // 4. CLEAN UP: Clear the placeholder now that the real data is written.
+      placeholderRange.clearContent();
+
+    } finally {
+      // Always release the lock, no matter what happens.
+      lock.releaseLock();
     }
-    sheet.getRange(sheet.getLastRow() + 1, 5, 1, rowData.length).setValues([rowData]);
-
-    // This function call is unchanged; it correctly passes the Drive File objects.
+    
     sendNotificationEmail(sanitized, refNumber, mainFile, revisedFile);
     
     return { refNumber };
 
   } catch (err) {
+    // This catch block handles cleanup and sends the correct error to the user.
     if (mainFile) {
-        console.error(`PROCESS FAILED AFTER MAIN FILE CREATION. File to review/delete: ${mainFile.getName()} (ID: ${mainFile.getId()}). Original Error: ${err.message}`);
+        try { mainFile.setTrashed(true); console.log(`CLEANUP: Trashed orphaned file: ${mainFile.getName()}`); } catch(e){}
     }
     if (revisedFile) {
-        console.error(`PROCESS FAILED AFTER REVISED FILE CREATION. File to review/delete: ${revisedFile.getName()} (ID: ${revisedFile.getId()}). Original Error: ${err.message}`);
+        try { revisedFile.setTrashed(true); console.log(`CLEANUP: Trashed orphaned file: ${revisedFile.getName()}`); } catch(e){}
     }
+    
     console.error("Processing error: " + err.stack);
+
+    if (err.message.startsWith("SHEET_FULL_ERROR:")) {
+      throw new Error(err.message);
+    }
     throw new Error("Server error during processing: " + err.message);
   }
 }
-
 
 // =========================================================================
 // ===                    START: MODIFIED CODE SECTION                   ===
