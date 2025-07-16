@@ -367,8 +367,19 @@
                               clearTimeout(failSafeTimeout);
                               window.onbeforeunload = null;
                               loading.value = false;
-                              alert("Submission failed: " + error.message);
+
+                              // Check if the error message from the server is our special "Sheet Full" error.
+                              if (error.message && error.message.startsWith("SHEET_FULL_ERROR:")) {
+                                 // Show a specific, helpful message for this exact problem.
+                                 alert("Submission Failed: The system storage is currently full.\n\nYour submission has not been saved. Please contact the system administrator to resolve this issue.");
+                              } else {
+                                 // For all other types of errors, show the original generic message.
+                                 alert("Submission failed. An unexpected error occurred. Please try to submit again.\n\nDetails: " + error.message);
+                              }
+                              
+                              console.error("Submission error from server:", error.message);
                            })
+                         
                            .processFormData(payload);
                      })
                      .catch((error) => {
