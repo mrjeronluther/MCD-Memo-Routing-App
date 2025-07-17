@@ -10,74 +10,65 @@
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
       <style>
-         /* --- GLOBAL & MOBILE-FIRST STYLES --- */
          :root {
-            --bs-border-radius-lg: 8px; /* Consistent border radius */
+            --bs-border-radius-lg: 8px;
+            --light-bg: #f8f9fa;
+            --soft-border: #dcdcdc;
+            --accent-color: #0d6efd;
          }
 
          body {
             font-family: "Segoe UI", sans-serif;
             background-color: white;
-            /* Use padding on the container, not the body, for better control */
          }
 
-         /* Make the entire app container responsive */
          #app {
             padding: 1rem;
          }
 
-         /*
-          * FIX: The single most important fix for tables on mobile.
-          * This makes the table scroll horizontally if its content is too wide,
-          * preventing it from breaking the page layout.
-          * We will also add the 'table-responsive' class in the HTML for Bootstrap's built-in handling.
-          */
          .table-wrapper {
-            max-height: 60vh; /* Use viewport height for better scaling on different devices */
+            max-height: 60vh;
             overflow-y: auto;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--soft-border);
             border-radius: var(--bs-border-radius-lg);
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
          }
 
-         /* Sticky headers are great, no change needed here */
          thead th {
             position: sticky;
             top: 0;
-            background-color: #e9ecef !important;
-            color: black;
+            background-color: var(--light-bg) !important;
+            color: #333;
             z-index: 2;
             text-align: center;
             vertical-align: middle;
+            font-weight: 500;
+            font-size: 0.95rem;
          }
 
          tbody td {
-            padding: 0.75rem;
+            padding: 0.65rem;
             text-align: center;
             vertical-align: middle;
-            white-space: nowrap; /* Prevents content from wrapping weirdly, works well with horizontal scroll */
+            white-space: nowrap;
+            font-size: 0.9rem;
          }
 
-         /* Allows specific columns to wrap and be left-aligned */
          .wider-column {
             min-width: 350px;
-            text-align: left !important; /* Use !important to override the general td style */
-            white-space: normal; /* Allow this column to wrap its text */
+            text-align: left !important;
+            white-space: normal;
          }
 
          tbody tr:hover {
-            background-color: #f8f9fa;
+            background-color: #f1f3f5;
          }
-         
-         /* NOTE: This class is no longer used, replaced by Bootstrap's .alert */
-         /* .error {
-            color: #dc3545;
-         } */
 
-         /* Bootstrap has its own spinner, but this custom one is fine */
          .loading-spinner {
             display: inline-block;
-            width: 2rem;
-            height: 2rem;
+            width: 1.75rem;
+            height: 1.75rem;
             vertical-align: -0.125em;
             border: 0.25em solid currentColor;
             border-right-color: transparent;
@@ -91,30 +82,105 @@
             }
          }
 
-         /* NEW (Always Top-Left) TOAST CSS */
-            .toast-container {
-              position: fixed;
-              z-index: 1060;
-              /* Position it in the top-left corner */
-              top: 1rem;
-              left: 1rem;
+         .toast-container {
+            position: fixed;
+            z-index: 1060;
+            top: 1rem;
+            left: 1rem;
+            width: 360px;
+            max-width: 90vw;
+            pointer-events: none;
+         }
 
-              /* Define a consistent size */
-              width: 380px;
-              
-              /* Ensure it doesn't overflow on very small mobile screens */
-              max-width: 90vw; /* 90% of the viewport width */
-              
-              /* Prevents the container from blocking clicks */
-              pointer-events: none;
-            }
+         .toast-item {
+            pointer-events: auto;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            font-size: 0.9rem;
+         }
 
-            /* Allow individual toast items to be clicked */
-            .toast-item {
-               pointer-events: auto;
-               margin-bottom: 0.5rem;
-            }
+         .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            background-color: #fff;
+         }
 
+         .card-body {
+            padding: 1.5rem;
+         }
+
+         .card.grey-highlight-shadow {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), /* subtle depth */ 0 0 0 2px rgba(240, 240, 240, 0.9); /* soft grey outer glow */
+            border-radius: 10px;
+         }
+
+         input.form-control,
+         textarea.form-control {
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            font-size: 0.9rem;
+         }
+
+         .btn {
+            border-radius: 6px;
+            font-size: 0.875rem;
+         }
+
+         .btn-outline-info {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+         }
+
+         .btn-outline-info:hover {
+            background-color: var(--accent-color);
+            color: #fff;
+         }
+
+         .btn-sm {
+            padding: 0.35rem 0.75rem;
+         }
+
+         .modal-content {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+         }
+
+         .modal-header,
+         .modal-footer {
+            border: none;
+            background-color: #f9f9f9;
+         }
+
+         .modal-title {
+            font-size: 1rem;
+            font-weight: 500;
+         }
+
+         .form-check-input {
+            border-radius: 4px;
+         }
+
+         .pagination-btns .btn {
+            min-width: 90px;
+         }
+
+         .lead {
+            font-size: 1rem;
+            color: #444;
+         }
+
+         .alert {
+            font-size: 0.9rem;
+            padding: 0.75rem 1rem;
+         }
+
+         .text-muted {
+            font-size: 0.9rem;
+         }
       </style>
    </head>
    <body>
@@ -134,40 +200,47 @@
             </div>
          </div>
 
-          <header class="text-center mb-4">
+         <header class="text-center mb-4">
             <img src="https://raw.githubusercontent.com/mrjeronluther/Memo-Routing-Landing-Page/main/WhatsApp%20Image%202025-06-05%20at%2015.44.42_3fc69535.jpg" alt="Header Image" class="img-fluid" style="max-width: 100%; width: 600px;" />
          </header>
 
          <!-- LOGIN FORM -->
          <div v-if="!user.isLoggedIn" class="d-flex justify-content-center align-items-center">
-            <div class="card p-4" style="width: 100%; max-width: 500px;">
+            <div class="card p-4 grey-highlight-shadow" style="width: 100%; max-width: 500px;">
                <h2 class="text-center">MCD Document Approval</h2>
                <div class="card-body">
                   <h3 class="card-title text-center mb-4">Login</h3>
-                  <div class="mb-3"><input v-model="loginForm.username" @keyup.enter="login" type="text" placeholder="Username" class="form-control" /></div>
-                  <div class="mb-3"><input v-model="loginForm.password" @keyup.enter="login" type="password" placeholder="Password" class="form-control" /></div>
-                  <button @click="login" :disabled="!isLoginFormValid || isLoggingIn" class="btn btn-primary w-100"><span v-if="isLoggingIn" class="spinner-border spinner-border-sm"></span><span v-else>Login</span></button>
-                  <!-- UPDATED: Login error now uses Bootstrap alert -->
+                  <div class="mb-3">
+                     <input v-model="loginForm.username" @keyup.enter="login" type="text" placeholder="Username" class="form-control" />
+                  </div>
+                  <div class="mb-3">
+                     <input v-model="loginForm.password" @keyup.enter="login" type="password" placeholder="Password" class="form-control" />
+                  </div>
+                  <button @click="login" :disabled="!isLoginFormValid || isLoggingIn" class="btn btn-primary w-100">
+                     <span v-if="isLoggingIn" class="spinner-border spinner-border-sm"></span>
+                     <span v-else>Login</span>
+                  </button>
                   <div v-if="loginError" class="alert alert-danger mt-3 mb-0" role="alert">
-                    {{ loginError }}
+                     {{ loginError }}
                   </div>
                </div>
             </div>
          </div>
+
          <!-- MAIN CONTENT -->
          <div v-else>
             <!-- Responsive header. Stacks on mobile, row on medium screens up. The logout button is now part of the flow. -->
             <!-- NEW, FIXED LOGOUT BUTTON -->
-              <button @click="logout" :disabled="isProcessPending" class="btn btn-sm btn-outline-danger position-fixed top-0 end-0 m-3" style="z-index: 1050;" title="Logout">Logout</button>
+            <button @click="logout" :disabled="isProcessPending" class="btn btn-sm btn-outline-danger position-fixed top-0 end-0 m-3" style="z-index: 1050;" title="Logout">Logout</button>
 
-              <!-- The greeting message now lives in a simpler container -->
-              <div class="mb-4">
-                  <p class="lead mb-0">{{ greetingMessage }}</p>
-              </div>
+            <!-- The greeting message now lives in a simpler container -->
+            <div class="mb-4">
+               <p class="lead mb-0">{{ greetingMessage }}</p>
+            </div>
 
             <h2 class="text-center">MCD Document Approval</h2>
             <br />
-            
+
             <!-- Responsive Search and View Toggle Button. Stacks on mobile, becomes a row on medium screens. -->
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
                <input v-model="searchQuery" type="text" class="form-control mb-2 mb-md-0 me-md-2" placeholder="Search table..." />
@@ -184,7 +257,7 @@
             </div>
 
             <div v-else>
-                <!-- Use Bootstrap's '.table-responsive' class. It handles horizontal scrolling perfectly. -->
+               <!-- Use Bootstrap's '.table-responsive' class. It handles horizontal scrolling perfectly. -->
                <div class="table-responsive table-wrapper mb-2">
                   <p v-if="filteredData.length === 0" class="text-center text-muted p-4">
                      {{ showApprovedView ? 'No approved items found.' : 'No pending items available or matching your search.' }}
@@ -219,7 +292,7 @@
                      </tbody>
                   </table>
                </div>
-               
+
                <!-- Pagination: Added flex-wrap for very narrow screens -->
                <div v-if="totalPages > 1" class="d-flex flex-wrap justify-content-center align-items-center my-3 gap-2">
                   <button @click="prevPage" :disabled="currentPage === 1" class="btn btn-outline-primary btn-sm">Previous</button>
@@ -270,21 +343,21 @@
 
          <!-- NEW: Confirmation Modal for Logout and other actions -->
          <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true" ref="confirmationModalRef">
-             <div class="modal-dialog modal-dialog-centered">
-                 <div class="modal-content">
-                     <div class="modal-header">
-                         <h5 class="modal-title" id="confirmationModalLabel">{{ confirmation.title }}</h5>
-                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                     </div>
-                     <div class="modal-body">
-                         {{ confirmation.message }}
-                     </div>
-                     <div class="modal-footer">
-                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                         <button type="button" class="btn" :class="confirmation.confirmButtonClass" @click="confirmAction">Confirm</button>
-                     </div>
-                 </div>
-             </div>
+            <div class="modal-dialog modal-dialog-centered">
+               <div class="modal-content">
+                  <div class="modal-header">
+                     <h5 class="modal-title" id="confirmationModalLabel">{{ confirmation.title }}</h5>
+                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body">
+                     {{ confirmation.message }}
+                  </div>
+                  <div class="modal-footer">
+                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                     <button type="button" class="btn" :class="confirmation.confirmButtonClass" @click="confirmAction">Confirm</button>
+                  </div>
+               </div>
+            </div>
          </div>
       </div>
 
@@ -292,36 +365,173 @@
          const { createApp, ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } = Vue;
 
          const RESTRICTED_USERS = [
-            "Jaye Trich Pizarro", "Brix Valdenarro", "Joy Melitante", "Alex Flores", "Aurora Pastolero", "Mariano Caleja", "Ernesto Andrade", "Dustin Sta. Maria", "Jenel Ann Cruzgarcia", "Doreen Penilla", "Denisse Malong", "Kevin Lin", "Juvi Masilungan", "Jhoanalyn Gatdula", "Mary Arceo", "Annalee Pine ", "Arralen Batallones", "Ma Dulce Cuenca ", "Aizelle Anne Yalong", "Henedina Viado", "Oauie Banagan", "Michelle Ong", "Ma Fatima Bausin", "Melanie Lingon", "Stephen Sumilang", "Patricia Mari Quierez", "Rosa Cecilia Salvador", "Janice Cadog", "Camsy Elvina", "Mikee Vivo", "Vanessa Vicente", "Tyron Tan", "Rodalyn Landoy", "Fermila Pacampara", "Lorraine Cicat"
+            "Jaye Trich Pizarro",
+            "Brix Valdenarro",
+            "Joy Melitante",
+            "Alex Flores",
+            "Aurora Pastolero",
+            "Mariano Caleja",
+            "Ernesto Andrade",
+            "Dustin Sta. Maria",
+            "Jenel Ann Cruzgarcia",
+            "Doreen Penilla",
+            "Denisse Malong",
+            "Kevin Lin",
+            "Juvi Masilungan",
+            "Jhoanalyn Gatdula",
+            "Mary Arceo",
+            "Annalee Pine ",
+            "Arralen Batallones",
+            "Ma Dulce Cuenca ",
+            "Aizelle Anne Yalong",
+            "Henedina Viado",
+            "Oauie Banagan",
+            "Michelle Ong",
+            "Ma Fatima Bausin",
+            "Melanie Lingon",
+            "Stephen Sumilang",
+            "Patricia Mari Quierez",
+            "Rosa Cecilia Salvador",
+            "Janice Cadog",
+            "Camsy Elvina",
+            "Mikee Vivo",
+            "Vanessa Vicente",
+            "Tyron Tan",
+            "Rodalyn Landoy",
+            "Fermila Pacampara",
+            "Lorraine Cicat",
          ];
          const SPECIAL_FORMAT_USERS = ["Louise Piamonte", "Rodalyn Landoy", "Frances Armian", "Zelfa Valderrama", "Allyzza Tolosa", "Fermila Pacampara", "Grace Guarico", "Lorraine Cicat"];
 
          const APPROVER_LISTS = {
             MGL: [
-               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] }, { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] }, { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] }, { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] }, { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] }, { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] }, { label: "Jaye Trich Pizarro", value: "JAYE", email: "jecastro@megaworld-lifestyle.com", cc: ["mrcastrojeronluther@gmail.com", "castrojeronluther@gmail.com"] }, { label: "Joy Melitante", value: "JOY", email: "joy.melitante@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] }, { label: "Alex Flores", value: "ALEX", email: "alex.flores@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] }, { label: "Aurora Pastolero", value: "AU", email: "aurora.pastolero@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] }, { label: "Brix Valdenarro", value: "BRIX", email: "brix.valdenarro@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] }, { label: "Mariano Caleja", value: "MAR", email: "mariano.caleja@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] }
+               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+               { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+               { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+               { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+               { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+               { label: "Jaye Trich Pizarro", value: "JAYE", email: "jecastro@megaworld-lifestyle.com", cc: ["mrcastrojeronluther@gmail.com", "castrojeronluther@gmail.com"] },
+               { label: "Joy Melitante", value: "JOY", email: "joy.melitante@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+               { label: "Alex Flores", value: "ALEX", email: "alex.flores@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+               { label: "Aurora Pastolero", value: "AU", email: "aurora.pastolero@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+               { label: "Brix Valdenarro", value: "BRIX", email: "brix.valdenarro@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+               { label: "Mariano Caleja", value: "MAR", email: "mariano.caleja@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
             ],
             RCS: [
-               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Annalee Pine ", value: "ANNALEE", email: "annalee.pine@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Arralen Batallones ", value: "ARRA", email: "arralen.batallones@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Ma Dulce Cuenca ", value: "DULCE", email: "dulce.cuenca@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Aizelle Anne Yalong ", value: "AIZELLE", email: "aizelle.yalong@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Henedina Viado ", value: "VIA", email: "henedina.viado@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Oauie Banagan ", value: "OAUIE", email: "oauie.banagan@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Michelle Ong ", value: "MICH", email: "michelle.ong@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Ma Fatima Bausin ", value: "FATIMA", email: "fatima.bausin@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Melanie Lingon ", value: "MELANIE", email: "melanie.lingon@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Stephen Sumilang ", value: "STEPH", email: "stephen.sumilang@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Patricia Mari Quierez ", value: "PAT", email: "patricia.quierez@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Rosa Cecilia Salvador ", value: "ROSA", email: "rosa.salvador@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }, { label: "Janice Cadog ", value: "JANICE", email: "janice.cadog@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] }
+               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Annalee Pine ", value: "ANNALEE", email: "annalee.pine@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Arralen Batallones ", value: "ARRA", email: "arralen.batallones@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Ma Dulce Cuenca ", value: "DULCE", email: "dulce.cuenca@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Aizelle Anne Yalong ", value: "AIZELLE", email: "aizelle.yalong@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Henedina Viado ", value: "VIA", email: "henedina.viado@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Oauie Banagan ", value: "OAUIE", email: "oauie.banagan@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Michelle Ong ", value: "MICH", email: "michelle.ong@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Ma Fatima Bausin ", value: "FATIMA", email: "fatima.bausin@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Melanie Lingon ", value: "MELANIE", email: "melanie.lingon@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Stephen Sumilang ", value: "STEPH", email: "stephen.sumilang@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Patricia Mari Quierez ", value: "PAT", email: "patricia.quierez@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Rosa Cecilia Salvador ", value: "ROSA", email: "rosa.salvador@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+               { label: "Janice Cadog ", value: "JANICE", email: "janice.cadog@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
             ],
             LDA: [
-               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] }, { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] }, { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] }, { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] }, { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] }, { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] }, { label: "Frances Armian", value: "FA", email: "frances.armian@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] }, { label: "Denisse Malong", value: "DM", email: "denisse.malong@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] }, { label: "Kevin Lin", value: "KL", email: "kevin.lin@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] }, { label: "Juvi Masilungan", value: "JM", email: "juvi.masilungan@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] }, { label: "Jhoanalyn Gatdula", value: "JG", email: "jhoanalyn.gatdula@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] }, { label: "Mary Arceo", value: "MA", email: "mary.arceo@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] }
+               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+               { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+               { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+               { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+               { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+               { label: "Frances Armian", value: "FA", email: "frances.armian@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+               { label: "Denisse Malong", value: "DM", email: "denisse.malong@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+               { label: "Kevin Lin", value: "KL", email: "kevin.lin@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+               { label: "Juvi Masilungan", value: "JM", email: "juvi.masilungan@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+               { label: "Jhoanalyn Gatdula", value: "JG", email: "jhoanalyn.gatdula@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+               { label: "Mary Arceo", value: "MA", email: "mary.arceo@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
             ],
             KMV: [
-               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] }, { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] }, { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] }, { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] }, { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] }, { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] }, { label: "Ernesto Andrade", value: "EBA", email: "ernesto.andrade@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] }, { label: "Dustin Sta. Maria", value: "DSM", email: "dustin.stamaria@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] }, { label: "Jenel Ann Cruzgarcia", value: "JAC", email: "jenel.cruzgarcia@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] }, { label: "Doreen Penilla", value: "DP", email: "doreen.penilla@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] }
+               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+               { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+               { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+               { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+               { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+               { label: "Ernesto Andrade", value: "EBA", email: "ernesto.andrade@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+               { label: "Dustin Sta. Maria", value: "DSM", email: "dustin.stamaria@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+               { label: "Jenel Ann Cruzgarcia", value: "JAC", email: "jenel.cruzgarcia@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+               { label: "Doreen Penilla", value: "DP", email: "doreen.penilla@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
             ],
             GMC: [
-               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] }, { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] }, { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] }, { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] }, { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] }, { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] }
+               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] },
+               { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] },
+               { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] },
+               { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] },
+               { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] },
+               { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] },
             ],
             JE: [
-               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] }, { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] }, { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] }, { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] }, { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] }, { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] }
+               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
+               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
+               { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
+               { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
+               { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
+               { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
             ],
             NOE: [
-               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] }, { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] }, { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] }, { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] }, { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] }, { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] }
-            ]
+               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
+               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
+               { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
+               { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
+               { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
+               { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
+            ],
          };
 
          const FORMATTER_NAMES = [
-            "Graham Coates", "Rosalyn Segura", "Michael Lao", "Jeremy Rodriguez", "Noe Versoza", "Tinay Villanueva", "Lorence Aurello", "Jaye Trich Pizarro", "Joy Melitante", "Alex Flores", "Aurora Pastolero", "Mariano Caleja", "Brix Valdenarro", "Ernesto Andrade", "Dustin Sta. Maria", "Jenel Ann Cruzgarcia", "Doreen Penilla", "Frances Armian", "Denisse Malong", "Kevin Lin", "Juvi Masilungan", "Jhoanalyn Gatdula", "Mary Arceo", "Annalee Pine", "Arralen Batallones", "Ma Dulce Cuenca", "Aizelle Anne Yalong", "Henedina Viado", "Oauie Banagan", "Michelle Ong", "Ma Fatima Bausin", "Melanie Lingon", "Stephen Sumilang", "Patricia Mari Quierez", "Rosa Cecilia Salvador", "Janice Cadog", "Camsy Elvina", "Mikee Vivo", "Vanessa Vicente", "Tyron Tan"
+            "Graham Coates",
+            "Rosalyn Segura",
+            "Michael Lao",
+            "Jeremy Rodriguez",
+            "Noe Versoza",
+            "Tinay Villanueva",
+            "Lorence Aurello",
+            "Jaye Trich Pizarro",
+            "Joy Melitante",
+            "Alex Flores",
+            "Aurora Pastolero",
+            "Mariano Caleja",
+            "Brix Valdenarro",
+            "Ernesto Andrade",
+            "Dustin Sta. Maria",
+            "Jenel Ann Cruzgarcia",
+            "Doreen Penilla",
+            "Frances Armian",
+            "Denisse Malong",
+            "Kevin Lin",
+            "Juvi Masilungan",
+            "Jhoanalyn Gatdula",
+            "Mary Arceo",
+            "Annalee Pine",
+            "Arralen Batallones",
+            "Ma Dulce Cuenca",
+            "Aizelle Anne Yalong",
+            "Henedina Viado",
+            "Oauie Banagan",
+            "Michelle Ong",
+            "Ma Fatima Bausin",
+            "Melanie Lingon",
+            "Stephen Sumilang",
+            "Patricia Mari Quierez",
+            "Rosa Cecilia Salvador",
+            "Janice Cadog",
+            "Camsy Elvina",
+            "Mikee Vivo",
+            "Vanessa Vicente",
+            "Tyron Tan",
          ];
 
          createApp({
@@ -333,8 +543,8 @@
                const isDataLoaded = ref(false);
                const isSubmitting = ref(false);
                const headers = ref([]);
-               const tableData = ref([]); // Holds pending data
-               const approvedData = ref([]); // Holds approved data
+               const tableData = ref([]); 
+               const approvedData = ref([]); 
                const searchQuery = ref("");
                const activeAction = reactive({ type: null, row: null, label: "", reason: "", selected: [], current: [] });
                const actionFormsRef = ref(null);
@@ -345,14 +555,14 @@
                let idleTimer;
                const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
 
-               // NEW: State for confirmation modal
-               const confirmationModalRef = ref(null); // Template ref
-               let confirmationModal = null; // To hold the Bootstrap modal instance
+               
+               const confirmationModalRef = ref(null); 
+               let confirmationModal = null; 
                const confirmation = reactive({
-                  title: '',
-                  message: '',
+                  title: "",
+                  message: "",
                   onConfirm: null,
-                  confirmButtonClass: 'btn-primary'
+                  confirmButtonClass: "btn-primary",
                });
 
                const showApprovedView = ref(false);
@@ -360,7 +570,7 @@
                const isProcessPending = computed(() => toasts.value.some((t) => t.status === "ongoing"));
                const isLoginFormValid = computed(() => /^[A-Za-z0-9@.]+$/.test(loginForm.username) && /^[A-Za-z0-9@.]+$/.test(loginForm.password));
                const greetingMessage = computed(() => `${new Date().getHours() < 12 ? "Good Morning" : new Date().getHours() < 18 ? "Good Afternoon" : "Good Evening"}, ${user.displayName}!`);
-               
+
                const filteredData = computed(() => {
                   const sourceData = showApprovedView.value ? approvedData.value : tableData.value;
                   if (!searchQuery.value) return sourceData;
@@ -386,17 +596,17 @@
                   }
                   return [];
                });
-               
+
                // --- Toast Notification System ---
                const removeToast = (id) => {
                   toasts.value = toasts.value.filter((t) => t.id !== id);
                };
 
-               // NEW: Function for simple, non-blocking alerts
-               const showSimpleToast = (message, status = 'warning', duration = 7000) => {
-                   const id = toastIdCounter++;
-                   toasts.value.unshift({ id, status, message });
-                   setTimeout(() => removeToast(id), duration);
+               
+               const showSimpleToast = (message, status = "warning", duration = 7000) => {
+                  const id = toastIdCounter++;
+                  toasts.value.unshift({ id, status, message });
+                  setTimeout(() => removeToast(id), duration);
                };
 
                const addToast = (actionType, refLabel, initialMessage = "") => {
@@ -414,43 +624,43 @@
                         toast.message = customMessage;
                      } else {
                         switch (newStatus) {
-                           case 'success':
+                           case "success":
                               toast.message = `${actionType} for '${refLabel}' was successful.`;
                               break;
-                           case 'failure':
+                           case "failure":
                               toast.message = `Failed to ${actionType} for '${refLabel}'. Please try again.`;
                               break;
-                           case 'warning':
+                           case "warning":
                               toast.message = `Warning for ${actionType} on '${refLabel}'. See details.`;
                               break;
                         }
                      }
-                     const delay = (newStatus === 'success' || newStatus === 'warning') ? 5000 : 10000;
+                     const delay = newStatus === "success" || newStatus === "warning" ? 5000 : 10000;
                      setTimeout(() => removeToast(id), delay);
                   }
                };
-               // --- End of Toast System ---
+               
 
-               // --- NEW: Confirmation Modal Logic ---
-               const showConfirmation = (title, message, onConfirmCallback, buttonClass = 'btn-primary') => {
-                   confirmation.title = title;
-                   confirmation.message = message;
-                   confirmation.onConfirm = onConfirmCallback;
-                   confirmation.confirmButtonClass = buttonClass;
-                   if (confirmationModal) {
-                       confirmationModal.show();
-                   }
+              
+               const showConfirmation = (title, message, onConfirmCallback, buttonClass = "btn-primary") => {
+                  confirmation.title = title;
+                  confirmation.message = message;
+                  confirmation.onConfirm = onConfirmCallback;
+                  confirmation.confirmButtonClass = buttonClass;
+                  if (confirmationModal) {
+                     confirmationModal.show();
+                  }
                };
 
                const confirmAction = () => {
-                   if (typeof confirmation.onConfirm === 'function') {
-                       confirmation.onConfirm();
-                   }
-                   if (confirmationModal) {
-                       confirmationModal.hide();
-                   }
+                  if (typeof confirmation.onConfirm === "function") {
+                     confirmation.onConfirm();
+                  }
+                  if (confirmationModal) {
+                     confirmationModal.hide();
+                  }
                };
-               // --- End of Modal Logic ---
+               
 
                const fetchApprovedData = async () => {
                   if (approvedData.value.length > 0) return;
@@ -460,8 +670,8 @@
                      const cols = [5, 6, 7, 9, 11, 12, 14, 0];
                      approvedData.value = data && data.length > 0 ? data.map((row) => cols.map((i) => row[i])) : [];
                   } catch (error) {
-                     // UPDATED: Replaced alert with toast
-                     showSimpleToast(`Failed to load approved items. Error: ${error.message}`, 'danger');
+                     
+                     showSimpleToast(`Failed to load approved items. Error: ${error.message}`, "danger");
                      showApprovedView.value = false;
                   } finally {
                      isApprovedDataLoading.value = false;
@@ -476,7 +686,7 @@
                      fetchApprovedData();
                   }
                };
-               
+
                const submitReviewerChange = async () => {
                   if (activeAction.selected.length === 0) return;
 
@@ -556,16 +766,24 @@
                   }
                };
 
-               const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++; };
-               const prevPage = () => { if (currentPage.value > 1) currentPage.value--; };
-               const runGoogleScript = (name, ...args) => new Promise((resolve, reject) => {
-                  if (typeof google === "undefined" || !google.script?.run) return reject(new Error("Google Script API not available."));
-                  google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[name](...args);
-               });
+               const nextPage = () => {
+                  if (currentPage.value < totalPages.value) currentPage.value++;
+               };
+               const prevPage = () => {
+                  if (currentPage.value > 1) currentPage.value--;
+               };
+               const runGoogleScript = (name, ...args) =>
+                  new Promise((resolve, reject) => {
+                     if (typeof google === "undefined" || !google.script?.run) return reject(new Error("Google Script API not available."));
+                     google.script.run
+                        .withSuccessHandler(resolve)
+                        .withFailureHandler(reject)
+                        [name](...args);
+                  });
                const forceLogout = () => {
-                  if (isProcessPending.value) { 
-                     // UPDATED: Replaced alert with toast
-                     showSimpleToast("Cannot perform this action while operations are in progress.", 'warning');
+                  if (isProcessPending.value) {
+                     
+                     showSimpleToast("Cannot perform this action while operations are in progress.", "warning");
                      return;
                   }
                   if (!user.isLoggedIn) return;
@@ -579,28 +797,31 @@
                   toasts.value = [];
                   isDataLoaded.value = false;
                };
-                const logout = () => {
+               const logout = () => {
                   if (isProcessPending.value) {
-                     showSimpleToast("Please wait for the background processes to complete before logging out.", 'warning');
+                     showSimpleToast("Please wait for the background processes to complete before logging out.", "warning");
                      return;
                   }
-                  // Define a new callback function that first shows a toast, then logs out.
-                  const onConfirmLogout = () => {
-                    showSimpleToast("You have successfully logged out.", 'success', 5000); // Show success message
-                    forceLogout(); // Then perform the logout
-                  };
                   
-                  // Use the new callback function in the confirmation modal.
-                  showConfirmation('Confirm Logout', 'Are you sure you want to log out?', onConfirmLogout, 'btn-danger');
+                  const onConfirmLogout = () => {
+                     showSimpleToast("You have successfully logged out.", "success", 5000); // Show success message
+                     forceLogout(); 
+                  };
+
+                 
+                  showConfirmation("Confirm Logout", "Are you sure you want to log out?", onConfirmLogout, "btn-danger");
                };
-               const handleInactivity = () => { 
-                   if (!isProcessPending.value) { 
-                       // UPDATED: Replaced alert with toast, then logout
-                       showSimpleToast("You have been logged out due to inactivity.", 'info', 10000); 
-                       forceLogout(); 
-                   } 
+               const handleInactivity = () => {
+                  if (!isProcessPending.value) {
+                     
+                     showSimpleToast("You have been logged out due to inactivity.", "info", 10000);
+                     forceLogout();
+                  }
                };
-               const resetIdleTimer = () => { clearTimeout(idleTimer); if (user.isLoggedIn) idleTimer = setTimeout(handleInactivity, INACTIVITY_TIMEOUT_MS); };
+               const resetIdleTimer = () => {
+                  clearTimeout(idleTimer);
+                  if (user.isLoggedIn) idleTimer = setTimeout(handleInactivity, INACTIVITY_TIMEOUT_MS);
+               };
                const login = async () => {
                   if (!isLoginFormValid.value) return;
                   isLoggingIn.value = true;
@@ -613,9 +834,14 @@
                         localStorage.setItem("mcd-user", JSON.stringify({ ...user, expires: Date.now() + INACTIVITY_TIMEOUT_MS }));
                         await refreshData();
                         resetIdleTimer();
-                     } else { loginError.value = "Invalid username or password."; }
-                  } catch (error) { loginError.value = error.message || "An unknown login error occurred."; } 
-                  finally { isLoggingIn.value = false; }
+                     } else {
+                        loginError.value = "Invalid username or password.";
+                     }
+                  } catch (error) {
+                     loginError.value = error.message || "An unknown login error occurred.";
+                  } finally {
+                     isLoggingIn.value = false;
+                  }
                };
                const refreshData = async (silent = false) => {
                   if (!silent) isDataLoaded.value = false;
@@ -625,14 +851,17 @@
                      headers.value = data?.length > 0 ? cols.map((i) => data[0][i]) : [];
                      tableData.value = data?.length > 1 ? data.slice(1).map((row) => cols.map((i) => row[i])) : [];
                   } catch (error) {
-                      // UPDATED: Replaced alert with toast
-                      showSimpleToast("Session expired or data loading failed. Please log in again.", 'danger', 10000);
-                      forceLogout();
-                  } 
-                  finally { isDataLoaded.value = true; }
+                     
+                     showSimpleToast("Session expired or data loading failed. Please log in again.", "danger", 10000);
+                     forceLogout();
+                  } finally {
+                     isDataLoaded.value = true;
+                  }
                };
                const showActionUI = (type, row) => {
-                  const allApproverLabels = Object.values(APPROVER_LISTS).flat().map((a) => a.label);
+                  const allApproverLabels = Object.values(APPROVER_LISTS)
+                     .flat()
+                     .map((a) => a.label);
                   const uniqueAllowedApprovers = [...new Set(allApproverLabels)];
                   const currentApprovers = uniqueAllowedApprovers.filter((name) => new RegExp(`\\b${name.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")}\\b`).test(row[7] || ""));
                   Object.assign(activeAction, { type, row, label: row[4], reason: "", selected: [], current: currentApprovers });
@@ -644,8 +873,8 @@
                const cancelAction = () => (activeAction.type = null);
                const submitApproval = async () => {
                   const trimmedReason = activeAction.reason.trim();
-                  // UPDATED: Replaced alert with toast
-                  if (trimmedReason.length < 5 || trimmedReason.length > 300) return showSimpleToast("Approval remarks are required and must be between 5 and 300 characters.", 'warning');
+                  
+                  if (trimmedReason.length < 5 || trimmedReason.length > 300) return showSimpleToast("Approval remarks are required and must be between 5 and 300 characters.", "warning");
                   const { label: refLabel, row: rowToUpdate } = activeAction;
                   const toastId = addToast("Approval", refLabel);
                   isSubmitting.value = true;
@@ -658,12 +887,15 @@
                   try {
                      await runGoogleScript("updateRowStatusWithValidation", rowToUpdate, "APPROVED", "", finalReason, user.sheetName);
                      updateToast(toastId, "success", "Approval", refLabel);
-                  } catch (error) { updateToast(toastId, "failure", "Approval", refLabel); if (originalIndex !== -1) tableData.value.splice(originalIndex, 0, originalRowData); }
+                  } catch (error) {
+                     updateToast(toastId, "failure", "Approval", refLabel);
+                     if (originalIndex !== -1) tableData.value.splice(originalIndex, 0, originalRowData);
+                  }
                };
                const submitDisapproval = async () => {
                   const trimmedReason = activeAction.reason.trim();
-                  // UPDATED: Replaced alert with toast
-                  if (trimmedReason.length < 5 || trimmedReason.length > 300) return showSimpleToast("Disapproval reason is required and must be between 5 and 300 characters.", 'warning');
+                  
+                  if (trimmedReason.length < 5 || trimmedReason.length > 300) return showSimpleToast("Disapproval reason is required and must be between 5 and 300 characters.", "warning");
                   const { label: refLabel, row: rowToUpdate } = activeAction;
                   const toastId = addToast("Disapproval", refLabel);
                   isSubmitting.value = true;
@@ -676,7 +908,10 @@
                   try {
                      await runGoogleScript("updateRowStatusWithValidation", rowToUpdate, "DISAPPROVED", finalReason, "", user.sheetName);
                      updateToast(toastId, "success", "Disapproval", refLabel);
-                  } catch (error) { updateToast(toastId, "failure", "Disapproval", refLabel); if (originalIndex !== -1) tableData.value.splice(originalIndex, 0, originalRowData); }
+                  } catch (error) {
+                     updateToast(toastId, "failure", "Disapproval", refLabel);
+                     if (originalIndex !== -1) tableData.value.splice(originalIndex, 0, originalRowData);
+                  }
                };
                const formatDateCell = (value) => (!value ? "" : new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }));
                const calculateDaysDifference = (dateStr) => (!dateStr ? "" : `${Math.floor((Date.now() - new Date(dateStr).getTime()) / 864e5)} day(s)`);
@@ -690,9 +925,15 @@
                   });
                   return processedText;
                };
-               watch(activeAction, (newVal) => { if (newVal.type) nextTick(() => actionFormsRef.value?.scrollIntoView({ behavior: "smooth", block: "center" })); });
-               watch(searchQuery, () => { currentPage.value = 1; });
-               const handleStorageChange = (event) => { if (event.key === "mcd-user" && !event.newValue && !isProcessPending.value) forceLogout(); };
+               watch(activeAction, (newVal) => {
+                  if (newVal.type) nextTick(() => actionFormsRef.value?.scrollIntoView({ behavior: "smooth", block: "center" }));
+               });
+               watch(searchQuery, () => {
+                  currentPage.value = 1;
+               });
+               const handleStorageChange = (event) => {
+                  if (event.key === "mcd-user" && !event.newValue && !isProcessPending.value) forceLogout();
+               };
 
                onMounted(() => {
                   const storedUserJSON = localStorage.getItem("mcd-user");
@@ -702,16 +943,20 @@
                         Object.assign(user, storedUser);
                         refreshData();
                         resetIdleTimer();
-                     } else { localStorage.removeItem("mcd-user"); }
+                     } else {
+                        localStorage.removeItem("mcd-user");
+                     }
                   }
-                  // NEW: Initialize the Bootstrap modal instance
+                  
                   if (confirmationModalRef.value) {
-                      confirmationModal = new bootstrap.Modal(confirmationModalRef.value);
+                     confirmationModal = new bootstrap.Modal(confirmationModalRef.value);
                   }
                   const activityEvents = ["mousemove", "keydown", "click", "scroll"];
                   activityEvents.forEach((e) => window.addEventListener(e, resetIdleTimer, { passive: true }));
                   window.addEventListener("storage", handleStorageChange);
-                  setInterval(() => { if (user.isLoggedIn && !isProcessPending.value) runGoogleScript("ping").catch(forceLogout); }, 60000);
+                  setInterval(() => {
+                     if (user.isLoggedIn && !isProcessPending.value) runGoogleScript("ping").catch(forceLogout);
+                  }, 60000);
                });
                onUnmounted(() => {
                   clearTimeout(idleTimer);
@@ -721,9 +966,50 @@
                });
 
                return {
-                  user, loginForm, isLoggingIn, loginError, isDataLoaded, isSubmitting, headers, searchQuery, activeAction, actionFormsRef, isLoginFormValid, greetingMessage, filteredData, isPrivilegedUser, isActionInProgress, availableReviewerOptions, login, logout, refreshData, showApproval, showDisapproval, showAddReviewer, showRemoveReviewer, cancelAction, submitApproval, submitDisapproval, submitReviewerChange, formatDateCell, calculateDaysDifference, formatCellWithLineBreaks, paginatedData, currentPage, totalPages, nextPage, prevPage, toasts, removeToast, isProcessPending, showApprovedView, isApprovedDataLoading, toggleApprovedView,
-                  // NEW: Expose modal state and functions to the template
-                  confirmation, confirmAction, confirmationModalRef
+                  user,
+                  loginForm,
+                  isLoggingIn,
+                  loginError,
+                  isDataLoaded,
+                  isSubmitting,
+                  headers,
+                  searchQuery,
+                  activeAction,
+                  actionFormsRef,
+                  isLoginFormValid,
+                  greetingMessage,
+                  filteredData,
+                  isPrivilegedUser,
+                  isActionInProgress,
+                  availableReviewerOptions,
+                  login,
+                  logout,
+                  refreshData,
+                  showApproval,
+                  showDisapproval,
+                  showAddReviewer,
+                  showRemoveReviewer,
+                  cancelAction,
+                  submitApproval,
+                  submitDisapproval,
+                  submitReviewerChange,
+                  formatDateCell,
+                  calculateDaysDifference,
+                  formatCellWithLineBreaks,
+                  paginatedData,
+                  currentPage,
+                  totalPages,
+                  nextPage,
+                  prevPage,
+                  toasts,
+                  removeToast,
+                  isProcessPending,
+                  showApprovedView,
+                  isApprovedDataLoading,
+                  toggleApprovedView,
+                  confirmation,
+                  confirmAction,
+                  confirmationModalRef,
                };
             },
          }).mount("#app");
