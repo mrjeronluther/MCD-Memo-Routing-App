@@ -8,10 +8,13 @@ function doGet() {
 let cachedSheetData = null;
 
 function getSheetData(selectedColumns, startRow) {
+  // --- FIX: Dynamically identify the date column ---
+  // It is the second item in your selectedColumns array: [8, 14, 2, ...]
+  // So selectedColumns[1] will be 14.
+  const dateColumnNumber = selectedColumns[1]; 
+
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("importselectedcol");
   const lastRow = sheet.getLastRow();
-
-  // Default to row 1 if not specified
   startRow = startRow || 1;
 
   const numRows = lastRow - startRow + 1;
@@ -19,19 +22,21 @@ function getSheetData(selectedColumns, startRow) {
 
   const fullData = sheet.getRange(startRow, 1, numRows, sheet.getLastColumn()).getValues();
   const threeMonthsAgo = new Date();
-  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3); // Calculate date limit
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
-  // Only include rows where column 8 (index 7) has a value AND column 94 (index 93) is within the last 3 months
+  // --- FIX: Filter using the dynamic dateColumnNumber ---
   const filteredData = fullData.filter(row => {
     const col8Valid = row[7] !== undefined && row[7] !== null && String(row[7]).trim() !== '';
-    const col94Date = row[93] instanceof Date ? row[93] : null; // Ensure col 94 is a valid Date
-    const col94Valid = col94Date ? col94Date >= threeMonthsAgo : true; // Exclude older dates
+    
+    // Get the date from the correct column (e.g., column 14, which is index 13)
+    const dateValue = row[dateColumnNumber - 1]; 
+    const dateInColumn = dateValue instanceof Date ? dateValue : null;
+    const isDateValid = dateInColumn ? dateInColumn >= threeMonthsAgo : true;
 
-    return col8Valid && col94Valid;
+    return col8Valid && isDateValid;
   });
 
   return filteredData.map(row => {
-    // Ensure all rows are padded for selected column indexes
     while (row.length < Math.max(...selectedColumns)) {
       row.push('');
     }
@@ -39,8 +44,8 @@ function getSheetData(selectedColumns, startRow) {
     return selectedColumns.map(colIndex => {
       const cell = row[colIndex - 1];
 
-      // Check if colIndex is 94 and convert to string if it's a date
-      if (colIndex === 94 && cell instanceof Date) {
+      // --- FIX: Format the date using the dynamic dateColumnNumber ---
+      if (colIndex === dateColumnNumber && cell instanceof Date) {
         return Utilities.formatDate(cell, Session.getScriptTimeZone(), "MMM d, yyyy H:mm:ss");
       }
 
@@ -48,9 +53,6 @@ function getSheetData(selectedColumns, startRow) {
     });
   });
 }
-
-
-
 
 function clearSheetDataCache() {
   cachedSheetData = null;
@@ -75,8 +77,3 @@ function validateLogin(username, password) {
     };
   }
 }
-
-
-
-
-
