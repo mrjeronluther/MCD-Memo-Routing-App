@@ -468,107 +468,91 @@
                   }
                };
 
-               // REPLACE this function with the new version below
-          const submitReviewerChange = async () => {
-             if (activeAction.selected.length === 0) return;
-             const { label: refLabel, row: rowToUpdate, type: currentActionType } = activeAction;
-             const actionType = currentActionType === "addReviewer" ? "Add Reviewer" : "Remove Reviewer";
-             const toastId = addToast(actionType, refLabel);
-             isSubmitting.value = true;
+               const submitReviewerChange = async () => {
+                  if (activeAction.selected.length === 0) return;
+                  const { label: refLabel, row: rowToUpdate, type: currentActionType } = activeAction;
+                  const actionType = currentActionType === "addReviewer" ? "Add Reviewer" : "Remove Reviewer";
+                  const toastId = addToast(actionType, refLabel);
+                  isSubmitting.value = true;
+                  const rowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
+                  if (rowIndex === -1) {
+                     alert("Error: Row not found.");
+                     isSubmitting.value = false;
+                     removeToast(toastId);
+                     return;
+                  }
+                  const originalApproversText = tableData.value[rowIndex][7] || "";
+                  const selectedOptions = activeAction.selected.map((val) => allApproverOptions.value.find((opt) => opt.value === val)).filter(Boolean);
+                  const selectedLabels = selectedOptions.map((opt) => opt.label.trim());
+                  const payload = { referenceNumber: rowToUpdate[0], memoSubject: rowToUpdate[4] };
+                  let newApproversText, apiAction;
 
-             const rowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
-             if (rowIndex === -1) {
-                 alert("Error: Row not found.");
-                 isSubmitting.value = false;
-                 removeToast(toastId);
-                 return;
-             }
+                  if (currentActionType === "addReviewer") {
+                     newApproversText = (originalApproversText + "\n" + selectedLabels.map((label) => `${label} (ADDING...)`).join("\n")).trim();
+                     apiAction = "submitApproverValues";
+                     payload.approverValues = selectedOptions;
+                  } else {
+                     // "removeReviewer" action
+                     // Append (REMOVING...) to the name for temporary UI feedback
+                     newApproversText = originalApproversText;
+                     selectedLabels.forEach((label) => {
+                        const escapedLabel = label.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                        const regex = new RegExp(`(${escapedLabel})`, "g");
+                        newApproversText = newApproversText.replace(regex, `$1 (REMOVING...)`);
+                     });
+                     apiAction = "submitRemoveApprovers";
+                     payload.removeApprovers = selectedOptions;
+                  }
+                  tableData.value[rowIndex][7] = newApproversText;
+                  cancelAction();
+                  isSubmitting.value = false;
+                  try {
+                     await runGoogleScript(apiAction, payload, user);
+                     updateToast(toastId, "success", actionType, refLabel);
 
-             // --- Step 1: Store original state and apply optimistic update ---
-             const originalApproversText = tableData.value[rowIndex][7] || "";
-             const selectedOptions = activeAction.selected.map((val) => allApproverOptions.value.find((opt) => opt.value === val)).filter(Boolean);
-             const selectedLabels = selectedOptions.map((opt) => opt.label.trim());
-             const payload = { referenceNumber: rowToUpdate[0], memoSubject: rowToUpdate[4] };
-             let apiAction;
-
-             if (currentActionType === "addReviewer") {
-                 const optimisticText = (originalApproversText + "\n" + selectedLabels.map(label => `${label} (Added)`).join("\n")).trim();
-                 tableData.value[rowIndex][7] = optimisticText;
-                 apiAction = "submitApproverValues";
-                 payload.approverValues = selectedOptions;
-             } else { // 'removeReviewer'
-                 let newApproversText = originalApproversText;
-                 selectedLabels.forEach((label) => {
-                     const regex = new RegExp(`(^|\\n)\\s*•?\\s*${label.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")}\\s*,?`, "g");
-                     newApproversText = newApproversText.replace(regex, "");
-                 });
-                 tableData.value[rowIndex][7] = newApproversText.trim();
-                 apiAction = "submitRemoveApprovers";
-                 payload.removeApprovers = selectedOptions;
-             }
-             
-             cancelAction();
-             isSubmitting.value = false;
-
-             try {
-                 // --- Step 2: Call the server ---
-                 await runGoogleScript(apiAction, payload, user);
-                 updateToast(toastId, "success", actionType, refLabel);
-             } catch (error) {
-                 // --- Step 3 (Failure Path): Just show the error toast. Do not revert the UI yet. ---
-                 updateToast(toastId, "failure", actionType, refLabel, error);
-             } finally {
-                 // --- Step 4 (Cleanup): This runs for BOTH success and failure. ---
-                 // This ensures the UX is consistent for the "Add Reviewer" action.
-                 if (currentActionType === "addReviewer") {
-                     setTimeout(() => {
-                         const finalRowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
-                         if (finalRowIndex > -1) {
-                             // To ensure formatting is perfect, we build the final, correct string.
-                             // This handles the duplicate case by creating a unique set of names.
-                             
-                             // 1. Get a clean list of original approvers.
-                             const originalList = originalApproversText.split('\n')
-                               .map(s => s.replace(/•/g, '').trim()) // Clean up bullets and spaces
-                               .filter(Boolean); // Remove any empty lines
-
-                             // 2. Combine with the labels the user just added.
-                             const combinedList = [...originalList, ...selectedLabels];
-                             
-                             // 3. Create a unique set to automatically handle the "duplicate" case.
-                             const uniqueList = [...new Set(combinedList)];
-                             
-                             // 4. Join back into a single string for the cell.
-                             const finalCorrectText = uniqueList.join('\n');
-                             
-                             // 5. Replace the entire cell content. Vue's formatter will handle the rest.
-                             tableData.value[finalRowIndex][7] = finalCorrectText;
-                         }
-                     }, 3000);
-                 }
-             }
-         };
+                     const finalRowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
+                     if (finalRowIndex !== -1) {
+                        let currentText = tableData.value[finalRowIndex][7];
+                        if (currentActionType === "addReviewer") {
+                           // Finalize "add": remove the (ADDING...) status
+                           selectedLabels.forEach((label) => {
+                              currentText = currentText.replace(`${label} (ADDING...)`, label.trim());
+                           });
+                        } else {
+                           // "removeReviewer" action
+                           // UPDATED: Finalize "remove": precisely remove only the name + status
+                           selectedLabels.forEach((label) => {
+                              const escapedLabel = label.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                              // This regex finds the label and status, plus optional surrounding whitespace, bullets, and commas
+                              const removalRegex = new RegExp(`\\s*•?\\s*${escapedLabel}\\s*\\(REMOVING...\\)\\s*,?`, "g");
+                              currentText = currentText.replace(removalRegex, "");
+                           });
+                           // Clean up any potential leftover artifacts, like a trailing comma
+                           currentText = currentText.replace(/,(\s*)$/, "$1");
+                        }
+                        tableData.value[finalRowIndex][7] = currentText.trim();
+                     }
+                  } catch (error) {
+                     updateToast(toastId, "failure", actionType, refLabel);
+                     // Reverts to the original text on failure for both actions
+                     const failedRowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
+                     if (failedRowIndex > -1) tableData.value[failedRowIndex][7] = originalApproversText;
+                  }
+               };
 
                const addToast = (actionType, refLabel) => {
                   const id = toastIdCounter++;
                   toasts.value.unshift({ id, status: "ongoing", message: `Processing ${actionType} for '${refLabel}'...` });
                   return id;
                };
-               const updateToast = (id, newStatus, actionType, refLabel, error = null) => {
+               const updateToast = (id, newStatus, actionType, refLabel) => {
                   const toast = toasts.value.find((t) => t.id === id);
                   if (toast) {
-                      toast.status = newStatus;
-                      if (newStatus === "success") {
-                          toast.message = `${actionType} for '${refLabel}' was successful.`;
-                      } else {
-                          // Use the specific error message from the server if available, otherwise use the generic one.
-                          toast.message = error && error.message 
-                              ? error.message 
-                              : `${actionType} for '${refLabel}' failed. The data has been restored.`;
-                      }
-                      setTimeout(() => removeToast(id), newStatus === "success" ? 5000 : 15000);
+                     toast.status = newStatus;
+                     toast.message = newStatus === "success" ? `${actionType} for '${refLabel}' was successful.` : `${actionType} for '${refLabel}' failed. The reviewer has been restored.`;
+                     setTimeout(() => removeToast(id), newStatus === "success" ? 5000 : 15000);
                   }
-              };
+               };
                const removeToast = (id) => {
                   toasts.value = toasts.value.filter((t) => t.id !== id);
                };
@@ -711,36 +695,34 @@
                };
                const formatDateCell = (value) => (!value ? "" : new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }));
                const calculateDaysDifference = (dateStr) => (!dateStr ? "" : `${Math.floor((Date.now() - new Date(dateStr).getTime()) / 864e5)} day(s)`);
-               
-                  const formatCellWithLineBreaks = (text) => {
-                      // 1. Handle empty or invalid input immediately.
-                      if (typeof text !== 'string' || !text.trim()) {
-                          return "";
-                      }
 
-                      // 2. Start with the raw text from the cell.
-                      let processedText = text;
+               const formatCellWithLineBreaks = (text) => {
+                  // 1. Handle empty or invalid input immediately.
+                  if (typeof text !== "string" || !text.trim()) {
+                     return "";
+                  }
 
-                      // 3. First, find the main section headers and format them, adding the necessary spacing between sections.
-                      // This establishes the overall structure. Using 'gi' makes it case-insensitive.
-                      processedText = processedText
-                          .replace(/\bApproved:/gi, "<strong>Approved:</strong>")
-                          .replace(/\bPending:/gi, "<br><br><strong>Pending:</strong>"); // Adds the critical gap between sections
+                  // 2. Start with the raw text from the cell.
+                  let processedText = text;
 
-                      // 4. Now, iterate through every known formatter name.
-                      // This is the core of the fix. It finds a name and applies formatting only to that name.
-                      FORMATTER_NAMES.forEach(name => {
-                          // Creates a specific, case-sensitive Regular Expression to find the name as a whole word.
-                          const regex = new RegExp(`\\b(${name.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")})\\b`, 'g');
+                  // 3. First, find the main section headers and format them, adding the necessary spacing between sections.
+                  // This establishes the overall structure. Using 'gi' makes it case-insensitive.
+                  processedText = processedText.replace(/\bApproved:/gi, "<strong>Approved:</strong>").replace(/\bPending:/gi, "<br><br><strong>Pending:</strong>"); // Adds the critical gap between sections
 
-                          // The replacement adds the bullet point, line break, and bold tag ONLY to the name itself.
-                          // Any text that follows the name, such as "(Remarks: ...)", is left untouched and remains on the same line.
-                          processedText = processedText.replace(regex, `<br>  • <strong>$1</strong>`);
-                      });
+                  // 4. Now, iterate through every known formatter name.
+                  // This is the core of the fix. It finds a name and applies formatting only to that name.
+                  FORMATTER_NAMES.forEach((name) => {
+                     // Creates a specific, case-sensitive Regular Expression to find the name as a whole word.
+                     const regex = new RegExp(`\\b(${name.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")})\\b`, "g");
 
-                      // 5. Return the fully processed HTML string.
-                      return processedText;
-                  };
+                     // The replacement adds the bullet point, line break, and bold tag ONLY to the name itself.
+                     // Any text that follows the name, such as "(Remarks: ...)", is left untouched and remains on the same line.
+                     processedText = processedText.replace(regex, `<br>  • <strong>$1</strong>`);
+                  });
+
+                  // 5. Return the fully processed HTML string.
+                  return processedText;
+               };
                watch(activeAction, (newVal) => {
                   if (newVal.type) nextTick(() => actionFormsRef.value?.scrollIntoView({ behavior: "smooth", block: "center" }));
                });
@@ -816,7 +798,6 @@
                   toasts,
                   removeToast,
                   isProcessPending,
-                  // --- Expose new properties to the template ---
                   showApprovedView,
                   isApprovedDataLoading,
                   toggleApprovedView,
