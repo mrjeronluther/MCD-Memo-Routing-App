@@ -119,7 +119,7 @@
     </div>
 
 <script>
-    // --- VUE JAVASCRIPT --- NO CHANGES NEEDED HERE
+    // --- VUE JAVASCRIPT ---
     const { createApp, ref, computed, watch } = Vue;
 
     const FORMATTER_NAMES = [
@@ -239,7 +239,8 @@
 
             const fetchData = async () => {
                 try {
-                    const selectedColumns = [8, 94, 2, 3, 4, 1, 5, 7, 6];
+                    // *** THIS IS THE ONLY CHANGE IN THIS FILE ***
+                    const selectedColumns = [8, 14, 2, 3, 4, 1, 5, 7, 6];
                     const data = await runGoogleScript('getSheetData', selectedColumns, 2);
                     tableData.value = data;
                     tableLoaded.value = true;
