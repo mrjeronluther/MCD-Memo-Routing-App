@@ -52,10 +52,8 @@ function doGet() {
 function submitRemoveApprovers(data, user) {
     const lock = LockService.getScriptLock();
     try {
-        // Wait up to 30 seconds to acquire the lock. Throws an error on timeout.
         lock.waitLock(30000);
 
-        // --- Critical Section: All sheet read/write operations happen here ---
         const required = ["referenceNumber", "removeApprovers"];
         const sanitizedData = validateAndSanitizeInputs(data, required);
         if (!user || !isUserPrivileged(user.displayName)) {
@@ -64,20 +62,20 @@ function submitRemoveApprovers(data, user) {
         
         const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
         const sheet = spreadsheet.getSheetByName("Conso");
-        if (!sheet) throw new Error("Sheet 'Conso' not found.");
+        if (!sheet) throw new Error("Server Error: Sheet 'Conso' not found. Please contact an administrator.");
         
         Logger.log("Privileged action 'submitRemoveApprovers' initiated by: %s", user.displayName);
         
         const referenceNumber = sanitizedData.referenceNumber;
         const rawApproverValues = sanitizedData.removeApprovers;
         
-        // Normalize the approver values to just their 'value' string (e.g., "RCS", "GMC")
         const approversToRemove = (rawApproverValues || [])
             .map(val => (val && typeof val === 'object' && val.value) ? val.value.trim() : null)
-            .filter(Boolean); // Filter out any null or empty values
+            .filter(Boolean);
 
         if (approversToRemove.length === 0) {
-            throw new Error("Submission aborted: No valid approvers were selected for removal.");
+            // This is a client-side logic error, but we catch it here as a fallback.
+            throw new Error("Invalid Request: No valid approvers were selected for removal.");
         }
         
         const lastRow = sheet.getLastRow();
@@ -85,14 +83,14 @@ function submitRemoveApprovers(data, user) {
         const matchRowIndex = refColumn.findIndex((row) => row[0] === referenceNumber);
         
         if (matchRowIndex === -1) {
-            throw new Error(`Reference number '${referenceNumber}' not found in column E.`);
+            throw new Error(`Data mismatch: Reference number '${referenceNumber}' could not be found. The table may have changed. Please refresh.`);
         }
         
         const actualRow = matchRowIndex + 2;
         Logger.log("Matched reference number at row: " + actualRow);
         
         const startColumn = 16; // Column P
-        const totalColumns = 60; // Up to your defined range
+        const totalColumns = 60;
         const targetRange = sheet.getRange(actualRow, startColumn, 1, totalColumns);
         const rowData = targetRange.getValues()[0];
         let removedCount = 0;
@@ -100,28 +98,26 @@ function submitRemoveApprovers(data, user) {
         for (let i = 0; i < rowData.length; i++) {
             if (approversToRemove.includes(rowData[i])) {
                 Logger.log("Removing approver: %s from column index %s", rowData[i], i + startColumn);
-                rowData[i] = ""; // Clear the cell
+                rowData[i] = "";
                 removedCount++;
             }
         }
         
         if (removedCount === 0) {
-            // This is a valid scenario if another user removed them first, so we don't throw an error.
-            // We just log it and return success as the desired state (approver is gone) is achieved.
-            Logger.log("Warning: None of the specified approvers were found to remove, they may have already been actioned.");
+            Logger.log("Warning: None of the specified approvers were found to remove, they may have already been actioned by another user.");
         } else {
-             // The single write operation for this function.
             targetRange.setValues([rowData]);
             Logger.log("✅ Successfully removed %s approver(s) from row %s.", removedCount, actualRow);
         }
+        
+        // Explicitly return success
+        return { success: true };
 
     } catch (error) {
-        // This block catches errors from both the lock and the main logic.
-        Logger.log("submitRemoveApprovers ERROR: " + error.message);
+        Logger.log("submitRemoveApprovers ERROR: %s \nStack: %s", error.message, error.stack);
         // Propagate a clean error message to the client.
         throw new Error("Remove Approver Failed: " + error.message);
     } finally {
-        // --- CRITICAL: Always release the lock to prevent deadlocks.
         lock.releaseLock();
     }
 }
@@ -129,20 +125,15 @@ function submitRemoveApprovers(data, user) {
 
 // REPLACE this function in your Code.gs
 function submitApproverValues(data, user) {
-    // --- Step 1: Prepare variables for post-lock operations ---
     let emailTasks = [];
-    let wasSuccessful = false; // Flag to ensure we only email on success.
-    
-    // Constants for the email can be defined early.
+    let wasSuccessful = false;
     const addedBy = user.displayName;
     const memoFinderUrl = "https://script.google.com/a/macros/megaworld-lifestyle.com/s/AKfycbymM8ffl8z24fG8zzNcE2_zSxvbR2bcP5BNxthFY9FkPremFC--A-zi3TRQOjUKh1Wq/exec";
 
     const lock = LockService.getScriptLock();
     try {
-        // Wait up to 30 seconds to acquire the lock.
         lock.waitLock(30000);
 
-        // --- Step 2: Critical Section (Fast Read-Modify-Write Operations Only) ---
         const required = ["referenceNumber", "approverValues", "memoSubject"];
         const sanitizedData = validateAndSanitizeInputs(data, required);
 
@@ -152,7 +143,7 @@ function submitApproverValues(data, user) {
 
         const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
         const sheet = spreadsheet.getSheetByName("Conso");
-        if (!sheet) throw new Error("Sheet 'Conso' not found.");
+        if (!sheet) throw new Error("Server Error: Sheet 'Conso' not found. Please contact an administrator.");
 
         Logger.log("Privileged action 'submitApproverValues' initiated by: %s", user.displayName);
 
@@ -161,7 +152,7 @@ function submitApproverValues(data, user) {
         const normalizedApprovers = (sanitizedData.approverValues || []).filter(val => val && typeof val === "object" && val.value);
 
         if (normalizedApprovers.length === 0) {
-            throw new Error("Submission aborted: No valid approvers provided.");
+            throw new Error("Invalid Request: No valid approvers provided.");
         }
 
         const lastRow = sheet.getLastRow();
@@ -169,114 +160,116 @@ function submitApproverValues(data, user) {
         const matchRowIndex = refColumn.findIndex(row => row[0] === referenceNumber);
 
         if (matchRowIndex === -1) {
-            throw new Error(`Reference number '${referenceNumber}' not found in column E.`);
+            throw new Error(`Data mismatch: Reference number '${referenceNumber}' could not be found. The table may have changed. Please refresh.`);
         }
 
         const actualRow = matchRowIndex + 2;
-        Logger.log("Matched reference number at row: " + actualRow);
-
         const startColumn = 14; // Column N
-        const totalColumns = 67; // Your defined range
+        const totalColumns = 67;
         const targetRange = sheet.getRange(actualRow, startColumn, 1, totalColumns);
         const rowData = targetRange.getValues()[0];
 
-        // Check for duplicates before attempting to write.
-        const approverValues = normalizedApprovers.map(a => a.value);
-        const duplicates = approverValues.filter(val => rowData.includes(val));
-        if (duplicates.length > 0) {
-            const approverLabels = normalizedApprovers.filter(a => duplicates.includes(a.value)).map(a => a.label);
-            throw new Error(`Duplicate approver(s) already exist in the list: ${approverLabels.join(", ")}`);
+        // --- NEW LOGIC: Identify new vs. duplicate approvers ---
+
+        // 1. Create a Set of existing approvers for efficient lookup.
+        const existingApproverValues = new Set(rowData.filter(Boolean));
+
+        // 2. Filter the submitted list to get only the ones that are truly new.
+        const newApproversToAdd = normalizedApprovers.filter(approver => !existingApproverValues.has(approver.value));
+        const duplicateApprovers = normalizedApprovers.filter(approver => existingApproverValues.has(approver.value));
+
+        // Log the findings for easier debugging
+        if (duplicateApprovers.length > 0) {
+            Logger.log(`Duplicate approvers identified (will be ignored): ${duplicateApprovers.map(a => a.label).join(", ")}`);
+        }
+        if (newApproversToAdd.length > 0) {
+            Logger.log(`New approvers to be added: ${newApproversToAdd.map(a => a.label).join(", ")}`);
         }
 
-        // Find empty slots and add new approvers.
+          // 3. If there are no new approvers to add, we can stop and inform the user.
+        if (newApproversToAdd.length === 0) {
+            Logger.log("No new approvers to add. All selected were duplicates.");
+            // We release the lock here before returning.
+            // CHANGE: Return a custom success 'message' instead of a 'warning'.
+            // This tells the frontend to show a green success toast.
+            return {
+                success: true,
+                message: `Success: The selected reviewer(s) were already on the list.`
+            };
+        }
+        
+        // --- END NEW LOGIC ---
+
+        // Now, only process the newApproversToAdd
         let insertIndex = 0;
-        for (const approver of normalizedApprovers) {
+        for (const approver of newApproversToAdd) { // Use the filtered list
             while (insertIndex < rowData.length && rowData[insertIndex]) {
                 insertIndex++;
             }
             if (insertIndex >= rowData.length) {
-                throw new Error("Not enough empty slots in the sheet to add all selected approvers.");
+                throw new Error("Process Failed: Not enough empty slots in the sheet to add all selected approvers. Please contact an administrator.");
             }
             rowData[insertIndex] = approver.value;
+            // Add the new value to our Set so we don't try to add the same person twice in one request
+            existingApproverValues.add(approver.value); 
         }
 
-        // Single write operation. This is the core of the critical section.
         targetRange.setValues([rowData]);
-        Logger.log("Successfully saved new approvers to the sheet.");
+        Logger.log("✅ Successfully saved new approvers to the sheet.");
         
-        // --- Step 3: Prepare Email Data (still inside the lock for data consistency) ---
-        // Gather all necessary info into 'emailTasks' array. This is extremely fast.
-        emailTasks = normalizedApprovers.map(approver => ({
+        // Prepare email tasks ONLY for the new approvers
+        emailTasks = newApproversToAdd.map(approver => ({
             email: approver.email,
             label: approver.label,
-            cc: approver.cc || [], // Ensure cc is an array
+            cc: approver.cc || [],
             memoSubject: memoSubject,
             referenceNumber: referenceNumber
         }));
-
-        // Set our flag to true, indicating the locked section completed without errors.
+        
         wasSuccessful = true;
 
     } catch (error) {
-        Logger.log("submitApproverValues ERROR inside lock: " + error.message);
-        // The 'wasSuccessful' flag remains false, so no emails will be sent.
+        Logger.log("submitApproverValues ERROR inside lock: %s \nStack: %s", error.message, error.stack);
         throw new Error("Submit Approver Failed: " + error.message);
     } finally {
-        // --- Step 4: Release the Lock ---
-        // CRITICAL: Always release the lock, now happening BEFORE the slow email process.
         lock.releaseLock();
         Logger.log("Lock released for 'submitApproverValues'.");
     }
     
-    // --- Step 5: Asynchronous-like Process (Slow Operations Outside the Lock) ---
-    // This runs AFTER the lock is released. Other users can now write to the sheet.
+    // --- Post-Lock Operations (Emailing) ---
+    // This section remains largely the same, but it now only operates on `emailTasks`
+    // which was populated exclusively with new approvers.
     if (wasSuccessful && emailTasks.length > 0) {
-        Logger.log("Starting email dispatch for %s task(s).", emailTasks.length);
+        Logger.log("Starting email dispatch for %s new approver(s).", emailTasks.length);
+        const emailFailures = [];
 
         emailTasks.forEach((task) => {
             if (task.email && task.label) {
                 try {
                     const emailSubject = `For Approval: ${task.memoSubject} (Ref: ${task.referenceNumber})`;
-                    const emailBody = `
-                        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                            <p>Hello ${task.label},</p>
-                            <p>You have been added as a reviewer by <strong>${addedBy}</strong> for the following memo:</p>
-                            <ul>
-                                <li><strong>Reference #:</strong> ${task.referenceNumber}</li>
-                                <li><strong>Subject:</strong> ${task.memoSubject}</li>
-                            </ul>
-                            <p>You can view and take action on this document by logging into the <a href="${memoFinderUrl}" target="_blank">MCD Memo Routing System</a>.</p>
-                            <br/>
-                            <p>Thank you.<br/>MCD Document Routing System</p>
-                        </div>
-                    `;
-
-                    const mailOptions = {
-                        to: task.email,
-                        subject: emailSubject,
-                        htmlBody: emailBody,
-                        name: "MCD Memo Routing Notification",
-                    };
-
-                    if (task.cc && Array.isArray(task.cc) && task.cc.length > 0) {
-                        mailOptions.cc = task.cc.join(',');
-                    }
-                    
+                    const emailBody = `<div style="font-family: Arial, sans-serif; line-height: 1.6;"><p>Hello ${task.label},</p><p>You have been added as a reviewer by <strong>${addedBy}</strong> for the following memo:</p><ul><li><strong>Reference #:</strong> ${task.referenceNumber}</li><li><strong>Subject:</strong> ${task.memoSubject}</li></ul><p>You can view and take action on this document by logging into the <a href="${memoFinderUrl}" target="_blank">MCD Memo Routing System</a>.</p><br/><p>Thank you.<br/>MCD Document Routing System</p></div>`;
+                    const mailOptions = { to: task.email, subject: emailSubject, htmlBody: emailBody, name: "MCD Memo Routing Notification" };
+                    if (task.cc && Array.isArray(task.cc) && task.cc.length > 0) { mailOptions.cc = task.cc.join(','); }
                     MailApp.sendEmail(mailOptions);
-
                     let logMessage = `Sent "Added Reviewer" notification to ${task.label} <${task.email}>`;
-                    if (mailOptions.cc) {
-                       logMessage += ` with CC to: ${mailOptions.cc}`;
-                    }
+                    if (mailOptions.cc) { logMessage += ` with CC to: ${mailOptions.cc}`; }
                     Logger.log(logMessage);
-
                 } catch (e) {
-                    // Log failure for a single email but continue with the rest.
-                    Logger.log(`Failed to send "Added Reviewer" email to ${task.label}. Error: ${e.message}`);
+                    Logger.log(`CRITICAL WARNING: Failed to send "Added Reviewer" email to ${task.label}. Error: ${e.message}`);
+                    emailFailures.push(task.label);
                 }
             }
         });
+
+        if (emailFailures.length > 0) {
+            return {
+                success: true,
+                warning: `Approvers added, but failed to send email notifications to: ${emailFailures.join(", ")}. Please notify them manually.`
+            };
+        }
     }
+    
+    return { success: true };
 }
 
 function getSheetData(sheetName) {
