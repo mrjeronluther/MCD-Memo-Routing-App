@@ -12,18 +12,38 @@
       /* Styles remain the same */
       body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background-color: white; color: #333; margin: 0; padding: 1rem; }
       h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 1rem; }
-      .container-custom { max-width: 1140px; margin: 0 auto; padding: 1rem; }
+      .container-custom {
+        width: 95%; /* Use 95% of the screen width */
+        max-width: 2000px; /* But don't let it get wider than 1600px */
+        margin: 0 auto;
+        padding: 1rem;
+      }
       .card { border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); border: 1px solid #dee2e6; }
-      .table-wrapper { overflow-x: auto; margin-bottom: 1.5rem; }
-      .table-body-scroll { max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.5rem; }
-      .table { width: 100%; font-size: 0.85rem; min-width: 800px; border-collapse: collapse; }
-      .table th, .table td { padding: 0.75rem; white-space: nowrap; text-align: center; border-bottom: 1px solid #eaeaea; }
+      .table-wrapper { margin-bottom: 1.5rem; }
+      .table-body-scroll { max-height: 500px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.5rem; }
+      .table {
+        width: 3800px
+        font-size: 0.85rem;
+        border-collapse: collapse;
+        table-layout: fixed; /* MODIFIED: Ensures column widths are based on header widths */
+      }
+      .table th, .table td {
+        padding: 0.70rem;
+        white-space: normal;
+        word-break: break-word; /* MODIFIED: Allows long words to break and wrap */
+        text-align: center;
+        border-bottom: 1px solid #eaeaea;
+      }
       .table thead th { position: sticky; top: 0; background-color: #f8f9fa; font-weight: 600; color: #222; z-index: 2; border-bottom: 2px solid #dee2e6; }
       .table tbody tr:hover { background-color: #f1f1f1; }
-      @media (min-width: 768px) {
+
+      /* --- MODIFIED: Renamed class for clarity, only handles text alignment --- */
+      .left-align-cell {
+        text-align: left !important;
+      }
+
+      @media (min-width: 240px) {
         h1 { font-size: 2rem; }
-        .table { font-size: 0.9rem; }
-        .login-card { max-width: 500px; margin: auto; }
       }
     </style>
   </head>
@@ -38,7 +58,7 @@
       <header class="text-center mb-4">
         <img src="https://raw.githubusercontent.com/mrjeronluther/Memo-Routing-Landing-Page/main/WhatsApp%20Image%202025-06-05%20at%2015.44.42_3fc69535.jpg" alt="Header Image" class="img-fluid" style="max-width: 100%; width: 600px;" />
       </header>
-      
+
       <!-- LOGIN DISPLAY -->
       <div v-if="!isLoggedIn" class="d-flex justify-content-center align-items-center" style="min-height: 15vh;">
         <div class="card p-4 bg-white" style="width: 100%; max-width: 500px;">
@@ -46,7 +66,7 @@
           <div class="card-body">
             <h3 class="card-title text-center mb-4">Login</h3>
             <div class="mb-3">
-              <input v-model="username" type="text" class="form-control" placeholder="Username" required />
+              <input v-model="username" id="username" class="form-control" placeholder="Username" required />
             </div>
             <div class="mb-3">
               <input v-model="password" @keyup.enter="login" type="password" class="form-control" placeholder="Password" required />
@@ -69,21 +89,57 @@
           <h1 class="fw-bold">MCD Document Finder</h1>
         </div>
         <br />
-        <input v-model="searchTerm" class="form-control mb-3" placeholder="Enter Reference Number to search..." />
-        
+
+        <!-- START: UPDATED SEARCH AND FILTER CONTROLS -->
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+            <input v-model="searchTerm" class="form-control" placeholder="Enter Reference Number to search..." />
+            <div class="btn-group flex-shrink-0" role="group">
+                <button @click="showPending()" type="button" class="btn" :class="{'btn-primary': currentView === 'pending', 'btn-outline-primary': currentView !== 'pending'}">
+                    Pending <span class="badge bg-light text-dark ms-1">{{ pendingCount }}</span>
+                </button>
+                <button @click="showApproved()" type="button" class="btn" :class="{'btn-primary': currentView === 'approved', 'btn-outline-primary': currentView !== 'approved'}">
+                    Approved <span class="badge bg-light text-dark ms-1">{{ approvedCount }}</span>
+                </button>
+                <!-- START: ADDED -->
+                <button @click="showDisapproved()" type="button" class="btn" :class="{'btn-danger': currentView === 'disapproved', 'btn-outline-danger': currentView !== 'disapproved'}">
+                    Disapproved <span class="badge bg-light text-dark ms-1">{{ disapprovedCount }}</span>
+                </button>
+                <!-- END: ADDED -->
+            </div>
+        </div>
+        <!-- END: UPDATED SEARCH AND FILTER CONTROLS -->
+
         <div v-if="filteredData.length > 1" class="table-wrapper">
           <div class="table-body-scroll">
             <table class="table table-bordered table-hover table-sm mb-0">
               <thead>
                 <tr>
-                  <th v-for="(col, index) in filteredData[0]" :key="'header-' + index">{{ col }}</th>
+                  <!-- MODIFIED: Applied dynamic style and class to headers -->
+                  <th v-for="(col, index) in filteredData[0]"
+                      :key="'header-' + index"
+                      :style="getColumnStyle(index)"
+                      :class="{'left-align-cell': index === 4 || index === 5}">
+                      {{ col }}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(row, rowIndex) in filteredData.slice(1)" :key="'row-' + rowIndex">
-                  <td v-for="(cell, colIndex) in row" :key="'cell-' + rowIndex + '-' + colIndex">
-                    <template v-if="colIndex === 8">
-                      <a v-if="cell" :href="cell" target="_blank" rel="noopener">View MEMO</a>
+                  <!--
+                    MODIFIED: Only the alignment class is needed now.
+                    The width is controlled by the header above.
+                  -->
+                  <td v-for="(cell, colIndex) in row"
+                      :key="'cell-' + rowIndex + '-' + colIndex"
+                      :class="{'left-align-cell': colIndex === 4 || colIndex === 5}">
+
+                    <!-- All the inner logic for formatting cells remains exactly the same -->
+                    <template v-if="colIndex === 9">
+                      <a v-if="cell" :href="cell" target="_blank" rel="noopener" class="btn btn-link btn-sm">View Status Page</a>
+                      <span v-else class="text-muted">No Link</span>
+                    </template>
+                    <template v-else-if="colIndex === 8">
+                      <a v-if="cell" :href="cell" target="_blank" rel="noopener" class="btn btn-link btn-sm">View Memo</a>
                       <span v-else class="text-muted">No Link</span>
                     </template>
                     <div v-else-if="colIndex === 5" class="text-start" v-html="formatCellWithLineBreaks(cell)"></div>
@@ -98,7 +154,6 @@
             </table>
           </div>
 
-          <!-- START: NEW PAGINATION CONTROLS (Updated Style) -->
           <div v-if="totalPages > 1" class="mt-3 d-flex justify-content-center align-items-center" aria-label="Table navigation">
             <button @click="prevPage()" :disabled="currentPage === 1" class="btn btn-outline-primary btn-sm me-2">
               Previous
@@ -108,10 +163,8 @@
               Next
             </button>
           </div>
-          <!-- END: NEW PAGINATION CONTROLS -->
-          
         </div>
-        
+
         <div v-else class="text-center p-4">
           <p class="text-muted">No matching data found for your user and search query.</p>
         </div>
@@ -119,18 +172,9 @@
     </div>
 
 <script>
-    // --- VUE JAVASCRIPT ---
     const { createApp, ref, computed, watch } = Vue;
 
-    const FORMATTER_NAMES = [
-        "Graham Coates", "Rosalyn Segura", "Michael Lao", "Tinay Villanueva", "Lorence Aurello", "Jaye Trich Pizarro",
-        "Joy Melitante", "Alex Flores", "Aurora Pastolero", "Mariano Caleja", "Brix Valdenarro", "Ernesto Andrade",
-        "Dustin Sta. Maria", "Jenel Ann Cruzgarcia", "Doreen Penilla", "Frances Armian", "Denisse Malong", "Kevin Lin",
-        "Juvi Masilungan", "Jhoanalyn Gatdula", "Mary Arceo", "Annalee Pine", "Arralen Batallones", "Ma Dulce Cuenca",
-        "Aizelle Anne Yalong", "Henedina Viado", "Oauie Banagan", "Michelle Ong", "Ma Fatima Bausin", "Melanie Lingon",
-        "Stephen Sumilang", "Patricia Mari Quierez", "Rosa Cecilia Salvador", "Janice Cadog", "Camsy Elvina",
-        "Mikee Vivo", "Vanessa Vicente", "Tyron Tan",
-    ];
+    const FORMATTER_NAMES = [ "Graham Coates", "Rosalyn Segura", "Michael Lao", "Tinay Villanueva", "Lorence Aurello", "Jaye Trich Pizarro", "Joy Melitante", "Alex Flores", "Aurora Pastolero", "Mariano Caleja", "Brix Valdenarro", "Ernesto Andrade", "Dustin Sta. Maria", "Jenel Ann Cruzgarcia", "Doreen Penilla", "Frances Armian", "Denisse Malong", "Kevin Lin", "Juvi Masilungan", "Jhoanalyn Gatdula", "Mary Arceo", "Annalee Pine", "Arralen Batallones", "Ma Dulce Cuenca", "Aizelle Anne Yalong", "Henedina Viado", "Oauie Banagan", "Michelle Ong", "Ma Fatima Bausin", "Melanie Lingon", "Stephen Sumilang", "Patricia Mari Quierez", "Rosa Cecilia Salvador", "Janice Cadog", "Camsy Elvina", "Mikee Vivo", "Vanessa Vicente", "Tyrone Tan", ];
 
     createApp({
         setup() {
@@ -140,6 +184,7 @@
             const password = ref("");
             const loginError = ref("");
             const loggedInUsername = ref("");
+            const isSuperUser = ref(false);
             const tableData = ref([]);
             const tableLoaded = ref(false);
             const searchTerm = ref("");
@@ -147,27 +192,61 @@
             const currentPage = ref(1);
             const rowsPerPage = 30;
 
-            
+            const currentView = ref('pending');
+
             const isFormValid = computed(() => {
                 return username.value.trim() !== "" && password.value.trim() !== "";
             });
-            
-            const allFilteredRows = computed(() => {
-                if (!loggedInUsername.value || tableData.value.length === 0) {
-                    return [];
+
+            const userFilteredRows = computed(() => {
+                if (tableData.value.length <= 1) return [];
+                let rows = tableData.value.slice(1);
+                rows = rows.filter(row => row[0] !== undefined && row[0] !== null && row[0] !== '');
+                if (!isSuperUser.value) {
+                    const user = loggedInUsername.value.toLowerCase();
+                    rows = rows.filter((row) => {
+                        const col2 = row[2];
+                        const col3 = row[3];
+                        return (col2 && col2.toString().toLowerCase() === user) || (col3 && col3.toString().toLowerCase() === user);
+                    });
                 }
-                const header = tableData.value[0];
-                const rows = tableData.value.slice(1);
-                const user = loggedInUsername.value.toLowerCase();
-                const filteredRows = rows.filter((row) => {
-                    const col2 = row[2];
-                    const col3 = row[3];
-                    return (col2 && col2.toString().toLowerCase() === user) || (col3 && col3.toString().toLowerCase() === user);
-                });
-                const search = searchTerm.value.trim().toLowerCase();
-                const searchedRows = search ? filteredRows.filter((row) => row[0] && row[0].toString().toLowerCase().includes(search)) : filteredRows;
-                return [header, ...searchedRows];
+                return rows;
             });
+
+            const pendingCount = computed(() => {
+                return userFilteredRows.value.filter(row => row[6] && row[6].toString().toLowerCase() === 'pending').length;
+            });
+
+            const approvedCount = computed(() => {
+                return userFilteredRows.value.filter(row => row[6] && row[6].toString().toLowerCase() === 'approved').length;
+            });
+
+            // ADDED: Computed property for the disapproved count
+            const disapprovedCount = computed(() => {
+                return userFilteredRows.value.filter(row => row[6] && row[6].toString().toLowerCase() === 'disapproved').length;
+            });
+
+            const allFilteredRows = computed(() => {
+                const header = tableData.value.length > 0 ? tableData.value[0] : [];
+                if (!header.length) return [];
+
+                let rowsToFilter = userFilteredRows.value;
+
+                if (currentView.value === 'pending') {
+                    rowsToFilter = rowsToFilter.filter(row => row[6] && row[6].toString().toLowerCase() === 'pending');
+                } else if (currentView.value === 'approved') {
+                    rowsToFilter = rowsToFilter.filter(row => row[6] && row[6].toString().toLowerCase() === 'approved');
+                } else if (currentView.value === 'disapproved') { // ADDED: Condition to filter by 'disapproved'
+                    rowsToFilter = rowsToFilter.filter(row => row[6] && row[6].toString().toLowerCase() === 'disapproved');
+                }
+
+                const search = searchTerm.value.trim().toLowerCase();
+                if (search) {
+                    rowsToFilter = rowsToFilter.filter((row) => row[0] && row[0].toString().toLowerCase().includes(search));
+                }
+                return [header, ...rowsToFilter];
+            });
+
 
             const filteredData = computed(() => {
                 const rows = allFilteredRows.value;
@@ -185,7 +264,39 @@
                 if (totalRows <= 0) return 1;
                 return Math.ceil(totalRows / rowsPerPage);
             });
-            
+
+            // --- NEW: Method to dynamically calculate column widths ---
+            const getColumnStyle = (index) => {
+                // Return empty if data isn't loaded yet to avoid errors
+                if (filteredData.value.length < 1 || !filteredData.value[0]) return {};
+
+                const totalColumns = filteredData.value[0].length;
+                if (totalColumns === 0) return {};
+
+                const wideColumns = [4, 5]; // The indices of the columns to make wider
+                const wideColumnCount = wideColumns.length;
+                const normalColumnCount = totalColumns - wideColumnCount;
+
+                // Assign weights for distribution. A wide column is 3x a normal one.
+                const wideColumnWeight = 3;
+                const normalColumnWeight = 1;
+
+                // Calculate the sum of all weights
+                const totalWeight = (wideColumnCount * wideColumnWeight) + (normalColumnCount * normalColumnWeight);
+                if (totalWeight === 0) return {}; // Prevent division by zero
+
+                let widthPercent;
+                // Check if the current column index is one of the designated wide columns
+                if (wideColumns.includes(index)) {
+                    widthPercent = (wideColumnWeight / totalWeight) * 100;
+                } else {
+                    widthPercent = (normalColumnWeight / totalWeight) * 100;
+                }
+
+                // Return the style object for the v-bind:style directive
+                return { 'width': `${widthPercent}%` };
+            };
+
             const formatDate = (value) => {
                 if (!value) return "";
                 const date = new Date(value);
@@ -195,27 +306,20 @@
 
             const formatCellWithLineBreaks = (text) => {
                 if (typeof text !== "string" || !text.trim()) return "";
-                let processedText = text.replace(/\bApproved:/g, "<br><strong>Approved:</strong>").replace(/\bPending:/g, "<br><strong>Pending:</strong>");
-                let approvedBlock = "";
-                let pendingBlock = "";
+                const escapedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                let processedText = escapedText.replace(/\bApproved:/g, "<br><strong>Approved:</strong>").replace(/\bPending:/g, "<br><strong>Pending:</strong>");
+                let approvedBlock = "", pendingBlock = "";
                 const approvedMatch = processedText.match(/<strong>Approved:<\/strong>([\s\S]*?)(?=<br><strong>Pending:<\/strong>|$)/);
                 if (approvedMatch && approvedMatch[1]) approvedBlock = approvedMatch[1];
                 const pendingMatch = processedText.match(/<strong>Pending:<\/strong>([\s\S]*)/);
                 if (pendingMatch && pendingMatch[1]) pendingBlock = pendingMatch[1];
-                let foundApprovedNames = false;
-                let foundPendingNames = false;
+                let foundApprovedNames = false, foundPendingNames = false;
                 FORMATTER_NAMES.forEach((name) => {
                     const escapedName = name.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
                     const regex = new RegExp(`\\b(${escapedName})\\b`, "g");
                     const replacement = "<br>• <strong>$1</strong>";
-                    if (approvedBlock.match(regex)) {
-                        foundApprovedNames = true;
-                        approvedBlock = approvedBlock.replace(regex, replacement);
-                    }
-                    if (pendingBlock.match(regex)) {
-                        foundPendingNames = true;
-                        pendingBlock = pendingBlock.replace(regex, replacement);
-                    }
+                    if (approvedBlock.match(regex)) { foundApprovedNames = true; approvedBlock = approvedBlock.replace(regex, replacement); }
+                    if (pendingBlock.match(regex)) { foundPendingNames = true; pendingBlock = pendingBlock.replace(regex, replacement); }
                 });
                 if (!foundApprovedNames) approvedBlock += "<br>N/A";
                 if (!foundPendingNames) pendingBlock += "<br>N/A";
@@ -230,18 +334,14 @@
                     if (typeof google === 'undefined' || !google.script?.run) {
                         return reject(new Error("Google Script API is not available."));
                     }
-                    google.script.run
-                        .withSuccessHandler(resolve)
-                        .withFailureHandler(reject)
-                        [functionName](...args);
+                    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[functionName](...args);
                 });
             };
 
-            const fetchData = async () => {
+            const fetchData = async (userEmail) => {
                 try {
-                    // *** THIS IS THE ONLY CHANGE IN THIS FILE ***
-                    const selectedColumns = [8, 14, 2, 3, 4, 1, 5, 7, 6];
-                    const data = await runGoogleScript('getSheetData', selectedColumns, 2);
+                    const selectedColumns = [8, 14, 2, 3, 4, 1, 5, 7, 22, 6];
+                    const data = await runGoogleScript('getSheetData', selectedColumns, 2, userEmail);
                     tableData.value = data;
                     tableLoaded.value = true;
                 } catch(err) {
@@ -250,7 +350,7 @@
                     throw err;
                 }
             };
-          
+
             const login = async () => {
                 loadingLogin.value = true;
                 loginError.value = "";
@@ -258,16 +358,15 @@
                     const result = await runGoogleScript('validateLogin', username.value, password.value);
                     if (result && result.valid) {
                         loggedInUsername.value = result.actualName;
-                        await fetchData();
-                        isLoggedIn.value = true; 
+                        isSuperUser.value = result.isSuperUser || false;
+                        await fetchData(username.value);
+                        isLoggedIn.value = true;
                     } else {
                         loginError.value = "Invalid username or password.";
                     }
                 } catch (err) {
                     console.error("Login or data fetch failed:", err);
-                    if (!loginError.value) {
-                        loginError.value = "An error occurred. Please try again.";
-                    }
+                    if (!loginError.value) loginError.value = "An error occurred. Please try again.";
                 } finally {
                     loadingLogin.value = false;
                 }
@@ -284,8 +383,9 @@
                     tableData.value = [];
                     searchTerm.value = "";
                     currentPage.value = 1;
+                    isSuperUser.value = false;
+                    currentView.value = 'pending';
                 };
-
                 if (isAutoLogout) {
                     alert("You have been automatically logged out due to 10 minutes of inactivity.");
                     performLogout();
@@ -293,44 +393,45 @@
                     performLogout();
                 }
             };
-            
+
             const nextPage = () => {
-                if (currentPage.value < totalPages.value) {
-                    currentPage.value++;
-                }
+                if (currentPage.value < totalPages.value) currentPage.value++;
             };
             const prevPage = () => {
-                if (currentPage.value > 1) {
-                    currentPage.value--;
-                }
+                if (currentPage.value > 1) currentPage.value--;
+            };
+
+            const showPending = () => {
+                currentView.value = 'pending';
+            };
+            const showApproved = () => {
+                currentView.value = 'approved';
             };
             
+            // ADDED: Method to change view to 'disapproved'
+            const showDisapproved = () => {
+                currentView.value = 'disapproved';
+            };
+
             const inactivityTimer = ref(null);
             const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
 
             const resetInactivityTimer = () => {
                 clearTimeout(inactivityTimer.value);
-                inactivityTimer.value = setTimeout(() => {
-                    logout(true); 
-                }, INACTIVITY_TIMEOUT_MS);
+                inactivityTimer.value = setTimeout(() => { logout(true); }, INACTIVITY_TIMEOUT_MS);
             };
 
-            watch(searchTerm, (newValue) => {
-                currentPage.value = 1;
-            });
-            
+            watch(searchTerm, () => { currentPage.value = 1; });
+            watch(currentView, () => { currentPage.value = 1; });
+
             watch(isLoggedIn, (loggedIn) => {
                 const activityEvents = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
                 if (loggedIn) {
                     resetInactivityTimer();
-                    activityEvents.forEach(event => {
-                        window.addEventListener(event, resetInactivityTimer, { passive: true });
-                    });
+                    activityEvents.forEach(event => window.addEventListener(event, resetInactivityTimer, { passive: true }));
                 } else {
                     clearTimeout(inactivityTimer.value);
-                    activityEvents.forEach(event => {
-                        window.removeEventListener(event, resetInactivityTimer);
-                    });
+                    activityEvents.forEach(event => window.removeEventListener(event, resetInactivityTimer));
                 }
             });
 
@@ -338,6 +439,12 @@
                 tableData, searchTerm, loadingLogin, isLoggedIn, tableLoaded, username, password,
                 loginError, loggedInUsername, isFormValid, filteredData, formatDate,
                 formatCellWithLineBreaks, login, logout, currentPage, totalPages, nextPage, prevPage,
+                currentView, pendingCount, approvedCount, showPending, showApproved,
+                // --- Exposing new properties/methods to the template ---
+                getColumnStyle,
+                // ADDED:
+                disapprovedCount,
+                showDisapproved
             };
         }
     }).mount("#app");
