@@ -5,11 +5,72 @@ const CONFIG = {
   DRIVE_FOLDER_ID: SCRIPT_PROPS.getProperty("DRIVE_FOLDER_ID") || "1tfPCtJmoFpONmX3MgbSfCe6w8_AIDJQw",
   SPREADSHEET_ID: SCRIPT_PROPS.getProperty("SPREADSHEET_ID") || "1tgjl8T-291AuM1DFaj0W1sTwI7A3lkhugKPVoVpu2lM",
   REF_SHEET_ID: SCRIPT_PROPS.getProperty("REF_SHEET_ID") || "1jACmopzPgV2dPYEbDQwI8iJmIT4SgTHw4L-CXBTHOG4",
+  /**
+   * NEW: Specify the name of the sheet in the REF_SHEET_ID spreadsheet
+   * that contains the headers (Row 1) and corresponding emails (Row 2).
+   */
+  EMAIL_LOOKUP_SHEET_NAME: "DefaultEmail",
 };
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile("index").setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL).addMetaTag("viewport", "width=device-width, initial-scale=1").setTitle("MCD Memo Routing");
 }
+
+/**
+ * NEW: This function matches selected options to headers in a reference sheet
+ * and retrieves corresponding emails from the row below the headers.
+ * @param {string[]} additionalOptions - An array of strings selected by the user.
+ * @returns {string[]} An array of unique email addresses found.
+ */
+function getEmailsFromHeaders(additionalOptions) {
+    if (!additionalOptions || additionalOptions.length === 0) {
+        return [];
+    }
+    if (!CONFIG.REF_SHEET_ID || !CONFIG.EMAIL_LOOKUP_SHEET_NAME) {
+        console.error("Email lookup Spreadsheet ID or Sheet Name is not configured.");
+        return [];
+    }
+
+    try {
+        const spreadsheet = SpreadsheetApp.openById(CONFIG.REF_SHEET_ID);
+        const sheet = spreadsheet.getSheetByName(CONFIG.EMAIL_LOOKUP_SHEET_NAME);
+        if (!sheet) {
+            console.error(`Sheet named "${CONFIG.EMAIL_LOOKUP_SHEET_NAME}" not found in the reference spreadsheet.`);
+            return [];
+        }
+
+        const lastColumn = sheet.getLastColumn();
+        if (lastColumn === 0) return []; // Sheet is empty
+
+        // Read headers from Row 1 and emails from Row 2
+        const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+        const emails = sheet.getRange(2, 1, 1, lastColumn).getValues()[0];
+
+        const headerToEmailMap = new Map();
+        headers.forEach((header, index) => {
+            // Only map if the header and email both exist and are not empty strings
+            if (header && String(header).trim() && emails[index] && String(emails[index]).trim()) {
+                headerToEmailMap.set(String(header).trim(), String(emails[index]).trim());
+            }
+        });
+
+        const emailsToNotify = new Set();
+        additionalOptions.forEach(option => {
+            const cleanOption = option.trim();
+            if (headerToEmailMap.has(cleanOption)) {
+                emailsToNotify.add(headerToEmailMap.get(cleanOption));
+            }
+        });
+
+        console.log("Found matching emails for notification: ", Array.from(emailsToNotify));
+        return Array.from(emailsToNotify);
+
+    } catch (e) {
+        console.error(`Error in getEmailsFromHeaders: ${e.toString()}`);
+        return []; // Return empty array on error to prevent process failure
+    }
+}
+
 
 function sanitizeString(str, type = "general") {
   if (!str || typeof str !== "string") return "";
@@ -27,148 +88,182 @@ function checkSheetLimit(sheet) {
   }
 }
 
-// === FINAL VERSION - WRITES TO INDIVIDUAL CELLS ===
-// This version uses our robust reservation pattern to safely write variable data into separate columns.
+// REPLACE this function in your Code.gs
+// This version uses our robust reservation pattern to safely write variable data into separate columns,
+// and separates the email notification process to run AFTER the lock is released for high concurrency.
 function processFormData(data) {
-  let mainFile = null;
-  let revisedFile = null;
-  
-  if (!CONFIG.DRIVE_FOLDER_ID || !CONFIG.SPREADSHEET_ID) {
-    throw new Error("Administrator setup error: Script properties for folder/sheet ID are not configured.");
-  }
+    let mainFile = null;
+    let revisedFile = null;
+    let wasSuccessful = false; // NEW: Flag to track if the critical section succeeded.
 
-  try {
-    validateFormServerSide(data);
-    const folder = DriveApp.getFolderById(CONFIG.DRIVE_FOLDER_ID);
-
-    const sanitized = {
-      name: sanitizeString(data.name),
-      email: sanitizeString(data.email, "email"),
-      email1: sanitizeString(data.email1, "email"),
-      memoType: sanitizeString(data.memoType),
-      dateType: sanitizeString(data.dateType, "date"),
-      additionalMemoInfo: sanitizeString(data.additionalMemoInfo),
-      otherExtraOption: sanitizeString(data.otherExtraOption),
-      fileName: sanitizeString(data.fileName),
-      fileMimeType: sanitizeString(data.fileMimeType, "mimetype"),
-      revisedFileName: sanitizeString(data.revisedFileName || ""),
-      revisedFileMimeType: sanitizeString(data.revisedFileMimeType || "", "mimetype"),
-      additionalOptions: (data.additionalOptions || []).map(sanitizeString),
-      isResubmission: !!data.isResubmission,
-      fileData: data.fileData,
-      revisedFileData: data.revisedFileData || null,
-      approversToNotify: (data.approversToNotify || []).map(a => ({
-        name: sanitizeString(a.name), email: sanitizeString(a.email, "email"),
-        value: sanitizeString(a.value), cc: (a.cc || []).map(cc => sanitizeString(cc, "email")).filter(Boolean)
-      })),
-      selectedCGM: (data.selectedCGM || []).map(sanitizeString),
-      selectedDept: (data.selectedDept || []).map(sanitizeString),
-      selectedDiv: (data.selectedDiv || []).map(sanitizeString),
-    };
-    
-    const mainBlob = Utilities.newBlob(Utilities.base64Decode(sanitized.fileData), sanitized.fileMimeType, sanitized.fileName);
-    mainFile = folder.createFile(mainBlob);
-
-    if (sanitized.isResubmission && sanitized.revisedFileData) {
-        const revisedBlob = Utilities.newBlob(Utilities.base64Decode(sanitized.revisedFileData), sanitized.revisedFileMimeType, sanitized.revisedFileName);
-        revisedFile = folder.createFile(revisedBlob);
+    if (!CONFIG.DRIVE_FOLDER_ID || !CONFIG.SPREADSHEET_ID) {
+        throw new Error("Administrator setup error: Script properties for folder/sheet ID are not configured.");
     }
-
-    const refNumber = generateReferenceNumber();
-    const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
-    const sheet = spreadsheet.getSheetByName("Conso");
-    if (!sheet) throw new Error('Sheet named "Conso" does not exist.');
-
-    checkSheetLimit(sheet);
-    
-    // Combine all reviewers into a single list for writing
-    const allReviewers = [...sanitized.selectedCGM, ...sanitized.selectedDept, ...sanitized.selectedDiv];
-    
-    // Prepare the data with a FIXED structure first
-    const fixedData = [
-      refNumber, new Date(), sanitized.name, sanitized.email, sanitized.memoType,
-      sanitized.email1, sanitized.additionalMemoInfo, sanitized.dateType,
-      mainFile.getName(), mainFile.getUrl()
-    ];
-
-    const lock = LockService.getScriptLock();
-    lock.waitLock(30000); 
 
     try {
-      // === ATOMIC ROW RESERVATION & CONFIRMATION (Unchanged) ===
-      const placeholderValue = `reserving_${refNumber}_${new Date().getTime()}`;
-      const placeholderRange = sheet.getRange(sheet.getLastRow() + 1, 4); // Column Z
-      placeholderRange.setValue(placeholderValue);
-      SpreadsheetApp.flush();
-      if (placeholderRange.getValue() !== placeholderValue) {
-        throw new Error("Critical concurrency error: Failed to secure a unique row. Please try again.");
-      }
-      const newRowNumber = placeholderRange.getRow();
+        // --- Step 1: Pre-computation and File Creation (Outside the lock) ---
+        // These operations are safe to run concurrently. File creation is inherently atomic.
+        validateFormServerSide(data);
+        const folder = DriveApp.getFolderById(CONFIG.DRIVE_FOLDER_ID);
 
-      // === NEW: SEQUENTIAL WRITING TO THE RESERVED ROW ===
+        const sanitized = {
+            name: sanitizeString(data.name),
+            email: sanitizeString(data.email, "email"),
+            email1: sanitizeString(data.email1, "email"),
+            memoType: sanitizeString(data.memoType),
+            dateType: sanitizeString(data.dateType, "date"),
+            additionalMemoInfo: sanitizeString(data.additionalMemoInfo),
+            otherExtraOption: sanitizeString(data.otherExtraOption),
+            fileName: sanitizeString(data.fileName),
+            fileMimeType: sanitizeString(data.fileMimeType, "mimetype"),
+            revisedFileName: sanitizeString(data.revisedFileName || ""),
+            revisedFileMimeType: sanitizeString(data.revisedFileMimeType || "", "mimetype"),
+            additionalOptions: (data.additionalOptions || []).map(sanitizeString),
+            isResubmission: !!data.isResubmission,
+            fileData: data.fileData,
+            revisedFileData: data.revisedFileData || null,
+            approversToNotify: (data.approversToNotify || []).map(a => ({
+                name: sanitizeString(a.name),
+                email: sanitizeString(a.email, "email"),
+                value: sanitizeString(a.value),
+                cc: (a.cc || []).map(cc => sanitizeString(cc, "email")).filter(Boolean)
+            })),
+            selectedCGM: (data.selectedCGM || []).map(sanitizeString),
+            selectedGhead: (data.selectedGhead || []).map(sanitizeString),
+            selectedDept: (data.selectedDept || []).map(sanitizeString),
+            selectedDiv: (data.selectedDiv || []).map(sanitizeString),
+        };
+        
+        // NEW: Get additional emails by matching headers from the reference sheet
+        sanitized.additionalEmails = getEmailsFromHeaders(sanitized.additionalOptions);
 
-      // 1. Write the fixed data starting at Column E.
-      const fixedDataRange = sheet.getRange(newRowNumber, 5, 1, fixedData.length);
-      fixedDataRange.setValues([fixedData]);
-      let lastColumn = fixedDataRange.getLastColumn();
 
-      // 2. Write the "Properties" array immediately after the fixed data.
-      if (sanitized.additionalOptions.length > 0) {
-        const propertiesRange = sheet.getRange(newRowNumber, lastColumn + 1, 1, sanitized.additionalOptions.length);
-        propertiesRange.setValues([sanitized.additionalOptions]);
-        lastColumn = propertiesRange.getLastColumn();
-      }
-      
-      // 3. Write the "Other" property next.
-      const otherPropertyRange = sheet.getRange(newRowNumber, lastColumn + 1);
-      otherPropertyRange.setValue(sanitized.otherExtraOption);
-      lastColumn = otherPropertyRange.getColumn();
+        const mainBlob = Utilities.newBlob(Utilities.base64Decode(sanitized.fileData), sanitized.fileMimeType, sanitized.fileName);
+        mainFile = folder.createFile(mainBlob);
 
-      // 4. Write the "Reviewers" array next.
-      if (allReviewers.length > 0) {
-        const reviewersRange = sheet.getRange(newRowNumber, lastColumn + 1, 1, allReviewers.length);
-        reviewersRange.setValues([allReviewers]);
-        lastColumn = reviewersRange.getLastColumn();
-      }
+        if (sanitized.isResubmission && sanitized.revisedFileData) {
+            const revisedBlob = Utilities.newBlob(Utilities.base64Decode(sanitized.revisedFileData), sanitized.revisedFileMimeType, sanitized.revisedFileName);
+            revisedFile = folder.createFile(revisedBlob);
+        }
 
-      // 5. Write the resubmission files next.
-      const resubmissionRange = sheet.getRange(newRowNumber, lastColumn + 1, 1, 2);
-      resubmissionRange.setValues([[
-        sanitized.isResubmission && revisedFile ? revisedFile.getName() : '',
-        sanitized.isResubmission && revisedFile ? revisedFile.getUrl() : ''
-      ]]);
+        const refNumber = generateReferenceNumber();
+        const spreadsheet = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+        const sheet = spreadsheet.getSheetByName("Conso");
+        if (!sheet) throw new Error('Sheet named "Conso" does not exist.');
 
-      // 6. Clean up the placeholder.
-      placeholderRange.clearContent();
+        checkSheetLimit(sheet);
 
-    } finally {
-      lock.releaseLock();
+          
+        const allReviewers = [...sanitized.selectedCGM, ...sanitized.selectedGhead, ...sanitized.selectedDept, ...sanitized.selectedDiv];
+        const fixedData = [
+            refNumber, new Date(), sanitized.name, sanitized.email, sanitized.memoType,
+            sanitized.email1, sanitized.additionalMemoInfo, sanitized.dateType,
+            mainFile.getName(), mainFile.getUrl()
+        ];
+
+        // --- Step 2: Critical Section (Spreadsheet writing ONLY) ---
+        const lock = LockService.getScriptLock();
+        lock.waitLock(30000);
+
+        try {
+            // This entire block is now extremely fast, minimizing lock time.
+
+            // **FIXED CODE: Find the first blank row from Col E to CD**
+            const startRow = 1; // Assuming data starts from row 1
+            const maxRows = sheet.getMaxRows();
+            const range = sheet.getRange(startRow, 1, maxRows - startRow + 1, 82); // From Col A to CD (82 columns)
+            const values = range.getValues();
+            let newRowNumber = -1;
+
+            for (let i = 0; i < values.length; i++) {
+                if (values[i].every(cell => cell === "")) {
+                    newRowNumber = i + startRow;
+                    break;
+                }
+            }
+
+            if (newRowNumber === -1) {
+                newRowNumber = sheet.getLastRow() + 1; // Fallback to appending if no empty row is found
+            }
+            
+            const placeholderValue = `reserving_${refNumber}_${new Date().getTime()}`;
+            const placeholderRange = sheet.getRange(newRowNumber, 4); 
+            placeholderRange.setValue(placeholderValue);
+            SpreadsheetApp.flush();
+            if (placeholderRange.getValue() !== placeholderValue) {
+                throw new Error("Critical concurrency error: Failed to secure a unique row. Please try again.");
+            }
+
+            sheet.getRange(newRowNumber, 1).setValue("PENDING");
+
+            const fixedDataRange = sheet.getRange(newRowNumber, 5, 1, fixedData.length);
+            fixedDataRange.setValues([fixedData]);
+            let lastColumn = fixedDataRange.getLastColumn();
+
+            if (sanitized.additionalOptions.length > 0) {
+                const propertiesRange = sheet.getRange(newRowNumber, lastColumn + 1, 1, sanitized.additionalOptions.length);
+                propertiesRange.setValues([sanitized.additionalOptions]);
+                lastColumn = propertiesRange.getLastColumn();
+            }
+
+            const otherPropertyRange = sheet.getRange(newRowNumber, lastColumn + 1);
+            otherPropertyRange.setValue(sanitized.otherExtraOption);
+            lastColumn = otherPropertyRange.getColumn();
+
+            if (allReviewers.length > 0) {
+                const reviewersRange = sheet.getRange(newRowNumber, lastColumn + 1, 1, allReviewers.length);
+                reviewersRange.setValues([allReviewers]);
+                lastColumn = reviewersRange.getLastColumn();
+            }
+
+            const resubmissionRange = sheet.getRange(newRowNumber, lastColumn + 1, 1, 2);
+            resubmissionRange.setValues([
+                [
+                    sanitized.isResubmission && revisedFile ? revisedFile.getName() : '',
+                    sanitized.isResubmission && revisedFile ? revisedFile.getUrl() : ''
+                ]
+            ]);
+
+            placeholderRange.clearContent();
+            
+            // NEW: Set the success flag ONLY if all spreadsheet operations complete without error.
+            wasSuccessful = true;
+
+        } finally {
+            // --- Step 3: Release the Lock ---
+            // This is CRITICAL. The lock is now released before the slow email process begins.
+            lock.releaseLock();
+        }
+
+        // --- Step 4: Post-Lock Operations (Slow tasks like emailing) ---
+        // This section only runs if the critical section above succeeded.
+        // Other users can now acquire the lock while this email is being sent.
+        if (wasSuccessful) {
+            sendNotificationEmail(sanitized, refNumber, mainFile, revisedFile);
+            return { refNumber }; // Return the success object to the client.
+        }
+
+    } catch (err) {
+        // This catch block handles errors from ANY of the steps above.
+        // It also ensures orphaned files are cleaned up if an error occurs after they are created.
+        if (mainFile) {
+            try { mainFile.setTrashed(true); console.log(`CLEANUP: Trashed orphaned file: ${mainFile.getName()}`); } catch (e) {}
+        }
+        if (revisedFile) {
+            try { revisedFile.setTrashed(true); console.log(`CLEANUP: Trashed orphaned file: ${revisedFile.getName()}`); } catch (e) {}
+        }
+
+        console.error("Processing error: " + err.stack);
+        throw new Error("Server error during processing: " + err.message);
     }
-    
-    sendNotificationEmail(sanitized, refNumber, mainFile, revisedFile);
-    
-    return { refNumber };
-
-  } catch (err) {
-    // This catch block remains unchanged and is fully functional.
-    if (mainFile) {
-        try { mainFile.setTrashed(true); console.log(`CLEANUP: Trashed orphaned file: ${mainFile.getName()}`); } catch(e){}
-    }
-    if (revisedFile) {
-        try { revisedFile.setTrashed(true); console.log(`CLEANUP: Trashed orphaned file: ${revisedFile.getName()}`); } catch(e){}
-    }
-    
-    console.error("Processing error: " + err.stack);
-
-    if (err.message.startsWith("SHEET_FULL_ERROR:")) {
-      throw new Error(err.message);
-    }
-    throw new Error("Server error during processing: " + err.message);
-  }
 }
 
 function sendNotificationEmail(sanitized, refNumber, mainAttachment, revisedAttachment) {
-    if (!sanitized.approversToNotify || sanitized.approversToNotify.length === 0) return;
+    // Check if there are any approvers or additional emails to notify
+    if ((!sanitized.approversToNotify || sanitized.approversToNotify.length === 0) && (!sanitized.additionalEmails || sanitized.additionalEmails.length === 0)) {
+        console.log("No recipients found for notification email. Skipping send.");
+        return;
+    }
     
     const subject = `For Approval: ${sanitized.additionalMemoInfo} (Ref: ${refNumber})`;
     const formattedDate = Utilities.formatDate(new Date(sanitized.dateType), Session.getScriptTimeZone(), "MMM d, yyyy");
@@ -181,6 +276,7 @@ function sendNotificationEmail(sanitized, refNumber, mainAttachment, revisedAtta
     };
 
     const approverListHtml = createApproverList("CGM/s", sanitized.selectedCGM, sanitized.approversToNotify)
+                           + createApproverList("Group Head/s", sanitized.selectedGhead, sanitized.approversToNotify)
                            + createApproverList("Department Head/s", sanitized.selectedDept, sanitized.approversToNotify)
                            + createApproverList("Division Head/s", sanitized.selectedDiv, sanitized.approversToNotify);
 
@@ -189,14 +285,22 @@ function sendNotificationEmail(sanitized, refNumber, mainAttachment, revisedAtta
         if(a.email) masterCcList.add(a.email);
         if(a.cc) a.cc.forEach(cc => masterCcList.add(cc));
     });
+    
+    // NEW: Add the emails found from the header matching to the CC list
+    if (sanitized.additionalEmails && sanitized.additionalEmails.length > 0) {
+        sanitized.additionalEmails.forEach(email => {
+            if (email) { // Ensure the email is not null/empty
+                masterCcList.add(email);
+            }
+        });
+    }
+
 
     const memmofinder = "https://script.google.com/a/macros/megaworld-lifestyle.com/s/AKfycbwFAhQ7gw4-b5VLc8ksZz2BmBmB6Fquo22eZ9nWs_CmJ04gJIoqYFWsdxyMLv7h0LpH/exec";
 
-    // --- CHANGE #1: Get URLs from the Drive file objects. ---
     const mainFileUrl = mainAttachment.getUrl();
     const revisedFileUrl = revisedAttachment ? revisedAttachment.getUrl() : null;
 
-    // --- CHANGE #2: Modify the HTML body to include links instead of mentioning attachments. ---
     const htmlBody = `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
           <p>Hello ${sanitized.name},</p>
@@ -204,6 +308,7 @@ function sendNotificationEmail(sanitized, refNumber, mainAttachment, revisedAtta
           <div style="border: 1px solid #eee; padding: 10px 15px; border-radius: 8px; background-color: #f9f9f9;">
             ${approverListHtml}
           </div>
+           <p>You may track the document status here: <a href="${memmofinder}" target="_blank">MCD Document Routing</a></p>
           <p><b>Approvers:</b> Please review the document(s) for your approval using the links below.</p>
           <div style="padding-left: 20px;">
             <p style="margin: 5px 0;">
@@ -225,18 +330,16 @@ function sendNotificationEmail(sanitized, refNumber, mainAttachment, revisedAtta
             <tr style="border-bottom: 1px solid #dddddd;"><th style="padding: 8px; background-color: #f2f2f2; text-align: left; border-right: 1px solid #dddddd;">Memo Date</th><td style="padding: 8px;">${formattedDate}</td></tr>
           </table>
           <br>
-          <p>You may track the document status here: <a href="${memmofinder}" target="_blank">MCD Document Routing</a></p>
+         
           <p>Thank you.<br/>MCD Document Routing System</p>
         </div>`;
 
     try {
-        // --- CHANGE #3: Remove the 'attachments' property from the sendEmail options. ---
         MailApp.sendEmail({
             to: sanitized.email,
             cc: Array.from(masterCcList).filter(Boolean).join(","),
             subject: subject,
             htmlBody: htmlBody,
-            // attachments: attachments, // <-- THIS LINE IS REMOVED
             name: "MCD Document for Approval",
         });
     } catch (err) {
@@ -254,9 +357,6 @@ function sendNotificationEmail(sanitized, refNumber, mainAttachment, revisedAtta
         }
     }
 }
-// =========================================================================
-// ===                     END: MODIFIED CODE SECTION                    ===
-// =========================================================================
 
 
 function validateFormServerSide(data) {
@@ -267,7 +367,7 @@ function validateFormServerSide(data) {
 
   if (!data.name || !data.email || !data.memoType || !data.email1 || !data.dateType || !data.additionalMemoInfo) throw new Error("A required information field is missing.");
   if ((data.additionalOptions || []).length === 0 && !data.otherExtraOption) throw new Error("At least one Property/Coverage must be selected or specified.");
-  if ((data.selectedCGM || []).length === 0 || (data.selectedDept || []).length === 0 || (data.selectedDiv || []).length === 0) throw new Error("An approver must be selected from each group (CGM, Dept, Div).");
+  if ((data.selectedCGM || []).length === 0 || (data.selectedGhead || []).length === 0 ||  (data.selectedDept || []).length === 0 || (data.selectedDiv || []).length === 0) throw new Error("An approver must be selected from each group (CGM, Dept, Div).");
   
   if (!data.fileData) throw new Error("Primary file data is missing.");
   if (base64Size(data.fileData) > MAX_SIZE) throw new Error("Primary file size exceeds 32 MB.");
@@ -316,3 +416,61 @@ function generateReferenceNumber() {
     lock.releaseLock();
   }
 }
+
+/**
+ * Fetches unique property values from the dvPayorCompany sheet
+ * and formats them for the memo routing form.
+ *
+ * @returns {Array<Object>} An array of objects, each with a 'label' and a 'value'.
+ */
+function getMemoProperties() {
+  try {
+    const ss = SpreadsheetApp.openById('1qheN_KURc-sOKSngpzVxLvfkkc8StzGv-1gMvGJZdsc');
+    const sheet = ss.getSheetByName('dvPayorCompany');
+
+    if (!sheet) {
+      throw new Error('Sheet "dvPayorCompany" not found.');
+    }
+
+    const lastRow = sheet.getLastRow();
+    // If there are no data rows (header is row 1 & 2, data starts at 3), return an empty array.
+    if (lastRow < 3) {
+      return [];
+    }
+
+    // Get all values from column C, starting from row 3.
+    const range = sheet.getRange('C3:C' + lastRow);
+    const values = range.getValues();
+
+    // The 'values' variable is a 2D array like [['Value1'], ['Value2'], ['']].
+    // 1. .flat() converts it to a 1D array: ['Value1', 'Value2', ''].
+    // 2. .filter(String) removes any empty or blank cells.
+    // 3. new Set(...) automatically gets only the unique values.
+    // 4. [...new Set(...)] converts the Set back into an array.
+    const uniqueLabels = [...new Set(values.flat().filter(String))];
+
+    // Map the labels to the required {label, value} format.
+    const options = uniqueLabels.map(label => {
+      // Create a short 'value' from the 'label' by taking the first letter of each word.
+      // Example: "Alabang West Parade" becomes "AWP".
+      const words = label.trim().split(/\s+/);
+      let value = words.map(word => word[0]).join('').toUpperCase();
+      
+      // Handle cases where the value might not be unique or is too short
+      if (value.length < 2 && label.length > 1) {
+         value = label.substring(0, 3).toUpperCase();
+      }
+
+      return { label: label.trim(), value: value };
+    });
+
+    // Sort the final array alphabetically by label for a better user experience.
+    return options.sort((a, b) => a.label.localeCompare(b.label));
+
+  } catch (e) {
+    // Log the error for debugging and return a clear error to the frontend.
+    console.error('Error fetching memo properties: ' + e.toString());
+    throw new Error('Could not retrieve the properties list from the spreadsheet. Please check sheet name and permissions.');
+  }
+}
+
