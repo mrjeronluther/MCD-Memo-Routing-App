@@ -1,1018 +1,1157 @@
 <!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>MCD Memo Approval</title>
-      <!-- Vue 3 from CDN -->
-      <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-      <!-- Bootstrap 5.3 from CDN -->
-      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-      <style>
-         :root {
-            --bs-border-radius-lg: 8px;
-            --light-bg: #f8f9fa;
-            --soft-border: #dcdcdc;
-            --accent-color: #0d6efd;
-         }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>MCD Memo Approval</title>
+        <!-- Vue 3 from CDN -->
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <!-- Bootstrap 5.3 from CDN -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
-         body {
-            font-family: "Segoe UI", sans-serif;
-            background-color: white;
-         }
-
-         #app {
-            padding: 1rem;
-         }
-
-         .table-wrapper {
-            max-height: 60vh;
-            overflow-y: auto;
-            border: 1px solid var(--soft-border);
-            border-radius: var(--bs-border-radius-lg);
-            background-color: white;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-         }
-
-         thead th {
-            position: sticky;
-            top: 0;
-            background-color: var(--light-bg) !important;
-            color: #333;
-            z-index: 2;
-            text-align: center;
-            vertical-align: middle;
-            font-weight: 500;
-            font-size: 0.95rem;
-         }
-
-         tbody td {
-            padding: 0.65rem;
-            text-align: center;
-            vertical-align: middle;
-            white-space: nowrap;
-            font-size: 0.9rem;
-         }
-
-         .wider-column {
-            min-width: 350px;
-            text-align: left !important;
-            white-space: normal;
-         }
-
-         tbody tr:hover {
-            background-color: #f1f3f5;
-         }
-
-         .loading-spinner {
-            display: inline-block;
-            width: 1.75rem;
-            height: 1.75rem;
-            vertical-align: -0.125em;
-            border: 0.25em solid currentColor;
-            border-right-color: transparent;
-            border-radius: 50%;
-            animation: 0.75s linear infinite spinner-border;
-         }
-
-         @keyframes spinner-border {
-            to {
-               transform: rotate(360deg);
+        <style>
+            :root {
+                --bs-border-radius-lg: 8px;
+                --light-bg: #f8f9fa;
+                --soft-border: #dcdcdc;
+                --accent-color: #0d6efd;
             }
-         }
 
-         .toast-container {
-            position: fixed;
-            z-index: 1060;
-            top: 1rem;
-            left: 1rem;
-            width: 360px;
-            max-width: 90vw;
-            pointer-events: none;
-         }
+            body {
+                font-family: "Segoe UI", sans-serif;
+                background-color: white;
+            }
 
-         .toast-item {
-            pointer-events: auto;
-            margin-bottom: 0.5rem;
-            border-radius: 6px;
-            border: none;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-            font-size: 0.9rem;
-         }
+            #app {
+                padding: 1rem;
+            }
 
-         .card {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            background-color: #fff;
-         }
+            .table-wrapper {
+                max-height: 60vh;
+                overflow-y: auto;
+                border: 1px solid var(--soft-border);
+                border-radius: var(--bs-border-radius-lg);
+                background-color: white;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            }
 
-         .card-body {
-            padding: 1.5rem;
-         }
+            thead th {
+                position: sticky;
+                top: 0;
+                background-color: var(--light-bg) !important;
+                color: #333;
+                z-index: 2;
+                text-align: center;
+                vertical-align: middle;
+                font-weight: 500;
+                font-size: 0.95rem;
+            }
 
-         .card.grey-highlight-shadow {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), /* subtle depth */ 0 0 0 2px rgba(240, 240, 240, 0.9); /* soft grey outer glow */
-            border-radius: 10px;
-         }
+            tbody td {
+                padding: 0.65rem;
+                text-align: center;
+                vertical-align: middle;
+                white-space: normal;
+                word-break: break-word;
+                font-size: 0.9rem;
+            }
 
-         input.form-control,
-         textarea.form-control {
-            border-radius: 6px;
-            border: 1px solid #ced4da;
-            font-size: 0.9rem;
-         }
+            .wider-column {
+                text-align: left !important;
+            }
 
-         .btn {
-            border-radius: 6px;
-            font-size: 0.875rem;
-         }
+            tbody tr:hover {
+                background-color: #f1f3f5;
+            }
 
-         .btn-outline-info {
-            color: var(--accent-color);
-            border-color: var(--accent-color);
-         }
+            .loading-spinner {
+                display: inline-block;
+                width: 1.75rem;
+                height: 1.75rem;
+                vertical-align: -0.125em;
+                border: 0.25em solid currentColor;
+                border-right-color: transparent;
+                border-radius: 50%;
+                animation: 0.75s linear infinite spinner-border;
+            }
 
-         .btn-outline-info:hover {
-            background-color: var(--accent-color);
-            color: #fff;
-         }
+            @keyframes spinner-border {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
 
-         .btn-sm {
-            padding: 0.35rem 0.75rem;
-         }
+            .toast-container {
+                position: fixed;
+                z-index: 1060;
+                top: 1rem;
+                left: 1rem;
+                width: 360px;
+                max-width: 90vw;
+                pointer-events: none;
+            }
 
-         .modal-content {
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-         }
+            .toast-item {
+                pointer-events: auto;
+                margin-bottom: 0.5rem;
+                border-radius: 6px;
+                border: none;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+                font-size: 0.9rem;
+            }
 
-         .modal-header,
-         .modal-footer {
-            border: none;
-            background-color: #f9f9f9;
-         }
+            .card {
+                border: none;
+                border-radius: 10px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                background-color: #fff;
+            }
 
-         .modal-title {
-            font-size: 1rem;
-            font-weight: 500;
-         }
+            .card-body {
+                padding: 1.5rem;
+            }
 
-         .form-check-input {
-            border-radius: 4px;
-         }
+            .card.grey-highlight-shadow {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 0 0 2px rgba(240, 240, 240, 0.9);
+                border-radius: 10px;
+            }
 
-         .pagination-btns .btn {
-            min-width: 90px;
-         }
+            input.form-control,
+            textarea.form-control {
+                border-radius: 6px;
+                border: 1px solid #ced4da;
+                font-size: 0.9rem;
+            }
 
-         .lead {
-            font-size: 1rem;
-            color: #444;
-         }
+            .btn {
+                border-radius: 6px;
+                font-size: 0.875rem;
+            }
 
-         .alert {
-            font-size: 0.9rem;
-            padding: 0.75rem 1rem;
-         }
+            .btn-outline-info {
+                color: var(--accent-color);
+                border-color: var(--accent-color);
+            }
 
-         .text-muted {
-            font-size: 0.9rem;
-         }
-      </style>
-   </head>
-   <body>
-      <!-- Use container-fluid for a full-width container that respects padding. -->
-      <div id="app" class="container-fluid">
-         <!-- Toast Container for all notifications -->
-         <div class="toast-container">
-            <div
-               v-for="toast in toasts"
-               :key="toast.id"
-               class="alert toast-item d-flex align-items-center shadow-sm"
-               :class="{ 'alert-info': toast.status === 'ongoing' || toast.status === 'info', 'alert-success': toast.status === 'success', 'alert-danger': toast.status === 'failure' || toast.status === 'danger', 'alert-warning': toast.status === 'warning' }"
-               role="alert"
-            >
-               <div class="spinner-border spinner-border-sm me-2" v-if="toast.status === 'ongoing'" role="status"><span class="visually-hidden">Loading...</span></div>
-               <div class="flex-grow-1">{{ toast.message }}</div>
+            .btn-outline-info:hover {
+                background-color: var(--accent-color);
+                color: #fff;
+            }
+
+            .btn-sm {
+                padding: 0.35rem 0.75rem;
+            }
+
+            .modal-content {
+                border-radius: 10px;
+                border: none;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            .modal-header,
+            .modal-footer {
+                border: none;
+            }
+
+            .modal-title {
+                font-size: 1rem;
+                font-weight: 500;
+            }
+
+            .form-check-input {
+                border-radius: 4px;
+            }
+
+            .pagination-btns .btn {
+                min-width: 90px;
+            }
+
+            .lead {
+                font-size: 1rem;
+                color: #444;
+            }
+
+            .alert {
+                font-size: 0.9rem;
+                padding: 0.75rem 1rem;
+            }
+
+            .text-muted {
+                font-size: 0.9rem;
+            }
+
+            /* --- ADD THESE NEW CSS RULES --- */
+            .narrow-column {
+                /* Sets a fixed width. Adjust the pixel value as needed. */
+                width: 210px;
+            }
+
+            .extra-wide-column {
+                /* Uses a percentage for flexibility, with a minimum width. */
+                width: 30%;
+                min-width: 350px;
+                text-align: left !important;
+                /* Keep text left-aligned for readability */
+            }
+
+            /* You can now remove the old .wider-column rule if it's no longer used elsewhere,
+   or just leave it. The new classes will override it where applied. */
+            .wider-column {
+                text-align: left !important;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="app" class="container-fluid">
+            <!-- Toast Container for all notifications -->
+            <div class="toast-container">
+                <div
+                    v-for="toast in toasts"
+                    :key="toast.id"
+                    class="alert toast-item d-flex align-items-center shadow-sm"
+                    :class="{ 'alert-info': toast.status === 'ongoing' || toast.status === 'info', 'alert-success': toast.status === 'success', 'alert-danger': toast.status === 'failure' || toast.status === 'danger', 'alert-warning': toast.status === 'warning' }"
+                    role="alert"
+                >
+                    <div class="spinner-border spinner-border-sm me-2" v-if="toast.status === 'ongoing'" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="flex-grow-1">{{ toast.message }}</div>
+                </div>
             </div>
-         </div>
 
-         <header class="text-center mb-4">
-            <img src="https://raw.githubusercontent.com/mrjeronluther/Memo-Routing-Landing-Page/main/WhatsApp%20Image%202025-06-05%20at%2015.44.42_3fc69535.jpg" alt="Header Image" class="img-fluid" style="max-width: 100%; width: 600px;" />
-         </header>
+            <header class="text-center mb-4">
+                <img
+                    src="https://raw.githubusercontent.com/mrjeronluther/Memo-Routing-Landing-Page/main/WhatsApp%20Image%202025-06-05%20at%2015.44.42_3fc69535.jpg"
+                    alt="Header Image"
+                    class="img-fluid"
+                    style="max-width: 100%; width: 600px;"
+                />
+            </header>
 
-         <!-- LOGIN FORM -->
-         <div v-if="!user.isLoggedIn" class="d-flex justify-content-center align-items-center">
-            <div class="card p-4 grey-highlight-shadow" style="width: 100%; max-width: 500px;">
-               <h2 class="text-center">MCD Document Approval</h2>
-               <div class="card-body">
-                  <h3 class="card-title text-center mb-4">Login</h3>
-                  <div class="mb-3">
-                     <input v-model="loginForm.username" @keyup.enter="login" type="text" placeholder="Username" class="form-control" />
-                  </div>
-                  <div class="mb-3">
-                     <input v-model="loginForm.password" @keyup.enter="login" type="password" placeholder="Password" class="form-control" />
-                  </div>
-                  <button @click="login" :disabled="!isLoginFormValid || isLoggingIn" class="btn btn-primary w-100">
-                     <span v-if="isLoggingIn" class="spinner-border spinner-border-sm"></span>
-                     <span v-else>Login</span>
-                  </button>
-                  <div v-if="loginError" class="alert alert-danger mt-3 mb-0" role="alert">
-                     {{ loginError }}
-                  </div>
-               </div>
-            </div>
-         </div>
-
-         <!-- MAIN CONTENT -->
-         <div v-else>
-            <!-- Responsive header. Stacks on mobile, row on medium screens up. The logout button is now part of the flow. -->
-            <!-- NEW, FIXED LOGOUT BUTTON -->
-            <button @click="logout" :disabled="isProcessPending" class="btn btn-sm btn-outline-danger position-fixed top-0 end-0 m-3" style="z-index: 1050;" title="Logout">Logout</button>
-
-            <!-- The greeting message now lives in a simpler container -->
-            <div class="mb-4">
-               <p class="lead mb-0">{{ greetingMessage }}</p>
+            <!-- LOGIN FORM -->
+            <div v-if="!user.isLoggedIn" class="d-flex justify-content-center align-items-center">
+                <div class="card p-4 grey-highlight-shadow" style="width: 100%; max-width: 500px;">
+                    <h2 class="text-center">MCD Document Approval</h2>
+                    <div class="card-body">
+                        <h3 class="card-title text-center mb-4">Login</h3>
+                        <div class="mb-3">
+                            <input v-model="loginForm.username" id="username" @keyup.enter="login" type="text" placeholder="Username" class="form-control" />
+                        </div>
+                        <div class="mb-3">
+                            <input v-model="loginForm.password" id="password" @keyup.enter="login" type="password" placeholder="Password" class="form-control" />
+                        </div>
+                        <button @click="login" :disabled="!isLoginFormValid || isLoggingIn" class="btn btn-primary w-100">
+                            <span v-if="isLoggingIn" class="spinner-border spinner-border-sm"></span>
+                            <span v-else>Login</span>
+                        </button>
+                        <div v-if="loginError" class="alert alert-danger mt-3 mb-0" role="alert">
+                            {{ loginError }}
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <h2 class="text-center">MCD Document Approval</h2>
-            <br />
-
-            <!-- Responsive Search and View Toggle Button. Stacks on mobile, becomes a row on medium screens. -->
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
-               <input v-model="searchQuery" type="text" class="form-control mb-2 mb-md-0 me-md-2" placeholder="Search table..." />
-               <button @click="toggleApprovedView" class="btn btn-outline-info flex-shrink-0" :disabled="isApprovedDataLoading">
-                  <span v-if="isApprovedDataLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                  <span v-else>{{ showApprovedView ? 'Show Pending' : 'Show Approved' }}</span>
-               </button>
-            </div>
-
-            <!-- Loading Indicator -->
-            <div v-if="(!isDataLoaded && !showApprovedView) || (isApprovedDataLoading && showApprovedView)" class="text-center p-5">
-               <div class="loading-spinner"></div>
-               <p class="mt-2">Loading data...</p>
-            </div>
-
+            <!-- MAIN CONTENT -->
             <div v-else>
-               <!-- Use Bootstrap's '.table-responsive' class. It handles horizontal scrolling perfectly. -->
-               <div class="table-responsive table-wrapper mb-2">
-                  <p v-if="filteredData.length === 0" class="text-center text-muted p-4">
-                     {{ showApprovedView ? 'No approved items found.' : 'No pending items available or matching your search.' }}
-                  </p>
-                  <table class="table table-bordered table-hover" v-else>
-                     <thead>
-                        <tr>
-                           <th v-for="header in headers" :key="header">{{ header }}</th>
-                           <th>DAYS SINCE</th>
-                           <th v-if="!showApprovedView">ACTIONS</th>
-                        </tr>
-                     </thead>
-                     <tbody>
-                        <tr v-for="row in paginatedData" :key="row[0]">
-                           <td v-for="(cell, i) in row" :key="i" :class="{ 'wider-column': i === 7 }">
-                              <a v-if="i === 6 && cell" :href="cell" target="_blank">View MEMO</a>
-                              <template v-else-if="i === 1 || i === 5">{{ formatDateCell(cell) }}</template>
-                              <div v-else-if="i === 7 && typeof cell === 'string'" class="text-start" v-html="formatCellWithLineBreaks(cell)"></div>
-                              <template v-else>{{ cell }}</template>
-                           </td>
-                           <td>{{ calculateDaysDifference(row[1]) }}</td>
-                           <td v-if="!showApprovedView">
-                              <!-- Responsive action buttons. They stack vertically for clarity. -->
-                              <div class="d-flex flex-column gap-2">
-                                 <button @click="showApproval(row)" class="btn btn-success btn-sm" :disabled="isActionInProgress">Approve</button>
-                                 <button @click="showDisapproval(row)" class="btn btn-danger btn-sm" :disabled="isActionInProgress">Disapprove</button>
-                                 <button v-if="isPrivilegedUser" @click="showAddReviewer(row)" class="btn btn-warning btn-sm" :disabled="isActionInProgress">Add Reviewer</button>
-                                 <button v-if="isPrivilegedUser" @click="showRemoveReviewer(row)" class="btn btn-secondary btn-sm" :disabled="isActionInProgress">Remove Reviewer</button>
-                              </div>
-                           </td>
-                        </tr>
-                     </tbody>
-                  </table>
-               </div>
+                <button @click="logout" :disabled="isProcessPending" class="btn btn-sm btn-outline-danger position-fixed top-0 end-0 m-3" style="z-index: 1050;" title="Logout">Logout</button>
 
-               <!-- Pagination: Added flex-wrap for very narrow screens -->
-               <div v-if="totalPages > 1" class="d-flex flex-wrap justify-content-center align-items-center my-3 gap-2">
-                  <button @click="prevPage" :disabled="currentPage === 1" class="btn btn-outline-primary btn-sm">Previous</button>
-                  <span class="text-muted">Page {{ currentPage }} of {{ totalPages }}</span>
-                  <button @click="nextPage" :disabled="currentPage >= totalPages" class="btn btn-outline-primary btn-sm">Next</button>
-               </div>
+                <div class="mb-4">
+                    <p class="lead mb-0">{{ greetingMessage }}</p>
+                </div>
 
-               <!-- Action Forms (Already responsive due to Bootstrap's card component) -->
-               <div ref="actionFormsRef" class="mb-5" v-if="!showApprovedView">
-                  <div v-if="activeAction.type === 'approve'" class="card card-body">
-                     <h5>Approval Remarks for: <strong>{{ activeAction.label }}</strong></h5>
-                     <textarea v-model="activeAction.reason" class="form-control" placeholder="Please provide remarks for approval (required, 5-300 chars)" maxlength="300"></textarea>
-                     <div class="d-flex justify-content-end gap-2 mt-3">
-                        <button @click="cancelAction" class="btn btn-secondary">Cancel</button>
-                        <button @click="submitApproval" :disabled="isSubmitting || activeAction.reason.trim().length < 5" class="btn btn-success">
-                           <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span> Submit Approval
+                <h2 class="text-center">MCD Document Approval</h2>
+                <br />
+
+                <!-- UPDATED: Responsive Search and THREE View Toggle Buttons -->
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+                    <input v-model="searchQuery" type="text" class="form-control mb-2 mb-md-0 me-md-2" placeholder="Search table..." />
+
+                    <div class="btn-group flex-shrink-0" role="group">
+                        <button @click="switchToPendingView" type="button" class="btn" :class="{'btn-primary': !showApprovedView && !showDisapprovedView, 'btn-outline-primary': showApprovedView || showDisapprovedView}">
+                            Pending <span class="badge bg-light text-dark ms-1">{{ pendingCount }}</span>
                         </button>
-                     </div>
-                  </div>
-                  <div v-if="activeAction.type === 'disapprove'" class="card card-body">
-                     <h5>Disapproval Reason for: <strong>{{ activeAction.label }}</strong></h5>
-                     <textarea v-model="activeAction.reason" class="form-control" placeholder="Please provide a reason (required, 5-300 chars)" maxlength="300"></textarea>
-                     <div class="d-flex justify-content-end gap-2 mt-3">
-                        <button @click="cancelAction" class="btn btn-secondary">Cancel</button>
-                        <button @click="submitDisapproval" :disabled="isSubmitting || activeAction.reason.trim().length < 5" class="btn btn-danger">
-                           <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span> Submit Disapproval
+                        <button @click="switchToApprovedView" type="button" class="btn" :class="{'btn-primary': showApprovedView, 'btn-outline-primary': !showApprovedView}" :disabled="isApprovedDataLoading">
+                            <span v-if="isApprovedDataLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span v-else>Approved <span class="badge bg-light text-dark ms-1">{{ approvedCount }}</span></span>
                         </button>
-                     </div>
-                  </div>
-                  <div v-if="['addReviewer', 'removeReviewer'].includes(activeAction.type)" class="card card-body">
-                     <h5>{{ activeAction.type === 'addReviewer' ? 'Add' : 'Remove' }} Reviewer for: <strong>{{ activeAction.label }}</strong></h5>
-                     <div v-if="activeAction.current.length > 0" class="mb-2"><strong>Current Reviewer/s:</strong> {{ activeAction.current.join(', ') }}</div>
-                     <strong>{{ activeAction.type === 'addReviewer' ? 'Available Reviewer/s:' : 'Check to Remove Reviewer/s:' }}</strong>
-                     <div v-for="option in availableReviewerOptions" :key="option.value" class="form-check">
-                        <input class="form-check-input" type="checkbox" :value="option.value" v-model="activeAction.selected" :id="`rev-${option.value}`" />
-                        <label class="form-check-label" :for="`rev-${option.value}`">{{ option.label }}</label>
-                     </div>
-                     <div class="d-flex justify-content-end gap-2 mt-3">
-                        <button @click="cancelAction" class="btn btn-secondary">Cancel</button>
-                        <button @click="submitReviewerChange" :disabled="isSubmitting || activeAction.selected.length === 0" class="btn btn-primary">
-                           <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span> Submit Changes
+                        <button @click="switchToDisapprovedView" type="button" class="btn" :class="{'btn-primary': showDisapprovedView, 'btn-outline-primary': !showDisapprovedView}" :disabled="isDisapprovedDataLoading">
+                            <span v-if="isDisapprovedDataLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span v-else>Disapproved <span class="badge bg-light text-dark ms-1">{{ disapprovedCount }}</span></span>
                         </button>
-                     </div>
-                  </div>
-               </div>
+                    </div>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div v-if="(!isDataLoaded && !showApprovedView) || (isApprovedDataLoading && showApprovedView)" class="text-center p-5">
+                    <div class="loading-spinner"></div>
+                    <p class="mt-2">Loading data...</p>
+                </div>
+
+                <div v-else>
+                    <!-- ================= START: NEW BULK ACTION FORM ================= -->
+                    <div v-if="!showApprovedView && !showDisapprovedView" class="card card-body mb-3">
+                        <h5 class="mb-2">Approve Multiple Document</h5>
+                        <p class="text-muted small mb-2">To select multiple items, you must first provide remarks below. These remarks will be applied to all selected items.</p>
+                        <textarea
+                            v-model="bulkRemarks"
+                            class="form-control"
+                            placeholder="Provide remarks here first to enable selection (min 5 chars)"
+                            rows="2"
+                            :disabled="activeAction.type !== null"
+                        ></textarea>
+                        <div class="d-flex justify-content-end align-items-center gap-2 mt-3" v-if="isAnyRowSelected">
+                            <span class="text-muted fst-italic me-auto">{{ selectedRows.length }} item(s) selected</span>
+                            <button @click="submitBulkApproval" :disabled="isSubmitting" class="btn btn-success">
+                                <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span>
+                                Approve Selected
+                            </button>
+                            <button @click="submitBulkDisapproval" :disabled="isSubmitting" class="btn btn-danger">
+                                <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span>
+                                Disapprove Selected
+                            </button>
+                        </div>
+                    </div>
+                    <!-- ================== END: NEW BULK ACTION FORM ================== -->
+
+                    <div class="table-responsive table-wrapper mb-2">
+                        <p v-if="filteredData.length === 0" class="text-center text-muted p-4">
+                            {{ showApprovedView ? 'No approved items found.' : 'No pending items available or matching your search.' }}
+                        </p>
+                        <table class="table table-bordered table-hover" v-else>
+                            <thead>
+                                <tr>
+                                    <!-- START: NEW CHECKBOX HEADER -->
+                                    <th v-if="!showApprovedView && !showDisapprovedView" style="width: 50px;">Select</th>
+                                    <!-- END: NEW CHECKBOX HEADER -->
+                                    <th v-for="header in headers" :key="header">{{ header }}</th>
+                                    <th v-if="!showApprovedView && !showDisapprovedView">DAYS SINCE</th>
+                                    <th v-if="!showApprovedView && !showDisapprovedView">ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="row in paginatedData" :key="row[0]">
+                                    <!-- START: NEW CHECKBOX CELL -->
+                                    <td v-if="!showApprovedView && !showDisapprovedView">
+                                        <div class="form-check d-flex justify-content-center">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                :value="row[0]"
+                                                v-model="selectedRows"
+                                                :disabled="isBulkRemarksInvalid || activeAction.type !== null"
+                                                :title="isBulkRemarksInvalid ? 'Please provide bulk remarks first to enable selection' : ''"
+                                            />
+                                        </div>
+                                    </td>
+                                    <!-- END: NEW CHECKBOX CELL -->
+                                    <td v-for="(cell, i) in row" :key="i" :class="{ 'narrow-column': i === 4, 'extra-wide-column': i === 8 }">
+                                        <a v-if="i === 6 && cell" :href="cell" target="_blank">View Memo</a>
+                                        <a v-else-if="i === 7 && cell" :href="cell" target="_blank">View Page</a>
+                                        <template v-else-if="i === 1">{{ formatDateCell(cell) }}</template>
+                                        <div v-else-if="i === 8 && typeof cell === 'string'" class="text-start" v-html="formatCellWithLineBreaks(cell)"></div>
+                                        <template v-else>{{ cell }}</template>
+                                    </td>
+                                    <td v-if="!showApprovedView && !showDisapprovedView">{{ calculateDaysDifference(row[1]) }}</td>
+                                    <td v-if="!showApprovedView && !showDisapprovedView">
+                                        <div class="d-flex flex-column gap-2">
+                                            <!-- MODIFIED: Buttons are disabled if in bulk mode -->
+                                            <button @click="showApproval(row)" class="btn btn-success btn-sm" :disabled="isActionInProgress || selectedRows.length > 0">Approve</button>
+                                            <button @click="showDisapproval(row)" class="btn btn-danger btn-sm" :disabled="isActionInProgress || selectedRows.length > 0">Disapprove</button>
+                                            <button v-if="isPrivilegedUser" @click="showAddReviewer(row)" class="btn btn-warning btn-sm" :disabled="isActionInProgress || selectedRows.length > 0">Add Reviewer</button>
+                                            <button v-if="isPrivilegedUser" @click="showRemoveReviewer(row)" class="btn btn-secondary btn-sm" :disabled="isActionInProgress || selectedRows.length > 0">Remove Reviewer</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div v-if="totalPages > 1" class="d-flex flex-wrap justify-content-center align-items-center my-3 gap-2">
+                        <button @click="prevPage" :disabled="currentPage === 1" class="btn btn-outline-primary btn-sm">Previous</button>
+                        <span class="text-muted">Page {{ currentPage }} of {{ totalPages }}</span>
+                        <button @click="nextPage" :disabled="currentPage >= totalPages" class="btn btn-outline-primary btn-sm">Next</button>
+                    </div>
+
+                    <!-- Action Forms -->
+                    <div ref="actionFormsRef" class="mb-5" v-if="!showApprovedView">
+                        <div v-if="activeAction.type === 'approve'" class="card card-body">
+                            <h5>Approval Remarks for: <strong>{{ activeAction.label }}</strong></h5>
+                            <textarea v-model="activeAction.reason" class="form-control" placeholder="Please provide remarks for approval (required, 5-300 chars)" maxlength="300"></textarea>
+                            <div class="d-flex justify-content-end gap-2 mt-3">
+                                <button @click="cancelAction" class="btn btn-secondary">Cancel</button>
+                                <button @click="submitApproval" :disabled="isSubmitting || activeAction.reason.trim().length < 5" class="btn btn-success">
+                                    <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span> Submit Approval
+                                </button>
+                            </div>
+                        </div>
+                        <div v-if="activeAction.type === 'disapprove'" class="card card-body">
+                            <h5>Disapproval Reason for: <strong>{{ activeAction.label }}</strong></h5>
+                            <textarea v-model="activeAction.reason" class="form-control" placeholder="Please provide a reason (required, 5-300 chars)" maxlength="300"></textarea>
+                            <div class="d-flex justify-content-end gap-2 mt-3">
+                                <button @click="cancelAction" class="btn btn-secondary">Cancel</button>
+                                <button @click="submitDisapproval" :disabled="isSubmitting || activeAction.reason.trim().length < 5" class="btn btn-danger">
+                                    <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span> Submit Disapproval
+                                </button>
+                            </div>
+                        </div>
+                        <div v-if="['addReviewer', 'removeReviewer'].includes(activeAction.type)" class="card card-body">
+                            <h5>{{ activeAction.type === 'addReviewer' ? 'Add' : 'Remove' }} Reviewer for: <strong>{{ activeAction.label }}</strong></h5>
+                            <div v-if="activeAction.current.length > 0" class="mb-2"><strong>Current Reviewer/s:</strong> {{ activeAction.current.join(', ') }}</div>
+                            <strong>{{ activeAction.type === 'addReviewer' ? 'Available Reviewer/s:' : 'Check to Remove Reviewer/s:' }}</strong>
+                            <div v-for="option in availableReviewerOptions" :key="option.value" class="form-check">
+                                <input class="form-check-input" type="checkbox" :value="option.value" v-model="activeAction.selected" :id="`rev-${option.value}`" />
+                                <label class="form-check-label" :for="`rev-${option.value}`">{{ option.label }}</label>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2 mt-3">
+                                <button @click="cancelAction" class="btn btn-secondary">Cancel</button>
+                                <button @click="submitReviewerChange" :disabled="isSubmitting || activeAction.selected.length === 0" class="btn btn-primary">
+                                    <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span> Submit Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-         </div>
 
-         <!-- NEW: Confirmation Modal for Logout and other actions -->
-         <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true" ref="confirmationModalRef">
-            <div class="modal-dialog modal-dialog-centered">
-               <div class="modal-content">
-                  <div class="modal-header">
-                     <h5 class="modal-title" id="confirmationModalLabel">{{ confirmation.title }}</h5>
-                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                  </div>
-                  <div class="modal-body">
-                     {{ confirmation.message }}
-                  </div>
-                  <div class="modal-footer">
-                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                     <button type="button" class="btn" :class="confirmation.confirmButtonClass" @click="confirmAction">Confirm</button>
-                  </div>
-               </div>
+            <!-- Confirmation Modal -->
+            <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true" ref="confirmationModalRef">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="confirmationModalLabel">{{ confirmation.title }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            {{ confirmation.message }}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn" :class="confirmation.confirmButtonClass" @click="confirmAction">Confirm</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-         </div>
-      </div>
+        </div>
 
-      <script>
-         const { createApp, ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } = Vue;
+        <script>
+            const { createApp, ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } = Vue;
 
-         const RESTRICTED_USERS = [
-            "Jaye Trich Pizarro",
-            "Brix Valdenarro",
-            "Joy Melitante",
-            "Alex Flores",
-            "Aurora Pastolero",
-            "Mariano Caleja",
-            "Ernesto Andrade",
-            "Dustin Sta. Maria",
-            "Jenel Ann Cruzgarcia",
-            "Doreen Penilla",
-            "Denisse Malong",
-            "Kevin Lin",
-            "Juvi Masilungan",
-            "Jhoanalyn Gatdula",
-            "Mary Arceo",
-            "Annalee Pine ",
-            "Arralen Batallones",
-            "Ma Dulce Cuenca ",
-            "Aizelle Anne Yalong",
-            "Henedina Viado",
-            "Oauie Banagan",
-            "Michelle Ong",
-            "Ma Fatima Bausin",
-            "Melanie Lingon",
-            "Stephen Sumilang",
-            "Patricia Mari Quierez",
-            "Rosa Cecilia Salvador",
-            "Janice Cadog",
-            "Camsy Elvina",
-            "Mikee Vivo",
-            "Vanessa Vicente",
-            "Tyron Tan",
-            "Rodalyn Landoy",
-            "Fermila Pacampara",
-            "Lorraine Cicat",
-         ];
-         const SPECIAL_FORMAT_USERS = ["Louise Piamonte", "Rodalyn Landoy", "Frances Armian", "Zelfa Valderrama", "Allyzza Tolosa", "Fermila Pacampara", "Grace Guarico", "Lorraine Cicat"];
+            createApp({
+                setup() {
+                    // =================================================================================
+                    // 1. CONSTANTS AND CONFIGURATION
+                    // =================================================================================
+                    const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes for auto-logout
+                    const RESTRICTED_USERS = [
+                        "Jaye Trich Pizarro",
+                        "Brix Valdenarro",
+                        "Jocelyn Melitante",
+                        "Alex Flores",
+                        "Aurora Pastolero",
+                        "Mariano Caleja",
+                        "Ernesto Andrade",
+                        "Dustin Sta. Maria",
+                        "Jenel Ann Cruzgarcia",
+                        "Doreen Penilla",
+                        "Denisse Malong",
+                        "Kevin Lin",
+                        "Juvi Masilungan",
+                        "Jhoanalyn Gatdula",
+                        "Mary Arceo",
+                        "Annalee Pine ",
+                        "Arralen Batallones",
+                        "Ma Dulce Cuenca ",
+                        "Aizelle Anne Yalong",
+                        "Henedina Viado",
+                        "Oauie Banagan",
+                        "Michelle Ong",
+                        "Ma Fatima Bausin",
+                        "Melanie Lingon",
+                        "Stephen Sumilang",
+                        "Patricia Mari Quierez",
+                        "Rosa Cecilia Salvador",
+                        "Janice Cadog",
+                        "Camsy Elvina",
+                        "Mikee Vivo",
+                        "Vanessa Vicente",
+                        "Tyrone Tan",
+                        "Rodalyn Landoy",
+                        "Fermila Pacampara",
+                        "Lorraine Cicat",
+                    ];
+                    const SPECIAL_FORMAT_USERS = ["Louise Piamonte", "Rodalyn Landoy", "Frances Armian", "Zelfa Valderrama", "Allyzza Tolosa", "Fermila Pacampara", "Grace Guarico", "Lorraine Cicat", "Andrea Buro"];
+                    const FORMATTER_NAMES = [
+                        "Graham Coates",
+                        "Rosalyn Segura",
+                        "Michael Lao",
+                        "Jeremy Rodriguez",
+                        "Noe Versoza",
+                        "Tinay Villanueva",
+                        "Lorence Aurello",
+                        "Jaye Trich Pizarro",
+                        "Jocelyn Melitante",
+                        "Alex Flores",
+                        "Aurora Pastolero",
+                        "Mariano Caleja",
+                        "Brix Valdenarro",
+                        "Ernesto Andrade",
+                        "Dustin Sta. Maria",
+                        "Jenel Ann Cruzgarcia",
+                        "Doreen Penilla",
+                        "Frances Armian",
+                        "Denisse Malong",
+                        "Kevin Lin",
+                        "Juvi Masilungan",
+                        "Jhoanalyn Gatdula",
+                        "Mary Arceo",
+                        "Annalee Pine",
+                        "Arralen Batallones",
+                        "Ma Dulce Cuenca",
+                        "Aizelle Anne Yalong",
+                        "Henedina Viado",
+                        "Oauie Banagan",
+                        "Michelle Ong",
+                        "Ma Fatima Bausin",
+                        "Melanie Lingon",
+                        "Stephen Sumilang",
+                        "Patricia Mari Quierez",
+                        "Rosa Cecilia Salvador",
+                        "Janice Cadog",
+                        "Camsy Elvina",
+                        "Mikee Vivo",
+                        "Vanessa Vicente",
+                        "Tyrone Tan",
+                    ];
+                    const APPROVER_LISTS = {
+                        MGL: [
+                            { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Graham Coates", value: "GMC", email: "gdguarico@megaworld-lifestyle.com", cc: ["jfpuga@megaworld-lifestyle.com"] },
+                            { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com" },
+                            { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Jaye Trich Pizarro", value: "JAYE", email: "jmpizarro@megaworld-lifestyle.com", cc: ["burofornisandrea30@gmail.com"] },
+                            { label: "Jocelyn Melitante", value: "JOY", email: "jcmelitante@megaworld-lifestyle.com" },
+                            { label: "Alex Flores", value: "ALEX", email: "apflores@megaworld-lifestyle.com" },
+                            { label: "Aurora Pastolero", value: "AU", email: "mdpastolero@megaworld-lifestyle.com" },
+                            { label: "Brix Valdenarro", value: "BRIX", email: "bvvaldenarro@megaworld-lifestyle.com" },
+                            { label: "Mariano Caleja", value: "MAR", email: "mbcaleja@megaworld-lifestyle.com" },
+                        ],
+                        MLP: [
+                            { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+                             { label: "Graham Coates", value: "GMC", email: "gdguarico@megaworld-lifestyle.com", cc: ["jfpuga@megaworld-lifestyle.com"] },
+                            { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Jaye Trich Pizarro", value: "JAYE", email: "jmpizarro@megaworld-lifestyle.com", cc: ["burofornisandrea30@gmail.com"] },
+                            { label: "Jocelyn Melitante", value: "JOY", email: "jcmelitante@megaworld-lifestyle.com" },
+                            { label: "Alex Flores", value: "ALEX", email: "apflores@megaworld-lifestyle.com" },
+                            { label: "Aurora Pastolero", value: "AU", email: "mdpastolero@megaworld-lifestyle.com" },
+                            { label: "Brix Valdenarro", value: "BRIX", email: "bvvaldenarro@megaworld-lifestyle.com" },
+                            { label: "Mariano Caleja", value: "MAR", email: "mbcaleja@megaworld-lifestyle.com" },
+                        ],
+                        RCS: [
+                             { label: "Graham Coates", value: "GMC", email: "gdguarico@megaworld-lifestyle.com", cc: ["jfpuga@megaworld-lifestyle.com"] },
+                            { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Annalee Pine ", value: "ANNALEE", email: "annalee.pine@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Arralen Batallones ", value: "ARRA", email: "arralen.batallones@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Ma Dulce Cuenca ", value: "DULCE", email: "dulce.cuenca@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Aizelle Anne Yalong ", value: "AIZELLE", email: "aizelle.yalong@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Henedina Viado ", value: "VIA", email: "henedina.viado@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Oauie Banagan ", value: "OAUIE", email: "oauie.banagan@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Michelle Ong ", value: "MICH", email: "michelle.ong@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Ma Fatima Bausin ", value: "FATIMA", email: "fatima.bausin@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Melanie Lingon ", value: "MELANIE", email: "melanie.lingon@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Stephen Sumilang ", value: "STEPH", email: "stephen.sumilang@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Patricia Mari Quierez ", value: "PAT", email: "patricia.quierez@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Rosa Cecilia Salvador ", value: "ROSA", email: "rosa.salvador@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Janice Cadog ", value: "JANICE", email: "janice.cadog@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
+                        ],
+                        LDA: [
+                            { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+                             { label: "Graham Coates", value: "GMC", email: "gdguarico@megaworld-lifestyle.com", cc: ["jfpuga@megaworld-lifestyle.com"] },
+                            { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Frances Armian", value: "FA", email: "frances.armian@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Denisse Malong", value: "DM", email: "denisse.malong@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Kevin Lin", value: "KL", email: "kevin.lin@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Juvi Masilungan", value: "JM", email: "juvi.masilungan@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Jhoanalyn Gatdula", value: "JG", email: "jhoanalyn.gatdula@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Mary Arceo", value: "MA", email: "mary.arceo@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
+                        ],
+                        KMV: [
+                            { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+                             { label: "Graham Coates", value: "GMC", email: "gdguarico@megaworld-lifestyle.com", cc: ["jfpuga@megaworld-lifestyle.com"] },
+                            { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Ernesto Andrade", value: "EBA", email: "ernesto.andrade@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Dustin Sta. Maria", value: "DSM", email: "dustin.stamaria@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Jenel Ann Cruzgarcia", value: "JAC", email: "jenel.cruzgarcia@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Doreen Penilla", value: "DP", email: "doreen.penilla@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
+                        ],
+                        GMC: [{ label: "Michael Lao", value: "MGL", email: "mglao@megaworld-lifestyle.com", cc: ["mppiamonte@megaworld-lifestyle.com"] }],
+                        JE: [
+                            { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
+                             { label: "Graham Coates", value: "GMC", email: "gdguarico@megaworld-lifestyle.com", cc: ["jfpuga@megaworld-lifestyle.com"] },
+                            { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
+                        ],
+                        NOE: [
+                            { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Graham Coates", value: "GMC", email: "gdguarico@megaworld-lifestyle.com", cc: ["jfpuga@megaworld-lifestyle.com"] },
+                            { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
+                            { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
+                        ],
+                    };
 
-         const APPROVER_LISTS = {
-            MGL: [
-               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
-               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
-               { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
-               { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
-               { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
-               { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
-               { label: "Jaye Trich Pizarro", value: "JAYE", email: "jecastro@megaworld-lifestyle.com", cc: ["mrcastrojeronluther@gmail.com", "castrojeronluther@gmail.com"] },
-               { label: "Joy Melitante", value: "JOY", email: "joy.melitante@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
-               { label: "Alex Flores", value: "ALEX", email: "alex.flores@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
-               { label: "Aurora Pastolero", value: "AU", email: "aurora.pastolero@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
-               { label: "Brix Valdenarro", value: "BRIX", email: "brix.valdenarro@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
-               { label: "Mariano Caleja", value: "MAR", email: "mariano.caleja@example.com", cc: ["michael.lao@example.com", "mcd-heads-group@example.com"] },
-            ],
-            RCS: [
-               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Annalee Pine ", value: "ANNALEE", email: "annalee.pine@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Arralen Batallones ", value: "ARRA", email: "arralen.batallones@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Ma Dulce Cuenca ", value: "DULCE", email: "dulce.cuenca@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Aizelle Anne Yalong ", value: "AIZELLE", email: "aizelle.yalong@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Henedina Viado ", value: "VIA", email: "henedina.viado@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Oauie Banagan ", value: "OAUIE", email: "oauie.banagan@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Michelle Ong ", value: "MICH", email: "michelle.ong@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Ma Fatima Bausin ", value: "FATIMA", email: "fatima.bausin@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Melanie Lingon ", value: "MELANIE", email: "melanie.lingon@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Stephen Sumilang ", value: "STEPH", email: "stephen.sumilang@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Patricia Mari Quierez ", value: "PAT", email: "patricia.quierez@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Rosa Cecilia Salvador ", value: "ROSA", email: "rosa.salvador@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-               { label: "Janice Cadog ", value: "JANICE", email: "janice.cadog@example.com", cc: ["rosalyn.segura@example.com", "mcd-heads-group@example.com"] },
-            ],
-            LDA: [
-               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
-               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
-               { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
-               { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
-               { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
-               { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
-               { label: "Frances Armian", value: "FA", email: "frances.armian@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
-               { label: "Denisse Malong", value: "DM", email: "denisse.malong@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
-               { label: "Kevin Lin", value: "KL", email: "kevin.lin@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
-               { label: "Juvi Masilungan", value: "JM", email: "juvi.masilungan@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
-               { label: "Jhoanalyn Gatdula", value: "JG", email: "jhoanalyn.gatdula@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
-               { label: "Mary Arceo", value: "MA", email: "mary.arceo@example.com", cc: ["lorence.aurelio@example.com", "mcd-heads-group@example.com"] },
-            ],
-            KMV: [
-               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
-               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
-               { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
-               { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
-               { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
-               { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
-               { label: "Ernesto Andrade", value: "EBA", email: "ernesto.andrade@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
-               { label: "Dustin Sta. Maria", value: "DSM", email: "dustin.stamaria@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
-               { label: "Jenel Ann Cruzgarcia", value: "JAC", email: "jenel.cruzgarcia@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
-               { label: "Doreen Penilla", value: "DP", email: "doreen.penilla@example.com", cc: ["tinay.villanueva@example.com", "mcd-heads-group@example.com"] },
-            ],
-            GMC: [
-               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] },
-               { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] },
-               { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] },
-               { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] },
-               { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] },
-               { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["graham.coates@example.com", "mcd-heads-group@example.com"] },
-            ],
-            JE: [
-               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
-               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
-               { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
-               { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
-               { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
-               { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["Jeremyrodriguez@example.com", "mcd-heads-group@example.com"] },
-            ],
-            NOE: [
-               { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
-               { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
-               { label: "Michael Lao", value: "MGL", email: "michael.lao@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
-               { label: "Jeremy Rodriguez", value: "JE", email: "Jeremyrodriguez@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
-               { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
-               { label: "Lorence Aurello", value: "LDA", email: "lorence.aurelio@example.com", cc: ["Noeversoza@example.com", "mcd-heads-group@example.com"] },
-            ],
-         };
+                    // =================================================================================
+                    // 2. REACTIVE STATE MANAGEMENT
+                    // =================================================================================
+                    const user = reactive({ isLoggedIn: false, sheetName: "", displayName: "" });
+                    const loginForm = reactive({ username: "", password: "" });
+                    const isLoggingIn = ref(false);
+                    const loginError = ref("");
 
-         const FORMATTER_NAMES = [
-            "Graham Coates",
-            "Rosalyn Segura",
-            "Michael Lao",
-            "Jeremy Rodriguez",
-            "Noe Versoza",
-            "Tinay Villanueva",
-            "Lorence Aurello",
-            "Jaye Trich Pizarro",
-            "Joy Melitante",
-            "Alex Flores",
-            "Aurora Pastolero",
-            "Mariano Caleja",
-            "Brix Valdenarro",
-            "Ernesto Andrade",
-            "Dustin Sta. Maria",
-            "Jenel Ann Cruzgarcia",
-            "Doreen Penilla",
-            "Frances Armian",
-            "Denisse Malong",
-            "Kevin Lin",
-            "Juvi Masilungan",
-            "Jhoanalyn Gatdula",
-            "Mary Arceo",
-            "Annalee Pine",
-            "Arralen Batallones",
-            "Ma Dulce Cuenca",
-            "Aizelle Anne Yalong",
-            "Henedina Viado",
-            "Oauie Banagan",
-            "Michelle Ong",
-            "Ma Fatima Bausin",
-            "Melanie Lingon",
-            "Stephen Sumilang",
-            "Patricia Mari Quierez",
-            "Rosa Cecilia Salvador",
-            "Janice Cadog",
-            "Camsy Elvina",
-            "Mikee Vivo",
-            "Vanessa Vicente",
-            "Tyron Tan",
-         ];
+                    const isDataLoaded = ref(false);
+                    const isSubmitting = ref(false);
+                    const headers = ref([]);
+                    const tableData = ref([]);
+                    const approvedData = ref([]);
+                    const searchQuery = ref("");
+                    const currentPage = ref(1);
+                    const rowsPerPage = ref(30);
+                    const disapprovedData = ref([]);
+                    const showDisapprovedView = ref(false);
+                    const isDisapprovedDataLoading = ref(false);
 
-         createApp({
-            setup() {
-               const user = reactive({ isLoggedIn: false, sheetName: "", displayName: "" });
-               const loginForm = reactive({ username: "", password: "" });
-               const isLoggingIn = ref(false);
-               const loginError = ref("");
-               const isDataLoaded = ref(false);
-               const isSubmitting = ref(false);
-               const headers = ref([]);
-               const tableData = ref([]); 
-               const approvedData = ref([]); 
-               const searchQuery = ref("");
-               const activeAction = reactive({ type: null, row: null, label: "", reason: "", selected: [], current: [] });
-               const actionFormsRef = ref(null);
-               const currentPage = ref(1);
-               const rowsPerPage = ref(30);
-               const toasts = ref([]);
-               let toastIdCounter = 0;
-               let idleTimer;
-               const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
+                    // --- START: New state for bulk actions ---
+                    const selectedRows = ref([]);
+                    const bulkRemarks = ref("");
+                    // --- END: New state for bulk actions ---
 
-               
-               const confirmationModalRef = ref(null); 
-               let confirmationModal = null; 
-               const confirmation = reactive({
-                  title: "",
-                  message: "",
-                  onConfirm: null,
-                  confirmButtonClass: "btn-primary",
-               });
+                    const activeAction = reactive({ type: null, row: null, label: "", reason: "", selected: [], current: [] });
+                    const confirmation = reactive({ title: "", message: "", onConfirm: null, confirmButtonClass: "btn-primary" });
 
-               const showApprovedView = ref(false);
-               const isApprovedDataLoading = ref(false);
-               const isProcessPending = computed(() => toasts.value.some((t) => t.status === "ongoing"));
-               const isLoginFormValid = computed(() => /^[A-Za-z0-9@.]+$/.test(loginForm.username) && /^[A-Za-z0-9@.]+$/.test(loginForm.password));
-               const greetingMessage = computed(() => `${new Date().getHours() < 12 ? "Good Morning" : new Date().getHours() < 18 ? "Good Afternoon" : "Good Evening"}, ${user.displayName}!`);
+                    const toasts = ref([]);
+                    let toastIdCounter = 0;
+                    let idleTimer;
 
-               const filteredData = computed(() => {
-                  const sourceData = showApprovedView.value ? approvedData.value : tableData.value;
-                  if (!searchQuery.value) return sourceData;
-                  return sourceData.filter((row) => row.some((cell) => String(cell).toLowerCase().includes(searchQuery.value.toLowerCase().trim())));
-               });
+                    const showApprovedView = ref(false);
+                    const isApprovedDataLoading = ref(false);
 
-               const totalPages = computed(() => Math.ceil(filteredData.value.length / rowsPerPage.value) || 1);
-               const paginatedData = computed(() => {
-                  const start = (currentPage.value - 1) * rowsPerPage.value;
-                  const end = start + rowsPerPage.value;
-                  return filteredData.value.slice(start, end);
-               });
+                    const actionFormsRef = ref(null);
+                    const confirmationModalRef = ref(null);
+                    let confirmationModal = null;
 
-               const isPrivilegedUser = computed(() => !RESTRICTED_USERS.includes(user.displayName));
-               const isActionInProgress = computed(() => activeAction.type !== null);
-               const allApproverOptions = computed(() => {
-                  const userMap = { "Michael Lao": "MGL", "Graham Coates": "GMC", "Rosalyn Segura": "RCS", "Tinay Villanueva": "KMV", "Lorence Aurelio": "LDA", "Jeremy Rodriguez": "JE", "Noe Versoza": "NOE" };
-                  return APPROVER_LISTS[userMap[user.displayName]] || [];
-               });
-               const availableReviewerOptions = computed(() => {
-                  if (["addReviewer", "removeReviewer"].includes(activeAction.type)) {
-                     return allApproverOptions.value.filter((opt) => (activeAction.type === "addReviewer" ? !activeAction.current.includes(opt.label) : activeAction.current.includes(opt.label)));
-                  }
-                  return [];
-               });
+                    // =================================================================================
+                    // 3. COMPUTED PROPERTIES
+                    // =================================================================================
+                    const isProcessPending = computed(() => toasts.value.some((t) => t.status === "ongoing"));
+                    const isLoginFormValid = computed(() => loginForm.username.trim() !== "" && loginForm.password.trim() !== "");
+                    const greetingMessage = computed(() => `${new Date().getHours() < 12 ? "Good Morning" : new Date().getHours() < 18 ? "Good Afternoon" : "Good Evening"}, ${user.displayName}!`);
 
-               // --- Toast Notification System ---
-               const removeToast = (id) => {
-                  toasts.value = toasts.value.filter((t) => t.id !== id);
-               };
+                    const filteredData = computed(() => {
+                        const sourceData = showApprovedView.value ? approvedData.value : showDisapprovedView.value ? disapprovedData.value : tableData.value;
+                        if (!searchQuery.value) return sourceData;
+                        return sourceData.filter((row) => row.some((cell) => String(cell).toLowerCase().includes(searchQuery.value.toLowerCase().trim())));
+                    });
 
-               
-               const showSimpleToast = (message, status = "warning", duration = 7000) => {
-                  const id = toastIdCounter++;
-                  toasts.value.unshift({ id, status, message });
-                  setTimeout(() => removeToast(id), duration);
-               };
+                    const pendingCount = computed(() => tableData.value.length);
+                    const approvedCount = computed(() => approvedData.value.length);
+                    const disapprovedCount = computed(() => disapprovedData.value.length);
 
-               const addToast = (actionType, refLabel, initialMessage = "") => {
-                  const id = toastIdCounter++;
-                  const message = initialMessage || `Processing ${actionType} for '${refLabel}'...`;
-                  toasts.value.unshift({ id, status: "ongoing", message });
-                  return id;
-               };
+                    const totalPages = computed(() => Math.ceil(filteredData.value.length / rowsPerPage.value) || 1);
+                    const paginatedData = computed(() => {
+                        const start = (currentPage.value - 1) * rowsPerPage.value;
+                        const end = start + rowsPerPage.value;
+                        return filteredData.value.slice(start, end);
+                    });
 
-               const updateToast = (id, newStatus, actionType, refLabel, customMessage = "") => {
-                  const toast = toasts.value.find((t) => t.id === id);
-                  if (toast) {
-                     toast.status = newStatus;
-                     if (customMessage) {
-                        toast.message = customMessage;
-                     } else {
-                        switch (newStatus) {
-                           case "success":
-                              toast.message = `${actionType} for '${refLabel}' was successful.`;
-                              break;
-                           case "failure":
-                              toast.message = `Failed to ${actionType} for '${refLabel}'. Please try again.`;
-                              break;
-                           case "warning":
-                              toast.message = `Warning for ${actionType} on '${refLabel}'. See details.`;
-                              break;
+                    const isPrivilegedUser = computed(() => !RESTRICTED_USERS.includes(user.displayName));
+                    const isActionInProgress = computed(() => activeAction.type !== null);
+
+                    // --- START: New computed properties for bulk actions ---
+                    const isBulkRemarksInvalid = computed(() => bulkRemarks.value.trim().length < 5);
+                    const isAnyRowSelected = computed(() => selectedRows.value.length > 0);
+                    // --- END: New computed properties for bulk actions ---
+
+                    const allApproverOptions = computed(() => {
+                        const userMap = { "Michael Lao": "MGL", "Louise Piamonte": "MLP", "Graham Coates": "GMC", "Rosalyn Segura": "RCS", "Tinay Villanueva": "KMV", "Lorence Aurelio": "LDA", "Jeremy Rodriguez": "JE", "Noe Versoza": "NOE" };
+                        return APPROVER_LISTS[userMap[user.displayName]] || [];
+                    });
+
+                    const availableReviewerOptions = computed(() => {
+                        if (["addReviewer", "removeReviewer"].includes(activeAction.type)) {
+                            return allApproverOptions.value.filter((opt) => (activeAction.type === "addReviewer" ? !activeAction.current.includes(opt.label) : activeAction.current.includes(opt.label)));
                         }
-                     }
-                     const delay = newStatus === "success" || newStatus === "warning" ? 5000 : 10000;
-                     setTimeout(() => removeToast(id), delay);
-                  }
-               };
-               
+                        return [];
+                    });
 
-              
-               const showConfirmation = (title, message, onConfirmCallback, buttonClass = "btn-primary") => {
-                  confirmation.title = title;
-                  confirmation.message = message;
-                  confirmation.onConfirm = onConfirmCallback;
-                  confirmation.confirmButtonClass = buttonClass;
-                  if (confirmationModal) {
-                     confirmationModal.show();
-                  }
-               };
+                    // =================================================================================
+                    // 4. CORE FUNCTIONS
+                    // =================================================================================
 
-               const confirmAction = () => {
-                  if (typeof confirmation.onConfirm === "function") {
-                     confirmation.onConfirm();
-                  }
-                  if (confirmationModal) {
-                     confirmationModal.hide();
-                  }
-               };
-               
+                    const runGoogleScript = (name, ...args) => new Promise((resolve, reject) => {
+                        if (typeof google === "undefined" || !google.script?.run) {
+                            return reject(new Error("Google Script API not available."));
+                        }
+                        google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[name](...args);
+                    });
 
-               const fetchApprovedData = async () => {
-                  if (approvedData.value.length > 0) return;
-                  isApprovedDataLoading.value = true;
-                  try {
-                     const data = await runGoogleScript("getApprovedSheetData", user.sheetName);
-                     const cols = [5, 6, 7, 9, 11, 12, 14, 0];
-                     approvedData.value = data && data.length > 0 ? data.map((row) => cols.map((i) => row[i])) : [];
-                  } catch (error) {
-                     
-                     showSimpleToast(`Failed to load approved items. Error: ${error.message}`, "danger");
-                     showApprovedView.value = false;
-                  } finally {
-                     isApprovedDataLoading.value = false;
-                  }
-               };
+                    const login = async () => {
+                        if (!isLoginFormValid.value) return;
+                        isLoggingIn.value = true;
+                        loginError.value = "";
+                        try {
+                            const userData = await runGoogleScript("authenticateUser", loginForm.username, loginForm.password);
+                            if (userData && userData.sheet) {
+                                Object.assign(user, { isLoggedIn: true, sheetName: userData.sheet, displayName: userData.displayName || loginForm.username });
+                                localStorage.setItem("mcd-user", JSON.stringify({ ...user, expires: Date.now() + INACTIVITY_TIMEOUT_MS }));
+                                await Promise.all([refreshData(), fetchApprovedData(true), fetchDisapprovedData(true)]);
+                                resetIdleTimer();
+                            } else {
+                                loginError.value = "Invalid username or password.";
+                            }
+                        } catch (error) {
+                            loginError.value = error.message || "An unknown login error occurred.";
+                        } finally {
+                            isLoggingIn.value = false;
+                        }
+                    };
 
-               const toggleApprovedView = () => {
-                  showApprovedView.value = !showApprovedView.value;
-                  searchQuery.value = "";
-                  currentPage.value = 1;
-                  if (showApprovedView.value) {
-                     fetchApprovedData();
-                  }
-               };
+                    const logout = () => {
+                        if (isProcessPending.value) return showSimpleToast("Please wait for processes to complete before logging out.", "warning");
+                        showConfirmation("Confirm Logout", "Are you sure you want to log out?", () => {
+                            showSimpleToast("You have successfully logged out.", "success", 5000);
+                            forceLogout();
+                        }, "btn-danger");
+                    };
 
-               const submitReviewerChange = async () => {
-                  if (activeAction.selected.length === 0) return;
+                    const forceLogout = () => {
+                        if (!user.isLoggedIn) return;
+                        clearTimeout(idleTimer);
+                        localStorage.removeItem("mcd-user");
+                        Object.assign(user, { isLoggedIn: false, sheetName: "", displayName: "" });
+                        Object.assign(loginForm, { username: "", password: "" });
+                        tableData.value = [];
+                        approvedData.value = [];
+                        disapprovedData.value = [];
+                        toasts.value = [];
+                        isDataLoaded.value = false;
+                        showApprovedView.value = false;
+                        showDisapprovedView.value = false;
+                    };
 
-                  const { label: refLabel, row: rowToUpdate, type: currentActionType } = activeAction;
-                  const actionType = currentActionType === "addReviewer" ? "Add Reviewer" : "Remove Reviewer";
-                  const toastId = addToast(actionType, refLabel, "Processing...");
-                  isSubmitting.value = true;
-
-                  const rowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
-                  if (rowIndex === -1) {
-                     const errorMsg = "Client Error: Row not found. Please refresh.";
-                     isSubmitting.value = false;
-                     updateToast(toastId, "failure", actionType, refLabel, errorMsg);
-                     return;
-                  }
-
-                  const originalApproversText = tableData.value[rowIndex][7] || "";
-                  const selectedOptions = activeAction.selected.map((val) => allApproverOptions.value.find((opt) => opt.value === val)).filter(Boolean);
-                  const selectedLabels = selectedOptions.map((opt) => opt.label.trim());
-
-                  const payload = { referenceNumber: rowToUpdate[0], memoSubject: rowToUpdate[4] };
-                  let newApproversText, apiAction;
-
-                  if (currentActionType === "addReviewer") {
-                     const newEntries = selectedLabels.map((label) => `${label} (ADDING...)`).join("\n");
-                     newApproversText = (originalApproversText ? originalApproversText + "\n" : "") + newEntries;
-                     apiAction = "submitApproverValues";
-                     payload.approverValues = selectedOptions;
-                  } else {
-                     newApproversText = originalApproversText;
-                     selectedLabels.forEach((label) => {
-                        const escapedLabel = label.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                        const regex = new RegExp(`(${escapedLabel})`, "g");
-                        newApproversText = newApproversText.replace(regex, `$1 (REMOVING...)`);
-                     });
-                     apiAction = "submitRemoveApprovers";
-                     payload.removeApprovers = selectedOptions;
-                  }
-                  tableData.value[rowIndex][7] = newApproversText.trim();
-                  cancelAction();
-                  isSubmitting.value = false;
-
-                  try {
-                     const result = await runGoogleScript(apiAction, payload, user);
-                     if (result && result.warning) {
-                        updateToast(toastId, "warning", actionType, refLabel, result.warning);
-                     } else {
-                        updateToast(toastId, "success", actionType, refLabel, result.message);
-                     }
-
-                     const finalRowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
-                     if (finalRowIndex !== -1) {
-                        let currentText = tableData.value[finalRowIndex][7];
-                        if (currentActionType === "addReviewer") {
-                           selectedLabels.forEach((label) => {
-                              currentText = currentText.replace(`${label} (ADDING...)`, label.trim());
-                           });
+                    const handleInactivity = () => {
+                        if (!isProcessPending.value) {
+                            showSimpleToast("Logged out due to inactivity.", "info", 10000);
+                            forceLogout();
                         } else {
-                           selectedLabels.forEach((label) => {
-                              const escapedLabel = label.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                              const removalRegex = new RegExp(`\\s*•?\\s*${escapedLabel}\\s*\\(REMOVING...\\)\\s*,?`, "g");
-                              currentText = currentText.replace(removalRegex, "");
-                           });
-                           currentText = currentText.replace(/,\s*$/, "").trim();
+                            resetIdleTimer();
                         }
-                        tableData.value[finalRowIndex][7] = currentText.trim();
-                     }
-                  } catch (error) {
-                     console.error("A server-side error occurred:", error);
-                     let userMessage = error.message || "An unknown server error occurred.";
-                     userMessage = userMessage.replace(/^(Submit Approver Failed:|Remove Approver Failed:)\s*/, "");
-                     updateToast(toastId, "failure", actionType, refLabel, userMessage);
-                     const failedRowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
-                     if (failedRowIndex > -1) {
-                        tableData.value[failedRowIndex][7] = originalApproversText;
-                     }
-                  }
-               };
+                    };
 
-               const nextPage = () => {
-                  if (currentPage.value < totalPages.value) currentPage.value++;
-               };
-               const prevPage = () => {
-                  if (currentPage.value > 1) currentPage.value--;
-               };
-               const runGoogleScript = (name, ...args) =>
-                  new Promise((resolve, reject) => {
-                     if (typeof google === "undefined" || !google.script?.run) return reject(new Error("Google Script API not available."));
-                     google.script.run
-                        .withSuccessHandler(resolve)
-                        .withFailureHandler(reject)
-                        [name](...args);
-                  });
-               const forceLogout = () => {
-                  if (isProcessPending.value) {
-                     
-                     showSimpleToast("Cannot perform this action while operations are in progress.", "warning");
-                     return;
-                  }
-                  if (!user.isLoggedIn) return;
-                  clearTimeout(idleTimer);
-                  localStorage.removeItem("mcd-user");
-                  Object.assign(user, { isLoggedIn: false, sheetName: "", displayName: "" });
-                  Object.assign(loginForm, { username: "", password: "" });
-                  tableData.value = [];
-                  approvedData.value = [];
-                  showApprovedView.value = false;
-                  toasts.value = [];
-                  isDataLoaded.value = false;
-               };
-               const logout = () => {
-                  if (isProcessPending.value) {
-                     showSimpleToast("Please wait for the background processes to complete before logging out.", "warning");
-                     return;
-                  }
-                  
-                  const onConfirmLogout = () => {
-                     showSimpleToast("You have successfully logged out.", "success", 5000); // Show success message
-                     forceLogout(); 
-                  };
+                    const resetIdleTimer = () => {
+                        clearTimeout(idleTimer);
+                        if (user.isLoggedIn) idleTimer = setTimeout(handleInactivity, INACTIVITY_TIMEOUT_MS);
+                    };
 
-                 
-                  showConfirmation("Confirm Logout", "Are you sure you want to log out?", onConfirmLogout, "btn-danger");
-               };
-               const handleInactivity = () => {
-                  if (!isProcessPending.value) {
-                     
-                     showSimpleToast("You have been logged out due to inactivity.", "info", 10000);
-                     forceLogout();
-                  }
-               };
-               const resetIdleTimer = () => {
-                  clearTimeout(idleTimer);
-                  if (user.isLoggedIn) idleTimer = setTimeout(handleInactivity, INACTIVITY_TIMEOUT_MS);
-               };
-               const login = async () => {
-                  if (!isLoginFormValid.value) return;
-                  isLoggingIn.value = true;
-                  loginError.value = "";
-                  try {
-                     const userData = await runGoogleScript("authenticateUser", loginForm.username, loginForm.password);
-                     if (userData && userData.sheet) {
-                        localStorage.removeItem("mcd-user");
-                        Object.assign(user, { isLoggedIn: true, sheetName: userData.sheet, displayName: userData.displayName || loginForm.username });
-                        localStorage.setItem("mcd-user", JSON.stringify({ ...user, expires: Date.now() + INACTIVITY_TIMEOUT_MS }));
-                        await refreshData();
-                        resetIdleTimer();
-                     } else {
-                        loginError.value = "Invalid username or password.";
-                     }
-                  } catch (error) {
-                     loginError.value = error.message || "An unknown login error occurred.";
-                  } finally {
-                     isLoggingIn.value = false;
-                  }
-               };
-               const refreshData = async (silent = false) => {
-                  if (!silent) isDataLoaded.value = false;
-                  try {
-                     const data = await runGoogleScript("getSheetData", user.sheetName);
-                     const cols = [5, 6, 7, 9, 11, 12, 14, 0];
-                     headers.value = data?.length > 0 ? cols.map((i) => data[0][i]) : [];
-                     tableData.value = data?.length > 1 ? data.slice(1).map((row) => cols.map((i) => row[i])) : [];
-                  } catch (error) {
-                     
-                     showSimpleToast("Session expired or data loading failed. Please log in again.", "danger", 10000);
-                     forceLogout();
-                  } finally {
-                     isDataLoaded.value = true;
-                  }
-               };
-               const showActionUI = (type, row) => {
-                  const allApproverLabels = Object.values(APPROVER_LISTS)
-                     .flat()
-                     .map((a) => a.label);
-                  const uniqueAllowedApprovers = [...new Set(allApproverLabels)];
-                  const currentApprovers = uniqueAllowedApprovers.filter((name) => new RegExp(`\\b${name.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")}\\b`).test(row[7] || ""));
-                  Object.assign(activeAction, { type, row, label: row[4], reason: "", selected: [], current: currentApprovers });
-               };
-               const showApproval = (row) => showActionUI("approve", row);
-               const showDisapproval = (row) => showActionUI("disapprove", row);
-               const showAddReviewer = (row) => showActionUI("addReviewer", row);
-               const showRemoveReviewer = (row) => showActionUI("removeReviewer", row);
-               const cancelAction = () => (activeAction.type = null);
-               const submitApproval = async () => {
-                  const trimmedReason = activeAction.reason.trim();
-                  
-                  if (trimmedReason.length < 5 || trimmedReason.length > 300) return showSimpleToast("Approval remarks are required and must be between 5 and 300 characters.", "warning");
-                  const { label: refLabel, row: rowToUpdate } = activeAction;
-                  const toastId = addToast("Approval", refLabel);
-                  isSubmitting.value = true;
-                  const finalReason = SPECIAL_FORMAT_USERS.includes(user.displayName) ? `<${trimmedReason}>` : trimmedReason;
-                  const originalIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
-                  const originalRowData = JSON.parse(JSON.stringify(tableData.value[originalIndex]));
-                  if (originalIndex !== -1) tableData.value.splice(originalIndex, 1);
-                  cancelAction();
-                  isSubmitting.value = false;
-                  try {
-                     await runGoogleScript("updateRowStatusWithValidation", rowToUpdate, "APPROVED", "", finalReason, user.sheetName);
-                     updateToast(toastId, "success", "Approval", refLabel);
-                  } catch (error) {
-                     updateToast(toastId, "failure", "Approval", refLabel);
-                     if (originalIndex !== -1) tableData.value.splice(originalIndex, 0, originalRowData);
-                  }
-               };
-               const submitDisapproval = async () => {
-                  const trimmedReason = activeAction.reason.trim();
-                  
-                  if (trimmedReason.length < 5 || trimmedReason.length > 300) return showSimpleToast("Disapproval reason is required and must be between 5 and 300 characters.", "warning");
-                  const { label: refLabel, row: rowToUpdate } = activeAction;
-                  const toastId = addToast("Disapproval", refLabel);
-                  isSubmitting.value = true;
-                  const finalReason = SPECIAL_FORMAT_USERS.includes(user.displayName) ? `<${trimmedReason}>` : trimmedReason;
-                  const originalIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
-                  const originalRowData = JSON.parse(JSON.stringify(tableData.value[originalIndex]));
-                  if (originalIndex !== -1) tableData.value.splice(originalIndex, 1);
-                  cancelAction();
-                  isSubmitting.value = false;
-                  try {
-                     await runGoogleScript("updateRowStatusWithValidation", rowToUpdate, "DISAPPROVED", finalReason, "", user.sheetName);
-                     updateToast(toastId, "success", "Disapproval", refLabel);
-                  } catch (error) {
-                     updateToast(toastId, "failure", "Disapproval", refLabel);
-                     if (originalIndex !== -1) tableData.value.splice(originalIndex, 0, originalRowData);
-                  }
-               };
-               const formatDateCell = (value) => (!value ? "" : new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }));
-               const calculateDaysDifference = (dateStr) => (!dateStr ? "" : `${Math.floor((Date.now() - new Date(dateStr).getTime()) / 864e5)} day(s)`);
-               const formatCellWithLineBreaks = (text) => {
-                  if (typeof text !== "string" || !text.trim()) return "";
-                  let processedText = text;
-                  processedText = processedText.replace(/\bApproved:/gi, "<strong>Approved:</strong>").replace(/\bPending:/gi, "<br><br><strong>Pending:</strong>");
-                  FORMATTER_NAMES.forEach((name) => {
-                     const regex = new RegExp(`\\b(${name.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")})\\b`, "g");
-                     processedText = processedText.replace(regex, `<br>  • <strong>$1</strong>`);
-                  });
-                  return processedText;
-               };
-               watch(activeAction, (newVal) => {
-                  if (newVal.type) nextTick(() => actionFormsRef.value?.scrollIntoView({ behavior: "smooth", block: "center" }));
-               });
-               watch(searchQuery, () => {
-                  currentPage.value = 1;
-               });
-               const handleStorageChange = (event) => {
-                  if (event.key === "mcd-user" && !event.newValue && !isProcessPending.value) forceLogout();
-               };
+                    const refreshData = async (silent = false) => {
+                        if (!silent) isDataLoaded.value = false;
+                        try {
+                            const data = await runGoogleScript("getSheetData", user.sheetName);
+                            const cols = [5, 6, 7, 9, 11, 12, 14, 2, 0];
+                            headers.value = data?.length > 0 ? cols.map((i) => data[0][i]) : [];
+                            tableData.value = data?.length > 1 ? data.slice(1).map((row) => cols.map((i) => row[i])) : [];
+                        } catch (error) {
+                            showSimpleToast("Session expired or data failed. Please log in again.", "danger", 10000);
+                            forceLogout();
+                        } finally {
+                            if (!silent) isDataLoaded.value = true;
+                        }
+                    };
 
-               onMounted(() => {
-                  const storedUserJSON = localStorage.getItem("mcd-user");
-                  if (storedUserJSON) {
-                     const storedUser = JSON.parse(storedUserJSON);
-                     if (storedUser.expires > Date.now()) {
-                        Object.assign(user, storedUser);
-                        refreshData();
-                        resetIdleTimer();
-                     } else {
-                        localStorage.removeItem("mcd-user");
-                     }
-                  }
-                  
-                  if (confirmationModalRef.value) {
-                     confirmationModal = new bootstrap.Modal(confirmationModalRef.value);
-                  }
-                  const activityEvents = ["mousemove", "keydown", "click", "scroll"];
-                  activityEvents.forEach((e) => window.addEventListener(e, resetIdleTimer, { passive: true }));
-                  window.addEventListener("storage", handleStorageChange);
-                  setInterval(() => {
-                     if (user.isLoggedIn && !isProcessPending.value) runGoogleScript("ping").catch(forceLogout);
-                  }, 60000);
-               });
-               onUnmounted(() => {
-                  clearTimeout(idleTimer);
-                  const activityEvents = ["mousemove", "keydown", "click", "scroll"];
-                  activityEvents.forEach((e) => window.removeEventListener(e, resetIdleTimer));
-                  window.removeEventListener("storage", handleStorageChange);
-               });
+                    const fetchApprovedData = async (silent = false) => {
+                        if (approvedData.value.length > 0 && !silent) return;
+                        if (!silent) isApprovedDataLoading.value = true;
+                        try {
+                            const data = await runGoogleScript("getApprovedSheetData", user.sheetName);
+                            const cols = [5, 6, 7, 9, 11, 12, 14, 2, 0];
+                            approvedData.value = data?.length > 0 ? data.map((row) => cols.map((i) => row[i])) : [];
+                        } catch (error) {
+                            if (!silent) showSimpleToast(`Failed to load approved items: ${error.message}`, "danger");
+                        } finally {
+                            if (!silent) isApprovedDataLoading.value = false;
+                        }
+                    };
 
-               return {
-                  user,
-                  loginForm,
-                  isLoggingIn,
-                  loginError,
-                  isDataLoaded,
-                  isSubmitting,
-                  headers,
-                  searchQuery,
-                  activeAction,
-                  actionFormsRef,
-                  isLoginFormValid,
-                  greetingMessage,
-                  filteredData,
-                  isPrivilegedUser,
-                  isActionInProgress,
-                  availableReviewerOptions,
-                  login,
-                  logout,
-                  refreshData,
-                  showApproval,
-                  showDisapproval,
-                  showAddReviewer,
-                  showRemoveReviewer,
-                  cancelAction,
-                  submitApproval,
-                  submitDisapproval,
-                  submitReviewerChange,
-                  formatDateCell,
-                  calculateDaysDifference,
-                  formatCellWithLineBreaks,
-                  paginatedData,
-                  currentPage,
-                  totalPages,
-                  nextPage,
-                  prevPage,
-                  toasts,
-                  removeToast,
-                  isProcessPending,
-                  showApprovedView,
-                  isApprovedDataLoading,
-                  toggleApprovedView,
-                  confirmation,
-                  confirmAction,
-                  confirmationModalRef,
-               };
-            },
-         }).mount("#app");
-      </script>
-   </body>
+                    const fetchDisapprovedData = async (silent = false) => {
+                        if (disapprovedData.value.length > 0 && !silent) return;
+                        if (!silent) isDisapprovedDataLoading.value = true;
+                        try {
+                            const data = await runGoogleScript("getDisapprovedSheetData", user.sheetName);
+                            const cols = [5, 6, 7, 9, 11, 12, 14, 2, 0];
+                            disapprovedData.value = data?.length > 0 ? data.map((row) => cols.map((i) => row[i])) : [];
+                        } catch (error) {
+                            if (!silent) showSimpleToast(`Failed to load disapproved items: ${error.message}`, "danger");
+                        } finally {
+                            if (!silent) isDisapprovedDataLoading.value = false;
+                        }
+                    };
+
+                    const switchToPendingView = () => {
+                        showApprovedView.value = false;
+                        showDisapprovedView.value = false;
+                        searchQuery.value = "";
+                        currentPage.value = 1;
+                    };
+
+                    const switchToApprovedView = () => {
+                        if (showApprovedView.value) return;
+                        showApprovedView.value = true;
+                        showDisapprovedView.value = false;
+                        searchQuery.value = "";
+                        currentPage.value = 1;
+                        fetchApprovedData();
+                    };
+
+                    const switchToDisapprovedView = () => {
+                        if (showDisapprovedView.value) return;
+                        showDisapprovedView.value = true;
+                        showApprovedView.value = false;
+                        searchQuery.value = "";
+                        currentPage.value = 1;
+                        fetchDisapprovedData();
+                    };
+
+                    const showActionUI = (type, row) => {
+                        const approversText = String(row[8] || "");
+                        const allApproverLabels = Object.values(APPROVER_LISTS).flat().map((a) => a.label.trim());
+                        const uniqueAllowedApprovers = [...new Set(allApproverLabels)];
+                        const currentApprovers = uniqueAllowedApprovers.filter((name) => {
+                            if (!name) return false;
+                            const escapedName = name.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+                            const regex = new RegExp(`\\b${escapedName}\\b`, "i");
+                            return regex.test(approversText);
+                        });
+                        Object.assign(activeAction, { type, row, label: row[4], reason: "", selected: [], current: currentApprovers });
+                    };
+
+                    const showApproval = (row) => showActionUI("approve", row);
+                    const showDisapproval = (row) => showActionUI("disapprove", row);
+                    const showAddReviewer = (row) => showActionUI("addReviewer", row);
+                    const showRemoveReviewer = (row) => showActionUI("removeReviewer", row);
+                    const cancelAction = () => (activeAction.type = null);
+
+                    const submitApproval = async () => {
+                        const trimmedReason = activeAction.reason.trim();
+                        if (trimmedReason.length < 5) return showSimpleToast("Remarks must be at least 5 characters.", "warning");
+                        const { label: refLabel, row: rowToUpdate } = activeAction;
+                        const toastId = addToast("Approval", refLabel);
+                        isSubmitting.value = true;
+                        const finalReason = SPECIAL_FORMAT_USERS.includes(user.displayName) ? `<${trimmedReason}>` : trimmedReason;
+                        const originalIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
+                        if (originalIndex !== -1) tableData.value.splice(originalIndex, 1);
+                        cancelAction();
+                        isSubmitting.value = false;
+                        try {
+                            await runGoogleScript("updateRowStatusWithValidation", rowToUpdate, "APPROVED", "", finalReason, user.sheetName);
+                            updateToast(toastId, "success", "Approval", refLabel);
+                        } catch (error) {
+                            updateToast(toastId, "failure", "Approval", refLabel, error.message);
+                            if (originalIndex !== -1) tableData.value.splice(originalIndex, 0, rowToUpdate);
+                        }
+                    };
+
+                    const submitDisapproval = async () => {
+                        const trimmedReason = activeAction.reason.trim();
+                        if (trimmedReason.length < 5) return showSimpleToast("Reason must be at least 5 characters.", "warning");
+                        const { label: refLabel, row: rowToUpdate } = activeAction;
+                        const toastId = addToast("Disapproval", refLabel);
+                        isSubmitting.value = true;
+                        const finalReason = SPECIAL_FORMAT_USERS.includes(user.displayName) ? `<${trimmedReason}>` : trimmedReason;
+                        const originalIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
+                        if (originalIndex !== -1) tableData.value.splice(originalIndex, 1);
+                        cancelAction();
+                        isSubmitting.value = false;
+                        try {
+                            await runGoogleScript("updateRowStatusWithValidation", rowToUpdate, "DISAPPROVED", finalReason, "", user.sheetName);
+                            updateToast(toastId, "success", "Disapproval", refLabel);
+                        } catch (error) {
+                            updateToast(toastId, "failure", "Disapproval", refLabel, error.message);
+                            if (originalIndex !== -1) tableData.value.splice(originalIndex, 0, rowToUpdate);
+                        }
+                    };
+
+                    const submitReviewerChange = async () => {
+                        if (activeAction.selected.length === 0) return;
+                        const { label: refLabel, row: rowToUpdate, type: currentActionType } = activeAction;
+                        const actionType = currentActionType === "addReviewer" ? "Add Reviewer" : "Remove Reviewer";
+                        const toastId = addToast(actionType, refLabel, "Processing...");
+                        isSubmitting.value = true;
+                        const rowIndex = tableData.value.findIndex((r) => r[0] === rowToUpdate[0]);
+                        if (rowIndex === -1) {
+                            updateToast(toastId, "failure", actionType, refLabel, "Row not found.");
+                            isSubmitting.value = false;
+                            return;
+                        }
+                        const originalRow = tableData.value[rowIndex];
+                        const originalApproversText = originalRow[8] || "";
+                        const selectedOptions = activeAction.selected.map((val) => allApproverOptions.value.find((opt) => opt.value === val)).filter(Boolean);
+                        const selectedLabels = selectedOptions.map((opt) => opt.label.trim());
+                        let newFinalApproversText;
+                        if (currentActionType === "addReviewer") {
+                            const newEntries = selectedLabels.join("\n");
+                            newFinalApproversText = (originalApproversText ? originalApproversText + "\n" : "") + newEntries;
+                        } else {
+                            newFinalApproversText = originalApproversText;
+                            selectedLabels.forEach((label) => {
+                                const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                                const removalRegex = new RegExp(`^\\s*•?\\s*${escapedLabel}\\s*,?|\\n\\s*•?\\s*${escapedLabel}\\s*,?`, "g");
+                                newFinalApproversText = newFinalApproversText.replace(removalRegex, "").trim();
+                            });
+                        }
+                        const updatedRow = [...originalRow];
+                        updatedRow[8] = newFinalApproversText;
+                        tableData.value = tableData.value.map((row, index) => (index === rowIndex ? updatedRow : row));
+                        cancelAction();
+                        isSubmitting.value = false;
+                        try {
+                            const payload = { referenceNumber: rowToUpdate[0], memoSubject: rowToUpdate[4] };
+                            let apiAction = currentActionType === "addReviewer" ? "submitApproverValues" : "submitRemoveApprovers";
+                            payload[currentActionType === "addReviewer" ? "approverValues" : "removeApprovers"] = selectedOptions;
+                            const result = await runGoogleScript(apiAction, payload, user);
+                            updateToast(toastId, result?.warning ? "warning" : "success", actionType, refLabel, result?.warning || result?.message || "Action successful.");
+                        } catch (error) {
+                            tableData.value = tableData.value.map((row, index) => (index === rowIndex ? originalRow : row));
+                            let userMessage = (error.message || "An unknown error occurred.").replace(/^(Submit Approver Failed:|Remove Approver Failed:)\s*/, "");
+                            updateToast(toastId, "failure", actionType, refLabel, `Failed: ${userMessage} (Change reverted)`);
+                        }
+                    };
+
+                    // --- START: New bulk action submission logic ---
+                    const submitBulkAction = (actionType) => {
+                        const isApproving = actionType === 'APPROVED';
+                        const actionName = isApproving ? 'Approval' : 'Disapproval';
+                        const btnClass = isApproving ? 'btn-success' : 'btn-danger';
+
+                        showConfirmation(
+                            `Confirm Bulk ${actionName}`,
+                            `This will ${actionName.toLowerCase()} ${selectedRows.value.length} item(s) using the provided remarks. Continue?`,
+                            async () => {
+                                const itemsToProcess = tableData.value.filter(row => selectedRows.value.includes(row[0]));
+                                const refLabel = `${itemsToProcess.length} item(s)`;
+                                const toastId = addToast(`Bulk ${actionName}`, refLabel);
+                                isSubmitting.value = true;
+
+                                const originalData = JSON.parse(JSON.stringify(tableData.value));
+                                tableData.value = tableData.value.filter(row => !selectedRows.value.includes(row[0]));
+
+                                const trimmedRemarks = bulkRemarks.value.trim();
+                                const finalReason = SPECIAL_FORMAT_USERS.includes(user.displayName) ? `<${trimmedRemarks}>` : trimmedRemarks;
+                                const approvalRemarks = isApproving ? finalReason : "";
+                                const disapprovalReason = isApproving ? "" : finalReason;
+                                
+                                selectedRows.value = [];
+                                bulkRemarks.value = '';
+
+                                try {
+                                    const promises = itemsToProcess.map(row =>
+                                        runGoogleScript("updateRowStatusWithValidation", row, actionType, disapprovalReason, approvalRemarks, user.sheetName)
+                                    );
+                                    await Promise.all(promises);
+                                    updateToast(toastId, "success", `Bulk ${actionName}`, refLabel, `All selected items have been processed.`);
+                                    
+                                    if (isApproving) fetchApprovedData(true);
+                                    else fetchDisapprovedData(true);
+                                    refreshData(true);
+                                } catch (error) {
+                                    updateToast(toastId, "failure", `Bulk ${actionName}`, refLabel, `An error occurred: ${error.message}. Rolling back UI.`);
+                                    tableData.value = originalData;
+                                } finally {
+                                    isSubmitting.value = false;
+                                }
+                            },
+                            btnClass
+                        );
+                    };
+
+                    const submitBulkApproval = () => submitBulkAction('APPROVED');
+                    const submitBulkDisapproval = () => submitBulkAction('DISAPPROVED');
+                    // --- END: New bulk action submission logic ---
+
+                    const showSimpleToast = (message, status = "info", duration = 7000) => {
+                        const id = toastIdCounter++;
+                        toasts.value.unshift({ id, status, message });
+                        setTimeout(() => removeToast(id), duration);
+                    };
+
+                    const addToast = (actionType, refLabel, initialMessage = "") => {
+                        const id = toastIdCounter++;
+                        const message = initialMessage || `Processing ${actionType} for '${refLabel}'...`;
+                        toasts.value.unshift({ id, status: "ongoing", message });
+                        return id;
+                    };
+
+                    const updateToast = (id, newStatus, actionType, refLabel, customMessage = "") => {
+                        const toast = toasts.value.find((t) => t.id === id);
+                        if (toast) {
+                            toast.status = newStatus;
+                            toast.message = customMessage || `${actionType} for '${refLabel}' ${newStatus === 'success' ? 'was successful' : 'failed'}.`;
+                            setTimeout(() => removeToast(id), newStatus === "success" ? 5000 : 10000);
+                        }
+                    };
+
+                    const removeToast = (id) => (toasts.value = toasts.value.filter((t) => t.id !== id));
+
+                    const showConfirmation = (title, message, onConfirmCallback, buttonClass = "btn-primary") => {
+                        Object.assign(confirmation, { title, message, onConfirm: onConfirmCallback, confirmButtonClass: buttonClass });
+                        if (confirmationModal) confirmationModal.show();
+                    };
+
+                    const confirmAction = () => {
+                        if (typeof confirmation.onConfirm === "function") confirmation.onConfirm();
+                        if (confirmationModal) confirmationModal.hide();
+                    };
+
+                    const formatDateCell = (value) => (!value ? "" : new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }));
+                    const calculateDaysDifference = (dateStr) => (!dateStr ? "" : `${Math.floor((Date.now() - new Date(dateStr).getTime()) / 864e5)} day(s)`);
+                    const formatCellWithLineBreaks = (text) => {
+                        if (typeof text !== "string" || !text.trim()) return "";
+                        let processedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        processedText = processedText.replace(/\bApproved:/gi, "<strong>Approved:</strong>").replace(/\bPending:/gi, "<br><br><strong>Pending:</strong>");
+                        FORMATTER_NAMES.forEach((name) => {
+                            const regex = new RegExp(`\\b(${name.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")})\\b`, "g");
+                            processedText = processedText.replace(regex, `<br> • <strong>$1</strong>`);
+                        });
+                        return processedText;
+                    };
+
+                    const nextPage = () => {
+                        if (currentPage.value < totalPages.value) currentPage.value++;
+                    };
+                    const prevPage = () => {
+                        if (currentPage.value > 1) currentPage.value--;
+                    };
+
+                    watch(activeAction, (newVal) => {
+                        if (newVal.type) nextTick(() => actionFormsRef.value?.scrollIntoView({ behavior: "smooth", block: "center" }));
+                    });
+
+                    watch(searchQuery, () => (currentPage.value = 1));
+
+                    const handleStorageChange = (event) => {
+                        if (event.key === "mcd-user" && !event.newValue && !isProcessPending.value) forceLogout();
+                    };
+
+                    onMounted(async () => {
+                        const storedUserJSON = localStorage.getItem("mcd-user");
+                        if (storedUserJSON) {
+                            const storedUser = JSON.parse(storedUserJSON);
+                            if (storedUser.expires > Date.now()) {
+                                Object.assign(user, storedUser);
+                                await Promise.all([refreshData(), fetchApprovedData(true), fetchDisapprovedData(true)]);
+                                resetIdleTimer();
+                            } else {
+                                localStorage.removeItem("mcd-user");
+                            }
+                        }
+
+                        // CORRECTED LINE: Explicitly use 'window.bootstrap' to ensure the global object is found.
+                        if (confirmationModalRef.value) {
+                            confirmationModal = new window.bootstrap.Modal(confirmationModalRef.value);
+                        }
+
+                        const activityEvents = ["mousemove", "keydown", "click", "scroll"];
+                        activityEvents.forEach((e) => window.addEventListener(e, resetIdleTimer, { passive: true }));
+                        window.addEventListener("storage", handleStorageChange);
+
+                        setInterval(() => {
+                            if (user.isLoggedIn && !isProcessPending.value) runGoogleScript("ping").catch(forceLogout);
+                        }, 60000);
+                    });
+
+                    onUnmounted(() => {
+                        clearTimeout(idleTimer);
+                        ["mousemove", "keydown", "click", "scroll"].forEach((e) => window.removeEventListener(e, resetIdleTimer));
+                        window.removeEventListener("storage", handleStorageChange);
+                    });
+
+                    return {
+                        user,
+                        loginForm,
+                        isLoggingIn,
+                        loginError,
+                        isDataLoaded,
+                        isSubmitting,
+                        headers,
+                        searchQuery,
+                        activeAction,
+                        toasts,
+                        showApprovedView,
+                        isApprovedDataLoading,
+                        confirmation,
+                        currentPage,
+                        totalPages,
+                        showDisapprovedView,
+                        isDisapprovedDataLoading,
+                        selectedRows,
+                        bulkRemarks,
+                        isLoginFormValid,
+                        greetingMessage,
+                        filteredData,
+                        isPrivilegedUser,
+                        isActionInProgress,
+                        availableReviewerOptions,
+                        paginatedData,
+                        isProcessPending,
+                        pendingCount,
+                        approvedCount,
+                        disapprovedCount,
+                        isBulkRemarksInvalid,
+                        isAnyRowSelected,
+                        login,
+                        logout,
+                        showApproval,
+                        showDisapproval,
+                        showAddReviewer,
+                        showRemoveReviewer,
+                        cancelAction,
+                        submitApproval,
+                        submitDisapproval,
+                        submitReviewerChange,
+                        submitBulkApproval,
+                        submitBulkDisapproval,
+                        formatDateCell,
+                        calculateDaysDifference,
+                        formatCellWithLineBreaks,
+                        nextPage,
+                        prevPage,
+                        confirmAction,
+                        switchToPendingView,
+                        switchToApprovedView,
+                        switchToDisapprovedView,
+                        actionFormsRef,
+                        confirmationModalRef,
+                    };
+                },
+            }).mount("#app");
+        </script>
+    </body>
 </html>
