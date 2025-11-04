@@ -96,27 +96,39 @@
                   </div>
                </div>
             </div>
-            <div class="mt-3"><label class="form-label">Other (if not listed above)</label><input type="text" class="form-control" v-model="otherExtraOption" placeholder="Specify other department or team..." /></div>
+            <div class="mt-3"><label class="form-label">Other (if not listed above)</label><input type="text" class="form-control" v-model="otherExtraOption" placeholder="Property1, Property2, Property3..." /></div>
          </div>
          <div class="card p-4">
-            <div class="section-header"><i class="bi bi-diagram-3"></i> Memo Routing Path For CGM/s</div>
-            <p class="text-muted mb-3">Select the CGM/s who need to approve this document:</p>
+            <div class="section-header"><i class="bi bi-diagram-3"></i> Memo Routing Path: Involved CGMs</div>
+            <p class="text-muted mb-3">Select the Cluster General Manager/s who need to approve this document:</p>
             <div v-for="item in mainCheckboxescgm" :key="item.value" class="form-check mb-2">
                <input class="form-check-input" type="checkbox" :id="'cgm-' + item.value" :value="item.value" v-model="selectedCGM" :disabled="selectedCGM.includes(naValue) && item.value !== naValue" />
                <label class="form-check-label fw-semibold" :for="'cgm-' + item.value">{{ item.label }}</label>
             </div>
          </div>
+
          <div class="card p-4">
-            <div class="section-header"><i class="bi bi-diagram-3"></i> Memo Routing Path for Department Head/s</div>
-            <p class="text-muted mb-3">Select the department head/s who need to approve this document:</p>
+            <div class="section-header"><i class="bi bi-diagram-3"></i> Memo Routing Path: Involved Central Office Group Heads of Mall Operations</div>
+            <p class="text-muted mb-3">Select the Group Head/s who need to approve this document:</p>
+            <div v-for="item in mainCheckboxesghead" :key="item.value" class="form-check mb-2">
+               <input class="form-check-input" type="checkbox" :id="'dept-' + item.value" :value="item.value" v-model="selectedGhead" :disabled="selectedGhead.includes(naValue) && item.value !== naValue" />
+               <label class="form-check-label fw-semibold" :for="'dept-' + item.value">{{ item.label }}</label>
+            </div>
+         </div>
+
+         <div class="card p-4">
+            <div class="section-header"><i class="bi bi-diagram-3"></i> Memo Routing Path: Involved Department Head</div>
+            <p class="text-muted mb-3">Select the Department Head/s who need to approve this document:</p>
             <div v-for="item in mainCheckboxes" :key="item.value" class="form-check mb-2">
                <input class="form-check-input" type="checkbox" :id="'dept-' + item.value" :value="item.value" v-model="selectedDept" :disabled="selectedDept.includes(naValue) && item.value !== naValue" />
                <label class="form-check-label fw-semibold" :for="'dept-' + item.value">{{ item.label }}</label>
             </div>
          </div>
+
+
          <div class="card p-4">
-            <div class="section-header"><i class="bi bi-diagram-3"></i> Memo Routing Path for Division Head/s</div>
-            <p class="text-muted mb-3">Select the division head/s who need to approve this document:</p>
+            <div class="section-header"><i class="bi bi-diagram-3"></i> Memo Routing Path: Involved Division Head</div>
+            <p class="text-muted mb-3">Select the Division Head/s who need to approve this document:</p>
             <div v-for="item in mainCheckboxesdivhead" :key="item.value" class="form-check mb-2">
                <input class="form-check-input" type="checkbox" :id="'div-' + item.value" :value="item.value" v-model="selectedDiv" :disabled="selectedDiv.includes(naValue) && item.value !== naValue" />
                <label class="form-check-label fw-semibold" :for="'div-' + item.value">{{ item.label }}</label>
@@ -124,7 +136,7 @@
          </div>
          <div class="card p-4">
             <div class="section-header"><i class="bi bi-upload"></i> Upload Memo Document</div>
-            <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="resubmissionCheck" v-model="isResubmission" /><label class="form-check-label" for="resubmissionCheck">Resubmission for approval?</label></div>
+            <div class="form-check mb-3"><input class="form-check-input" type="checkbox" id="resubmissionCheck" v-model="isResubmission" /><label class="form-check-label" for="resubmissionCheck">Check if you are submitting a revised memo. Do not check if you are submitting a new memo for approval.</label></div>
             <div class="mb-3">
                <label class="form-label">Attach Memo document</label>
                <input type="file" class="form-control" accept="application/pdf,image/*" @change="handleFileUpload" /><small class="text-muted">Only PDF or Image files up to 32MB are allowed.</small>
@@ -156,63 +168,43 @@
          <div v-if="generatedRefNumber" class="alert alert-success mt-3"><strong>Reference Number:</strong> {{ generatedRefNumber }}</div>
       </div>
       <script>
-         const { createApp, ref, reactive, computed, watch } = Vue;
+         const { createApp, ref, reactive, computed, watch, onMounted } = Vue;
 
          const NA_VALUE = "N/A";
+
+        // APPROVERS - These remain hardcoded as they are specific people
+        const MAIN_CHECKBOXES_GHEAD = [
+            { label: "Jaye Trich Pizarro", value: "JAYE", email: "jmpizarro@megaworld-lifestyle.com"},
+            { label: "Joy Melitante", value: "JOY", email: "jsrodriguez@megaworld-lifestyle.com"},
+            { label: "Alex Flores", value: "ALEX", email: "apflores@megaworld-lifestyle.com"},
+            { label: "Aurora Pastolero", value: "AU", email: "mdpastolero@megaworld-lifestyle.com"},
+            { label: "Mariano Caleja", value: "MAR", email: "mbcaleja@megaworld-lifestyle.com"},
+            { label: "Brix Valdenarro", value: "BRIX", email: "bvvaldenarro@megaworld-lifestyle.com"},
+            { label: "N/A", value: NA_VALUE, email: null },
+         ];
          const MAIN_CHECKBOXES = [
-            { label: "Michael Lao", value: "MGL", email: "jecastro@megaworld-lifestyle.com", cc: ["cc.mgl@example.com", "assistant.mgl@example.com"] },
-            { label: "Jeremy Rodriguez", value: "JE", email: "JeremyRodriguez@gmail.com", cc: ["cc.jeremy@example.com"] },
-            { label: "Tinay Villanueva", value: "KMV", email: "tinay.villanueva@example.com" },
-            { label: "Lorence Aurelio", value: "LDA", email: "lorence.aurelio@example.com" },
-            { label: "Noe Versoza", value: "NOE", email: "Noeversoza@example.com" },
+            { label: "Michael Lao", value: "MGL", email: "mglao@megaworld-lifestyle.com", cc: ["mppiamonte@megaworld-lifestyle.com"] },
             { label: "N/A", value: NA_VALUE, email: null },
          ];
          const MAIN_CHECKBOXES_CGM = [
-            { label: "Camille Elvina", value: "CAMSY", email: "camille.elvina@example.com", cc: ["cc.camsy@example.com"] },
-            { label: "Mikee Vivo", value: "MIKEE", email: "mikee.vivo@example.com" },
-            { label: "Vanessa Vicente", value: "VAN", email: "vanessa.vicente@example.com" },
-            { label: "Tyron Tan", value: "TYRON", email: "tyron.tan@example.com" },
+            { label: "Camille Elvina", value: "CAMSY", email: "celvina@megaworld-lifestyle.com", cc: ["lbcicat@megaworld-lifestyle.com"] },
+            { label: "Mikee Vivo", value: "MIKEE", email: "mvvivo@megaworld-lifestyle.com" , cc: ["frpacampara@megaworld-lifestyle.com"]},
+            { label: "Vanessa Vicente", value: "VAN", email: "vrvicente@megaworld-lifestyle.com" },
+            { label: "Tyrone Tan", value: "TYRON", email: "tstan@megaworld-lifestyle.com", cc: ["rrlandoy@megaworld-lifestyle.com"] },
             { label: "N/A", value: NA_VALUE, email: null },
          ];
          const MAIN_CHECKBOXES_DIVHEAD = [
-            { label: "Graham Coates", value: "GMC", email: "graham.coates@example.com", cc: ["cc.graham@example.com"] },
-            { label: "Rosalyn Segura", value: "RCS", email: "rosalyn.segura@example.com" },
+            { label: "Graham Coates", value: "GMC", email: "gdguarico@megaworld-lifestyle.com", cc: ["jfpuga@megaworld-lifestyle.com"] },
             { label: "N/A", value: NA_VALUE, email: null },
          ];
-         const EXTRA_OPTIONS = [
-            { label: "Alabang West Parade", value: "AW" },
-            { label: "Arcovia City", value: "AC" },
-            { label: "Broadway Centrum", value: "BC" },
-            { label: "Boracay Newcoast", value: "BN" },
-            { label: "California Garden Square", value: "CGS" },
-            { label: "The Clubhouse at Temple Drive", value: "CTD" },
-            { label: "Clark Cityfront", value: "CCF" },
-            { label: "Capital Town", value: "CT" },
-            { label: "Eastwood City", value: "EWC" },
-            { label: "Forbes Town", value: "FT" },
-            { label: "Iloilo Business Park", value: "IBP" },
-            { label: "Lucky Chinatown Mall", value: "LCT" },
-            { label: "McKinley Hill", value: "MKH" },
-            { label: "Maple Grove", value: "MG" },
-            { label: "Newport City", value: "NP" },
-            { label: "Paseo Center", value: "PC" },
-            { label: "San Antonio Place", value: "SAP" },
-            { label: "Three Central", value: "TCM" },
-            { label: "San Lorenzo Place", value: "SLP" },
-            { label: "Southwoods Mall", value: "SW" },
-            { label: "Twin Lakes", value: "TL" },
-            { label: "The Mactan Newtown", value: "TMN" },
-            { label: "The Upper East", value: "TUE" },
-            { label: "Uptown Bonifacio", value: "UB" },
-            { label: "Village Square Alabang", value: "VS" },
-            { label: "Westside City", value: "WSC" },
-         ];
+         // END APPROVERS
 
          createApp({
             setup() {
                const formData = reactive({ name: "", email: "", email1: "", memoType: "", dateType: "", additionalMemoInfo: "" });
                const selectedCGM = ref([]);
                const selectedDept = ref([]);
+               const selectedGhead = ref([]);
                const selectedDiv = ref([]);
                const selectedExtras = ref([]);
                const otherExtraOption = ref("");
@@ -223,17 +215,38 @@
                const loading = ref(false);
                const timedOut = ref(false);
                const generatedRefNumber = ref("");
+               
+               // These are still hardcoded approver lists
                const mainCheckboxes = ref(MAIN_CHECKBOXES);
+               const mainCheckboxesghead = ref(MAIN_CHECKBOXES_GHEAD);
                const mainCheckboxescgm = ref(MAIN_CHECKBOXES_CGM);
                const mainCheckboxesdivhead = ref(MAIN_CHECKBOXES_DIVHEAD);
-               const extraOptions = ref(EXTRA_OPTIONS);
+               
+               // MODIFICATION: Initialize extraOptions as an empty array.
+               // It will be filled with data from the Google Sheet when the page loads.
+               const extraOptions = ref([]);
                const naValue = NA_VALUE;
+
+               // NEW: This function runs when the component is first loaded into the page.
+               onMounted(() => {
+                  google.script.run
+                     .withSuccessHandler(propertiesList => {
+                        // On success, update the extraOptions with the data from the sheet.
+                        extraOptions.value = propertiesList;
+                     })
+                     .withFailureHandler(error => {
+                        // On failure, log the error and show an alert to the user.
+                        console.error("Failed to load Property/Coverage options:", error.message);
+                        alert("Error: Could not load the Property/Coverage list from the spreadsheet. Please contact an administrator.");
+                     })
+                     .getMemoProperties(); // This is the new function you added to your .gs file.
+               });
 
                watch(selectedCGM, (newVal) => applyNaRule(newVal, selectedCGM));
                watch(selectedDept, (newVal) => applyNaRule(newVal, selectedDept));
+               watch(selectedGhead, (newVal) => applyNaRule(newVal, selectedGhead));
                watch(selectedDiv, (newVal) => applyNaRule(newVal, selectedDiv));
 
-               // NEW: A computed property that returns an array of user-friendly error messages.
                const validationErrors = computed(() => {
                   const errors = [];
                   if (formData.name.trim() === "") errors.push("Uploader Name is required.");
@@ -246,9 +259,10 @@
                   if (!(selectedExtras.value.length > 0 || otherExtraOption.value.trim() !== "")) errors.push("Select at least one Property/Coverage or specify 'Other'.");
                   if (selectedCGM.value.length === 0) errors.push("At least one CGM must be selected.");
                   if (selectedDept.value.length === 0) errors.push("At least one Department Head must be selected.");
+                  if (selectedGhead.value.length === 0) errors.push("At least one Group Head must be selected.");
                   if (selectedDiv.value.length === 0) errors.push("At least one Division Head must be selected.");
-                  const naCount = [selectedCGM.value, selectedDept.value, selectedDiv.value].filter((g) => g.includes(naValue)).length;
-                  if (naCount >= 3) errors.push("You cannot select 'N/A' for all approver groups.");
+                  const naCount = [selectedCGM.value, selectedDept.value, selectedGhead.value, selectedDiv.value].filter((g) => g.includes(naValue)).length;
+                  if (naCount >= 4) errors.push("You cannot select 'N/A' for all approver groups.");
                   if (isResubmission.value ? !revisedFile.value : !uploadedFile.value) errors.push("A Memo document is required.");
                   if (isResubmission.value && !revisedFile.value) errors.push("The Disapproval Page document is required for resubmission.");
                   return errors;
@@ -291,14 +305,13 @@
                   loading.value = true;
                   timedOut.value = false;
 
-                  // NEW: Warn user before they leave the page during submission.
                   window.onbeforeunload = () => "A submission is in progress. Are you sure you want to leave?";
 
                   const failSafeTimeout = setTimeout(() => {
                      if (loading.value) {
                         timedOut.value = true;
                         loading.value = false;
-                        window.onbeforeunload = null; // NEW: Clear the warning
+                        window.onbeforeunload = null;
                         alert("Submission timed out. Please check your connection and try again.");
                      }
                   }, 180000);
@@ -317,8 +330,8 @@
                         if (timedOut.value) return;
                         if (!originalBase64 && !isResubmission.value) throw new Error("Could not read the primary file.");
 
-                        const allApproverOptions = [...mainCheckboxescgm.value, ...mainCheckboxes.value, ...mainCheckboxesdivhead.value];
-                        const approversToNotify = [...selectedCGM.value, ...selectedDept.value, ...selectedDiv.value]
+                        const allApproverOptions = [...mainCheckboxescgm.value, ...mainCheckboxes.value, ...mainCheckboxesghead.value,  ...mainCheckboxesdivhead.value];
+                        const approversToNotify = [...selectedCGM.value, ...selectedDept.value, ...selectedGhead.value, ...selectedDiv.value]
                            .map((value) => allApproverOptions.find((opt) => opt.value === value))
                            .filter((a) => a && a.email)
                            .map((a) => ({ name: a.label, email: a.email, cc: a.cc || [], value: a.value }));
@@ -328,16 +341,17 @@
                            otherExtraOption: otherExtraOption.value,
                            selectedCGM: selectedCGM.value,
                            selectedDept: selectedDept.value,
+                           selectedGhead: selectedGhead.value,
                            selectedDiv: selectedDiv.value,
                            additionalOptions: selectedExtras.value,
                            fileName: uploadedFile.value?.name || (isResubmission.value && revisedFile.value?.name),
                            fileMimeType: uploadedFile.value?.type || (isResubmission.value && revisedFile.value?.type),
-                           fileData: originalBase64 || revisedBase64, // simplified logic, server should decide
+                           fileData: originalBase64 || revisedBase64,
                            isResubmission: isResubmission.value,
                            revisedFileName: isResubmission.value ? revisedFile.value?.name : "",
                            revisedFileMimeType: isResubmission.value ? revisedFile.value?.type : "",
                            revisedFileData: isResubmission.value ? revisedBase64 : null,
-                           originalFileName: isResubmission.value ? uploadedFile.value?.name : "", // Send both on resubmit
+                           originalFileName: isResubmission.value ? uploadedFile.value?.name : "",
                            originalFileMimeType: isResubmission.value ? uploadedFile.value?.type : "",
                            originalFileData: isResubmission.value ? originalBase64 : null,
                            approversToNotify,
@@ -355,31 +369,26 @@
                               otherExtraOption.value = "";
                               selectedCGM.value = [];
                               selectedDept.value = [];
+                              selectedGhead.value = [];
                               selectedDiv.value = [];
                               selectedExtras.value = [];
                               uploadedFile.value = null;
                               revisedFile.value = null;
                               isResubmission.value = false;
-                              document.querySelectorAll("input[type=file]").forEach((el) => (el.value = "")); // Reset file inputs
+                              document.querySelectorAll("input[type=file]").forEach((el) => (el.value = ""));
                            })
                            .withFailureHandler((error) => {
                               if (timedOut.value) return;
                               clearTimeout(failSafeTimeout);
                               window.onbeforeunload = null;
                               loading.value = false;
-
-                              // Check if the error message from the server is our special "Sheet Full" error.
                               if (error.message && error.message.startsWith("SHEET_FULL_ERROR:")) {
-                                 // Show a specific, helpful message for this exact problem.
                                  alert("Submission Failed: The system storage is currently full.\n\nYour submission has not been saved. Please contact the system administrator to resolve this issue.");
                               } else {
-                                 // For all other types of errors, show the original generic message.
                                  alert("Submission failed. An unexpected error occurred. Please try to submit again.\n\nDetails: " + error.message);
                               }
-                              
                               console.error("Submission error from server:", error.message);
                            })
-                         
                            .processFormData(payload);
                      })
                      .catch((error) => {
@@ -395,6 +404,7 @@
                return {
                   formData,
                   selectedCGM,
+                  selectedGhead,
                   selectedDept,
                   selectedDiv,
                   selectedExtras,
@@ -405,9 +415,10 @@
                   generatedRefNumber,
                   naValue,
                   mainCheckboxes,
+                  mainCheckboxesghead,
                   mainCheckboxescgm,
                   mainCheckboxesdivhead,
-                  extraOptions,
+                  extraOptions, // Return the dynamic list
                   isFormValid,
                   validationErrors,
                   handleFileUpload,
