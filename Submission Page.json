@@ -1,5 +1,4 @@
 //filename should be appsscript.json when deploying
-
 {
   "timeZone": "Asia/Manila",
   "dependencies": {},
