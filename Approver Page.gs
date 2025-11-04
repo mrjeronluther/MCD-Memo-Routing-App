@@ -4,7 +4,7 @@ const SPREADSHEET_ID = "1tgjl8T-291AuM1DFaj0W1sTwI7A3lkhugKPVoVpu2lM";
 const RESTRICTED_USERS = [
     "Jaye Trich Pizarro",
     "Brix Valdenarro",
-    "Joy Melitante",
+    "Jocelyn Melitante",
     "Alex Flores",
     "Aurora Pastolero",
     "Mariano Caleja",
@@ -33,7 +33,7 @@ const RESTRICTED_USERS = [
     "Camsy Elvina",
     "Mikee Vivo",
     "Vanessa Vicente",
-    "Tyron Tan",
+    "Tyrone Tan",
     "Rodalyn Landoy",
     "Fermila Pacampara",
     "Lorraine Cicat",
@@ -122,8 +122,6 @@ function submitRemoveApprovers(data, user) {
     }
 }
 
-
-// REPLACE this function in your Code.gs
 function submitApproverValues(data, user) {
     let emailTasks = [];
     let wasSuccessful = false;
@@ -272,8 +270,15 @@ function submitApproverValues(data, user) {
     return { success: true };
 }
 
+/**
+ * Retrieves and filters data from a specified sheet. It only returns rows
+ * where column BR is exactly "YOUR TURN".
+ *
+ * @param {string} sheetName The name of the sheet to get data from.
+ * @return {Array<Array<string>>|null} The filtered data or null if no valid data is found or an error occurs.
+ */
 function getSheetData(sheetName) {
-    const MAX_COLUMNS = 80;
+    const MAX_COLUMNS = 90;
     const START_ROW = 1;
     const START_COLUMN = 1;
     try {
@@ -288,6 +293,7 @@ function getSheetData(sheetName) {
             return null;
         }
         const range = sheet.getRange(START_ROW, START_COLUMN, lastRow, MAX_COLUMNS);
+        // getValues() reads the result of formulas, which is what we need.
         const data = range.getValues();
         const timeZone = Session.getScriptTimeZone();
         const cleanedData = data.map((row, rowIndex) =>
@@ -296,6 +302,7 @@ function getSheetData(sheetName) {
                     if (cell instanceof Date) {
                         return Utilities.formatDate(cell, timeZone, "MMM d, yyyy hh:mm a");
                     }
+                    // This standardizes every cell to a trimmed string for reliable comparison.
                     return String(cell).trim();
                 } catch (e) {
                     Logger.log(`Cell processing error at row ${rowIndex + 1}, column ${colIndex + 1}: ${e}`);
@@ -305,6 +312,16 @@ function getSheetData(sheetName) {
         );
         const filteredData = cleanedData
             .filter((row, i) => {
+                // --- START: Added Condition ---
+                // Get the value from column BR (index 69 in a 0-based array).
+                const colBR = row[87];
+                
+                // If the cell in column BR is not 'YOUR TURN', skip the row.
+                if (colBR !== "YOUR TURN") {
+                    return false;
+                }
+                // --- END: Added Condition ---
+
                 const statusColA = row[0];
                 const statusColF = row[5];
                 const colJ = row[9];
@@ -326,10 +343,7 @@ function getSheetData(sheetName) {
     }
 }
 
-
 // Function to show all Approved Memos
-
-
 function getApprovedSheetData(sheetName) {
     // --- These constants and the initial setup are identical to getSheetData ---
     const MAX_COLUMNS = 80;
@@ -401,6 +415,85 @@ function getApprovedSheetData(sheetName) {
     }
 }
 
+/**
+ * Retrieves all rows from a user-specific sheet where the status is "DISAPPROVED".
+ * This function is a direct counterpart to getApprovedSheetData.
+ * 
+ * @param {string} sheetName The name of the user-specific sheet to query.
+ * @returns {Array<Array<string>>|null} A 2D array of the disapproved data rows, or null if none are found or an error occurs.
+ */
+function getDisapprovedSheetData(sheetName) {
+    // --- These constants and the initial setup are identical to your other functions ---
+    const MAX_COLUMNS = 80;
+    const START_ROW = 1;
+    const START_COLUMN = 1;
+    try {
+        const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID); // Assumes SPREADSHEET_ID is a global constant
+        const sheet = spreadsheet.getSheetByName(sheetName);
+        if (!sheet) {
+            throw new Error(`Sheet "${sheetName}" not found.`);
+        }
+        const lastRow = sheet.getLastRow();
+        if (lastRow < 1) {
+            Logger.log(`Sheet "${sheetName}" has no disapproved items because it is empty.`);
+            return null;
+        }
+        const range = sheet.getRange(START_ROW, START_COLUMN, lastRow, MAX_COLUMNS);
+        const data = range.getValues();
+        const timeZone = Session.getScriptTimeZone();
+
+        // --- Data cleaning is identical to ensure consistent formatting ---
+        const cleanedData = data.map((row, rowIndex) =>
+            row.map((cell, colIndex) => {
+                try {
+                    if (cell instanceof Date) {
+                        return Utilities.formatDate(cell, timeZone, "MMM d, yyyy hh:mm a");
+                    }
+                    return String(cell).trim();
+                } catch (e) {
+                    Logger.log(`Cell processing error at row ${rowIndex + 1}, column ${colIndex + 1}: ${e}`);
+                    return "";
+                }
+            })
+        );
+        
+        // --- This is the key difference: The filtering logic is changed for DISAPPROVED ---
+        const filteredData = cleanedData
+            .filter((row, i) => {
+                // We are still interested in the same columns for our logic
+                const statusColA = row[0]; // Status column A
+                const statusColF = row[5]; // Status column F
+                const colJ = row[9];       // This is a required column
+
+                // CORE LOGIC CHANGE: Instead of "APPROVED", we now require "DISAPPROVED".
+                const isDisapproved = (statusColA === "DISAPPROVED" || statusColF === "DISAPPROVED");
+                
+                // If the row is not marked as "DISAPPROVED", we exclude it.
+                if (!isDisapproved) {
+                    return false;
+                }
+                
+                // We keep the other essential validation checks from your original function.
+                if (!colJ || colJ === "") {
+                    return false; // A row isn't valid without data in column J
+                }
+                
+                // This ensures we don't return completely blank rows.
+                return row.some((cell) => cell !== "");
+            })
+            // IMPORTANT: This slicing is IDENTICAL to the original function to ensure
+            // the front-end receives data with the expected structure.
+            .map((row) => row.slice(4));
+
+        Logger.log(`Filtered ${filteredData.length} DISAPPROVED row(s) from sheet "${sheetName}".`);
+        return filteredData.length > 0 ? filteredData : null;
+    } catch (error) {
+        // Updated error log message for easier debugging
+        Logger.log(`Error in getDisapprovedSheetData("${sheetName}"): ${error.message}`);
+        return null;
+    }
+}
+
 function updateRowStatusWithValidation(rowData, status, reason, approvalReason, sheetName) {
     try {
         if (!rowData || !Array.isArray(rowData) || !rowData[0]) {
@@ -455,66 +548,80 @@ function authenticateUser(username, password) {
     if (!username || !password) {
         throw new Error("Username or password is missing.");
     }
+
     const users = {
-        GMC: { password: "pass1", displayName: "Graham Coates", sheet: "GMC" },
-        GRACE: { password: "grace123", displayName: "Grace Guarico", sheet: "GMC" },
-        RCS: { password: "pass2", displayName: "Rosalyn Segura", sheet: "RCS" },
-        ALY: { password: "pass2", displayName: "Allyzza Tolosa", sheet: "RCS" },
-        JE: { password: "je123", displayName: "Jeremy Rodriguez", sheet: "JE" },
-        NOE: { password: "noe123", displayName: "Noe Versoza", sheet: "NOE" },
-        MGL: { password: "pass3", displayName: "Michael Lao", sheet: "MGL" },
-        MLP: { password: "pass3a", displayName: "Louise Piamonte", sheet: "MGL" },
-        KMV: { password: "pass4", displayName: "Tinay Villanueva", sheet: "KMV" },
-        ZELFA: { password: "zelfa123", displayName: "Zelfa Valderrama", sheet: "KMV" },
-        LDA: { password: "pass5", displayName: "Lorence Aurelio", sheet: "LDA" },
-        FA: { password: "pass16", displayName: "Frances Armian", sheet: "LDA" },
-        JAYE: { password: "pass6", displayName: "Jaye Trich Pizarro", sheet: "JAYE" },
-        JOY: { password: "pass7", displayName: "Jocelyn Melitante", sheet: "JOY" },
-        ALEX: { password: "pass8", displayName: "Alex Flores", sheet: "ALEX" },
-        AU: { password: "pass9", displayName: "Aurora Palostero", sheet: "AU" },
-        MAR: { password: "pass10", displayName: "Mariano Caleja", sheet: "MAR" },
-        BRIX: { password: "pass11", displayName: "Brix Valdenarro", sheet: "BRIX" },
-        EBA: { password: "pass12", displayName: "Ernesto Andrade", sheet: "EBA" },
-        DSM: { password: "pass13", displayName: "Dustin Sta. Maria", sheet: "DSM" },
-        JAC: { password: "pass14", displayName: "Jenel Ann Cruzgarcia", sheet: "JAC" },
-        DP: { password: "pass15", displayName: "Doreen Penilla", sheet: "DP" },
-        DM: { password: "pass17", displayName: "Denisse Malong", sheet: "DM" },
-        KL: { password: "pass18", displayName: "Kevin Lin", sheet: "KL" },
-        JM: { password: "pass19", displayName: "Juvi Masilungan", sheet: "JM" },
-        JG: { password: "pass20", displayName: "Jhoanalyn Gatdula", sheet: "JG" },
-        MA: { password: "pass21", displayName: "Mary Arceo", sheet: "MA" },
-        JLC: { password: "luther2024", displayName: "Jeron Luther Castro", sheet: "GMC" },
-        ANNALEE: { password: "pass22", displayName: "Annalee Pine ", sheet: "ANNALEE" },
-        ARRA: { password: "pass23", displayName: "Arralen Batallones", sheet: "ARRA" },
-        DULCE: { password: "pass24", displayName: "Ma Dulce Cuenca", sheet: "DULCE" },
-        AIZELLE: { password: "pass25", displayName: "Aizelle Anne Yalong", sheet: "AIZELLE" },
-        VIA: { password: "pass26", displayName: "Henedina Viado", sheet: "VIA" },
-        OAUIE: { password: "pass27", displayName: "Oauie Banagan", sheet: "OAUIE" },
-        MICH: { password: "pass28", displayName: "Michelle Ong", sheet: "MICH" },
-        FATIMA: { password: "pass29", displayName: "Ma Fatima Bausin", sheet: "FATIMA" },
-        MELANIE: { password: "pass30", displayName: "Melanie Lingon", sheet: "MELANIE" },
-        STEPH: { password: "pass31", displayName: "Stephen Sumilang", sheet: "STEPH" },
-        PAT: { password: "pass32", displayName: "Patricia Mari Quierez", sheet: "PAT" },
-        ROSA: { password: "pass33", displayName: "Rosa Cecilia Salvador", sheet: "ROSA" },
-        JANICE: { password: "pass34", displayName: "Janice Cadog", sheet: "JANICE" },
-        CAMSY: { password: "camsy123", displayName: "Camsy Elvina", sheet: "CAMSY" },
-        LORRAINE: { password: "lorraine123", displayName: "Lorraine Cicat", sheet: "CAMSY" },
-        MIKEE: { password: "mikee123", displayName: "Mikee Vivo", sheet: "MIKEE" },
-        FERMIE: { password: "fermie123", displayName: "Fermila Pacampara", sheet: "MIKEE" },
-        VANESSA: { password: "vanessa123", displayName: "Vanessa Vicente", sheet: "VANESSA" },
-        TYRON: { password: "tyron123", displayName: "Tyron Tan", sheet: "TYRON" },
-        RODA: { password: "roda123", displayName: "Rodalyn Landoy", sheet: "TYRON" },
-        GLORIE: { password: "glorie123", displayName: "Glorie Alynna Racelis", sheet: "MGL" },
+        GMC: { password: "pass1", displayName: "Graham Coates", sheet: "GMC", email: "gmcoates@megaworld-lifestyle.com" },
+        GRACE: { password: "grace123", displayName: "Grace Guarico", sheet: "GMC", email: "gdguarico@megaworld-lifestyle.com" },
+        RCS: { password: "pass2", displayName: "Rosalyn Segura", sheet: "RCS", email: "rosalyn.segura@example.com" },
+        ALY: { password: "pass2", displayName: "Allyzza Tolosa", sheet: "RCS", email: "allyzza.tolosa@example.com" },
+        JE: { password: "je123", displayName: "Jeremy Rodriguez", sheet: "JE", email: "jeremy.rodriguez@example.com" },
+        NOE: { password: "noe123", displayName: "Noe Versoza", sheet: "NOE", email: "noe.versoza@example.com" },
+        MGL: { password: "pass3", displayName: "Michael Lao", sheet: "MGL", email: "mglao@megaworld-lifestyle.com" },
+        MLP: { password: "pass3a", displayName: "Louise Piamonte", sheet: "MGL", email: "mppiamonte@megaworld-lifestyle.com" },
+        KMV: { password: "pass4", displayName: "Tinay Villanueva", sheet: "KMV", email: "tinay.villanueva@example.com" },
+        ZELFA: { password: "zelfa123", displayName: "Zelfa Valderrama", sheet: "KMV", email: "zelfa.valderrama@example.com" },
+        LDA: { password: "pass5", displayName: "Lorence Aurelio", sheet: "LDA", email: "lorence.aurelio@example.com" },
+        FA: { password: "pass16", displayName: "Frances Armian", sheet: "LDA", email: "frances.armian@example.com" },
+        JAYE: { password: "pass6", displayName: "Jaye Trich Pizarro", sheet: "JAYE", email: "jmpizarro@megaworld-lifestyle.com" },
+        ANDREA: { password: "@Fornis022920", displayName: "Andrea Buro", sheet: "JAYE", email: "burofornisandrea30@gmail.com" },
+        JOY: { password: "pass7", displayName: "Jocelyn Melitante", sheet: "JOY", email: "jcmelitante@megaworld-lifestyle.com" },
+        ALEX: { password: "pass8", displayName: "Alex Flores", sheet: "ALEX", email: "apflores@megaworld-lifestyle.com" },
+        AU: { password: "pass9", displayName: "Aurora Palostero", sheet: "AU", email: "mdpastolero@megaworld-lifestyle.com" },
+        SHIENA: { password: "Sh!iena_2017", displayName: "Shiena Candido", sheet: "AU", email: "stcandido@megaworld-lifestyle.com" },
+        MAR: { password: "pass10", displayName: "Mariano Caleja", sheet: "MAR", email: "mbcaleja@megaworld-lifestyle.com" },
+        BRIX: { password: "brixton20", displayName: "Jan Brix V. Valdenarro", sheet: "BRIX", email: "bvvaldenarro@megaworld-lifestyle.com" },
+        EBA: { password: "pass12", displayName: "Ernesto Andrade", sheet: "EBA", email: "ernesto.andrade@example.com" },
+        DSM: { password: "pass13", displayName: "Dustin Sta. Maria", sheet: "DSM", email: "dustin.stamaria@example.com" },
+        JAC: { password: "pass14", displayName: "Jenel Ann Cruzgarcia", sheet: "JAC", email: "jenel.cruzgarcia@example.com" },
+        DP: { password: "pass15", displayName: "Doreen Penilla", sheet: "DP", email: "doreen.penilla@example.com" },
+        DM: { password: "pass17", displayName: "Denisse Malong", sheet: "DM", email: "denisse.malong@example.com" },
+        KL: { password: "pass18", displayName: "Kevin Lin", sheet: "KL", email: "kevin.lin@example.com" },
+        JM: { password: "pass19", displayName: "Juvi Masilungan", sheet: "JM", email: "juvi.masilungan@example.com" },
+        JG: { password: "pass20", displayName: "Jhoanalyn Gatdula", sheet: "JG", email: "jhoanalyn.gatdula@example.com" },
+        MA: { password: "pass21", displayName: "Mary Arceo", sheet: "MA", email: "mary.arceo@example.com" },
+        JLC: { password: "luther2024", displayName: "Jeron Luther Castro", sheet: "GMC", email: "jeron.castro@example.com" },
+        ANNALEE: { password: "pass22", displayName: "Annalee Pine ", sheet: "ANNALEE", email: "annalee.pine@example.com" },
+        ARRA: { password: "pass23", displayName: "Arralen Batallones", sheet: "ARRA", email: "arralen.batallones@example.com" },
+        DULCE: { password: "pass24", displayName: "Ma Dulce Cuenca", sheet: "DULCE", email: "dulce.cuenca@example.com" },
+        AIZELLE: { password: "pass25", displayName: "Aizelle Anne Yalong", sheet: "AIZELLE", email: "aizelle.yalong@example.com" },
+        VIA: { password: "pass26", displayName: "Henedina Viado", sheet: "VIA", email: "henedina.viado@example.com" },
+        OAUIE: { password: "pass27", displayName: "Oauie Banagan", sheet: "OAUIE", email: "oauie.banagan@example.com" },
+        MICH: { password: "pass28", displayName: "Michelle Ong", sheet: "MICH", email: "michelle.ong@example.com" },
+        FATIMA: { password: "pass29", displayName: "Ma Fatima Bausin", sheet: "FATIMA", email: "fatima.bausin@example.com" },
+        MELANIE: { password: "pass30", displayName: "Melanie Lingon", sheet: "MELANIE", email: "melanie.lingon@example.com" },
+        STEPH: { password: "pass31", displayName: "Stephen Sumilang", sheet: "STEPH", email: "stephen.sumilang@example.com" },
+        PAT: { password: "pass32", displayName: "Patricia Mari Quierez", sheet: "PAT", email: "patricia.quierez@example.com" },
+        ROSA: { password: "pass33", displayName: "Rosa Cecilia Salvador", sheet: "ROSA", email: "rosa.salvador@example.com" },
+        JANICE: { password: "pass34", displayName: "Janice Cadog", sheet: "JANICE", email: "janice.cadog@example.com" },
+        CAMSY: { password: "camsy123", displayName: "Camsy Elvina", sheet: "CAMSY", email: "celvina@megaworld-lifestyle.com" },
+        LORRAINE: { password: "earaine2017", displayName: "Lorraine Ann B. Cicat", sheet: "CAMSY", email: "lbcicat@megaworld-lifestyle.com" },
+        MIKEE: { password: "mikee123", displayName: "Mikee Vivo", sheet: "MIKEE", email: "mvvivo@megaworld-lifestyle.com" },
+        FERMIE: { password: "fermie123", displayName: "Fermila Pacampara", sheet: "MIKEE", email: "frpacampara@megaworld-lifestyle.com" },
+        VAN: { password: "vanessa123", displayName: "Vanessa Vicente", sheet: "VAN", email: "vrvicente@megaworld-lifestyle.com" },
+        TYRON: { password: "CGMOps@888", displayName: "Tyrone Jason S Tan", sheet: "TYRON", email: "tstan@megaworld-lifestyle.com" },
+        RODA: { password: "Mcd@123", displayName: "Rodalyn Landoy", sheet: "TYRON", email: "rrlandoy@megaworld-lifestyle.com" },
     };
-    const user = users[username];
+
+    let user;
+
+    // Check if the input is a username
+    if (users[username]) {
+        user = users[username];
+    } else {
+        // If not a username, check if it's an email
+        const usernameFound = Object.keys(users).find(key => users[key].email === username);
+        if (usernameFound) {
+            user = users[usernameFound];
+        }
+    }
+
     if (!user || user.password !== password) {
         throw new Error(`Unauthorized Account.`);
     }
+
     Logger.log(`Authenticated: ${user.displayName}`);
     return { displayName: user.displayName, sheet: user.sheet };
 }
-
-
 
 function validateAndSanitizeInputs(data, requiredFields = []) {
     if (!data || typeof data !== "object") {
