@@ -1,453 +1,616 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <base target="_top" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Vue 3 CDN -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <!-- Bootstrap 5.3 CDN -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <style>
-      /* Styles remain the same */
-      body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background-color: white; color: #333; margin: 0; padding: 1rem; }
-      h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 1rem; }
-      .container-custom {
-        width: 95%; /* Use 95% of the screen width */
-        max-width: 2000px; /* But don't let it get wider than 1600px */
-        margin: 0 auto;
-        padding: 1rem;
-      }
-      .card { border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); border: 1px solid #dee2e6; }
-      .table-wrapper { margin-bottom: 1.5rem; }
-      .table-body-scroll { max-height: 500px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.5rem; }
-      .table {
-        width: 3800px
-        font-size: 0.85rem;
-        border-collapse: collapse;
-        table-layout: fixed; /* MODIFIED: Ensures column widths are based on header widths */
-      }
-      .table th, .table td {
-        padding: 0.70rem;
-        white-space: normal;
-        word-break: break-word; /* MODIFIED: Allows long words to break and wrap */
-        text-align: center;
-        border-bottom: 1px solid #eaeaea;
-      }
-      .table thead th { position: sticky; top: 0; background-color: #f8f9fa; font-weight: 600; color: #222; z-index: 2; border-bottom: 2px solid #dee2e6; }
-      .table tbody tr:hover { background-color: #f1f1f1; }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <title>MCD Document Finder</title>
+        <!-- Vue 3 from CDN -->
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <!-- Bootstrap 5.3 from CDN -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
-      /* --- MODIFIED: Renamed class for clarity, only handles text alignment --- */
-      .left-align-cell {
-        text-align: left !important;
-      }
+        <style>
+            :root {
+                --bs-border-radius-lg: 12px;
+                --light-bg: #f8f9fa;
+                --soft-border: #e9ecef;
+                --accent-color: #0d6efd;
+                --header-height: 60px;
+            }
 
-      @media (min-width: 240px) {
-        h1 { font-size: 2rem; }
-      }
-    </style>
-  </head>
+            body {
+                font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+                background-color: #fdfdfd;
+                padding-bottom: 2rem;
+            }
 
-  <body>
-    <div id="app" class="container-custom">
-        <!-- LOGOUT BUTTON -->
-        <div v-if="isLoggedIn" class="position-fixed top-0 end-0 p-3 z-3">
-            <button @click="logout()" class="btn btn-outline-danger btn-sm">Logout</button>
-        </div>
+            #app {
+                padding: 1rem 0.5rem;
+                max-width: 1600px; /* Slightly wider for Finder table */
+                margin: 0 auto;
+            }
 
-      <header class="text-center mb-4">
-        <img src="https://raw.githubusercontent.com/mrjeronluther/Memo-Routing-Landing-Page/main/WhatsApp%20Image%202025-06-05%20at%2015.44.42_3fc69535.jpg" alt="Header Image" class="img-fluid" style="max-width: 100%; width: 600px;" />
-      </header>
+            /* Responsive Image */
+            header img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 8px;
+            }
 
-      <!-- LOGIN DISPLAY -->
-      <div v-if="!isLoggedIn" class="d-flex justify-content-center align-items-center" style="min-height: 15vh;">
-        <div class="card p-4 bg-white" style="width: 100%; max-width: 500px;">
-          <h2 class="text-center">MCD Document Finder</h2>
-          <div class="card-body">
-            <h3 class="card-title text-center mb-4">Login</h3>
-            <div class="mb-3">
-              <input v-model="username" id="username" class="form-control" placeholder="Username" required />
-            </div>
-            <div class="mb-3">
-              <input v-model="password" @keyup.enter="login" type="password" class="form-control" placeholder="Password" required />
-            </div>
-            <button @click="login" class="btn btn-primary w-100" :disabled="!isFormValid || loadingLogin">
-              <span v-if="loadingLogin" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              <span v-if="!loadingLogin">Login</span>
-              <span v-else>Logging in & Preparing Data...</span>
-            </button>
-            <div class="text-danger mt-2 text-center" v-if="loginError">
-              {{ loginError }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TABLE DISPLAY -->
-      <div v-else-if="isLoggedIn && tableLoaded" class="mt-4">
-        <div class="text-center mb-3">
-          <h1 class="fw-bold">MCD Document Finder</h1>
-        </div>
-        <br />
-
-        <!-- START: UPDATED SEARCH AND FILTER CONTROLS -->
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
-            <input v-model="searchTerm" class="form-control" placeholder="Enter Reference Number to search..." />
-            <div class="btn-group flex-shrink-0" role="group">
-                <button @click="showPending()" type="button" class="btn" :class="{'btn-primary': currentView === 'pending', 'btn-outline-primary': currentView !== 'pending'}">
-                    Pending <span class="badge bg-light text-dark ms-1">{{ pendingCount }}</span>
-                </button>
-                <button @click="showApproved()" type="button" class="btn" :class="{'btn-primary': currentView === 'approved', 'btn-outline-primary': currentView !== 'approved'}">
-                    Approved <span class="badge bg-light text-dark ms-1">{{ approvedCount }}</span>
-                </button>
-                <!-- START: ADDED -->
-                <button @click="showDisapproved()" type="button" class="btn" :class="{'btn-danger': currentView === 'disapproved', 'btn-outline-danger': currentView !== 'disapproved'}">
-                    Disapproved <span class="badge bg-light text-dark ms-1">{{ disapprovedCount }}</span>
-                </button>
-                <!-- END: ADDED -->
-            </div>
-        </div>
-        <!-- END: UPDATED SEARCH AND FILTER CONTROLS -->
-
-        <div v-if="filteredData.length > 1" class="table-wrapper">
-          <div class="table-body-scroll">
-            <table class="table table-bordered table-hover table-sm mb-0">
-              <thead>
-                <tr>
-                  <!-- MODIFIED: Applied dynamic style and class to headers -->
-                  <th v-for="(col, index) in filteredData[0]"
-                      :key="'header-' + index"
-                      :style="getColumnStyle(index)"
-                      :class="{'left-align-cell': index === 4 || index === 5}">
-                      {{ col }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(row, rowIndex) in filteredData.slice(1)" :key="'row-' + rowIndex">
-                  <!--
-                    MODIFIED: Only the alignment class is needed now.
-                    The width is controlled by the header above.
-                  -->
-                  <td v-for="(cell, colIndex) in row"
-                      :key="'cell-' + rowIndex + '-' + colIndex"
-                      :class="{'left-align-cell': colIndex === 4 || colIndex === 5}">
-
-                    <!-- All the inner logic for formatting cells remains exactly the same -->
-                    <template v-if="colIndex === 9">
-                      <a v-if="cell" :href="cell" target="_blank" rel="noopener" class="btn btn-link btn-sm">View Status Page</a>
-                      <span v-else class="text-muted">No Link</span>
-                    </template>
-                    <template v-else-if="colIndex === 8">
-                      <a v-if="cell" :href="cell" target="_blank" rel="noopener" class="btn btn-link btn-sm">View Memo</a>
-                      <span v-else class="text-muted">No Link</span>
-                    </template>
-                    <div v-else-if="colIndex === 5" class="text-start" v-html="formatCellWithLineBreaks(cell)"></div>
-                    <template v-else-if="colIndex === 1 && cell">{{ formatDate(cell) }}</template>
-                    <template v-else>
-                      <span v-if="cell !== undefined && cell !== null && cell !== ''">{{ cell }}</span>
-                      <span v-else class="text-muted">N/A</span>
-                    </template>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div v-if="totalPages > 1" class="mt-3 d-flex justify-content-center align-items-center" aria-label="Table navigation">
-            <button @click="prevPage()" :disabled="currentPage === 1" class="btn btn-outline-primary btn-sm me-2">
-              Previous
-            </button>
-            <span class="text-muted">Page {{ currentPage }} of {{ totalPages }}</span>
-            <button @click="nextPage()" :disabled="currentPage >= totalPages" class="btn btn-outline-primary btn-sm ms-2">
-              Next
-            </button>
-          </div>
-        </div>
-
-        <div v-else class="text-center p-4">
-          <p class="text-muted">No matching data found for your user and search query.</p>
-        </div>
-      </div>
-    </div>
-
-<script>
-    const { createApp, ref, computed, watch } = Vue;
-
-    const FORMATTER_NAMES = [ "Graham Coates", "Rosalyn Segura", "Michael Lao", "Tinay Villanueva", "Lorence Aurello", "Jaye Trich Pizarro", "Joy Melitante", "Alex Flores", "Aurora Pastolero", "Mariano Caleja", "Brix Valdenarro", "Ernesto Andrade", "Dustin Sta. Maria", "Jenel Ann Cruzgarcia", "Doreen Penilla", "Frances Armian", "Denisse Malong", "Kevin Lin", "Juvi Masilungan", "Jhoanalyn Gatdula", "Mary Arceo", "Annalee Pine", "Arralen Batallones", "Ma Dulce Cuenca", "Aizelle Anne Yalong", "Henedina Viado", "Oauie Banagan", "Michelle Ong", "Ma Fatima Bausin", "Melanie Lingon", "Stephen Sumilang", "Patricia Mari Quierez", "Rosa Cecilia Salvador", "Janice Cadog", "Camsy Elvina", "Mikee Vivo", "Vanessa Vicente", "Tyrone Tan", ];
-
-    createApp({
-        setup() {
-            const isLoggedIn = ref(false);
-            const loadingLogin = ref(false);
-            const username = ref("");
-            const password = ref("");
-            const loginError = ref("");
-            const loggedInUsername = ref("");
-            const isSuperUser = ref(false);
-            const tableData = ref([]);
-            const tableLoaded = ref(false);
-            const searchTerm = ref("");
-
-            const currentPage = ref(1);
-            const rowsPerPage = 30;
-
-            const currentView = ref('pending');
-
-            const isFormValid = computed(() => {
-                return username.value.trim() !== "" && password.value.trim() !== "";
-            });
-
-            const userFilteredRows = computed(() => {
-                if (tableData.value.length <= 1) return [];
-                let rows = tableData.value.slice(1);
-                rows = rows.filter(row => row[0] !== undefined && row[0] !== null && row[0] !== '');
-                if (!isSuperUser.value) {
-                    const user = loggedInUsername.value.toLowerCase();
-                    rows = rows.filter((row) => {
-                        const col2 = row[2];
-                        const col3 = row[3];
-                        return (col2 && col2.toString().toLowerCase() === user) || (col3 && col3.toString().toLowerCase() === user);
-                    });
-                }
-                return rows;
-            });
-
-            const pendingCount = computed(() => {
-                return userFilteredRows.value.filter(row => row[6] && row[6].toString().toLowerCase() === 'pending').length;
-            });
-
-            const approvedCount = computed(() => {
-                return userFilteredRows.value.filter(row => row[6] && row[6].toString().toLowerCase() === 'approved').length;
-            });
-
-            // ADDED: Computed property for the disapproved count
-            const disapprovedCount = computed(() => {
-                return userFilteredRows.value.filter(row => row[6] && row[6].toString().toLowerCase() === 'disapproved').length;
-            });
-
-            const allFilteredRows = computed(() => {
-                const header = tableData.value.length > 0 ? tableData.value[0] : [];
-                if (!header.length) return [];
-
-                let rowsToFilter = userFilteredRows.value;
-
-                if (currentView.value === 'pending') {
-                    rowsToFilter = rowsToFilter.filter(row => row[6] && row[6].toString().toLowerCase() === 'pending');
-                } else if (currentView.value === 'approved') {
-                    rowsToFilter = rowsToFilter.filter(row => row[6] && row[6].toString().toLowerCase() === 'approved');
-                } else if (currentView.value === 'disapproved') { // ADDED: Condition to filter by 'disapproved'
-                    rowsToFilter = rowsToFilter.filter(row => row[6] && row[6].toString().toLowerCase() === 'disapproved');
-                }
-
-                const search = searchTerm.value.trim().toLowerCase();
-                if (search) {
-                    rowsToFilter = rowsToFilter.filter((row) => row[0] && row[0].toString().toLowerCase().includes(search));
-                }
-                return [header, ...rowsToFilter];
-            });
-
-
-            const filteredData = computed(() => {
-                const rows = allFilteredRows.value;
-                if (rows.length <= 1) return rows;
-                const header = rows[0];
-                const dataRows = rows.slice(1);
-                const start = (currentPage.value - 1) * rowsPerPage;
-                const end = start + rowsPerPage;
-                const slicedRows = dataRows.slice(start, end);
-                return [header, ...slicedRows];
-            });
-
-            const totalPages = computed(() => {
-                const totalRows = allFilteredRows.value.length - 1;
-                if (totalRows <= 0) return 1;
-                return Math.ceil(totalRows / rowsPerPage);
-            });
-
-            // --- NEW: Method to dynamically calculate column widths ---
-            const getColumnStyle = (index) => {
-                // Return empty if data isn't loaded yet to avoid errors
-                if (filteredData.value.length < 1 || !filteredData.value[0]) return {};
-
-                const totalColumns = filteredData.value[0].length;
-                if (totalColumns === 0) return {};
-
-                const wideColumns = [4, 5]; // The indices of the columns to make wider
-                const wideColumnCount = wideColumns.length;
-                const normalColumnCount = totalColumns - wideColumnCount;
-
-                // Assign weights for distribution. A wide column is 3x a normal one.
-                const wideColumnWeight = 3;
-                const normalColumnWeight = 1;
-
-                // Calculate the sum of all weights
-                const totalWeight = (wideColumnCount * wideColumnWeight) + (normalColumnCount * normalColumnWeight);
-                if (totalWeight === 0) return {}; // Prevent division by zero
-
-                let widthPercent;
-                // Check if the current column index is one of the designated wide columns
-                if (wideColumns.includes(index)) {
-                    widthPercent = (wideColumnWeight / totalWeight) * 100;
-                } else {
-                    widthPercent = (normalColumnWeight / totalWeight) * 100;
-                }
-
-                // Return the style object for the v-bind:style directive
-                return { 'width': `${widthPercent}%` };
-            };
-
-            const formatDate = (value) => {
-                if (!value) return "";
-                const date = new Date(value);
-                if (isNaN(date.getTime())) return value;
-                return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-            };
-
-            const formatCellWithLineBreaks = (text) => {
-                if (typeof text !== "string" || !text.trim()) return "";
-                const escapedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                let processedText = escapedText.replace(/\bApproved:/g, "<br><strong>Approved:</strong>").replace(/\bPending:/g, "<br><strong>Pending:</strong>");
-                let approvedBlock = "", pendingBlock = "";
-                const approvedMatch = processedText.match(/<strong>Approved:<\/strong>([\s\S]*?)(?=<br><strong>Pending:<\/strong>|$)/);
-                if (approvedMatch && approvedMatch[1]) approvedBlock = approvedMatch[1];
-                const pendingMatch = processedText.match(/<strong>Pending:<\/strong>([\s\S]*)/);
-                if (pendingMatch && pendingMatch[1]) pendingBlock = pendingMatch[1];
-                let foundApprovedNames = false, foundPendingNames = false;
-                FORMATTER_NAMES.forEach((name) => {
-                    const escapedName = name.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
-                    const regex = new RegExp(`\\b(${escapedName})\\b`, "g");
-                    const replacement = "<br>• <strong>$1</strong>";
-                    if (approvedBlock.match(regex)) { foundApprovedNames = true; approvedBlock = approvedBlock.replace(regex, replacement); }
-                    if (pendingBlock.match(regex)) { foundPendingNames = true; pendingBlock = pendingBlock.replace(regex, replacement); }
-                });
-                if (!foundApprovedNames) approvedBlock += "<br>N/A";
-                if (!foundPendingNames) pendingBlock += "<br>N/A";
-                let finalHtml = `<strong>Approved:</strong>${approvedBlock}<br><strong>Pending:</strong>${pendingBlock}`;
-                finalHtml = finalHtml.replace(/\bRemarks\b/g, "<strong>Remarks</strong>").replace(/\bDate\b/g, "<strong>Date</strong>");
-                if (finalHtml.startsWith("<br>")) finalHtml = finalHtml.substring(4);
-                return finalHtml;
-            };
-
-            const runGoogleScript = (functionName, ...args) => {
-                return new Promise((resolve, reject) => {
-                    if (typeof google === 'undefined' || !google.script?.run) {
-                        return reject(new Error("Google Script API is not available."));
-                    }
-                    google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[functionName](...args);
-                });
-            };
-
-            const fetchData = async (userEmail) => {
-                try {
-                    const selectedColumns = [8, 14, 2, 3, 4, 1, 5, 7, 22, 6];
-                    const data = await runGoogleScript('getSheetData', selectedColumns, 2, userEmail);
-                    tableData.value = data;
-                    tableLoaded.value = true;
-                } catch(err) {
-                    console.error("Failed to fetch data:", err);
-                    loginError.value = "Could not load your memo data. Please try logging in again.";
-                    throw err;
-                }
-            };
-
-            const login = async () => {
-                loadingLogin.value = true;
-                loginError.value = "";
-                try {
-                    const result = await runGoogleScript('validateLogin', username.value, password.value);
-                    if (result && result.valid) {
-                        loggedInUsername.value = result.actualName;
-                        isSuperUser.value = result.isSuperUser || false;
-                        await fetchData(username.value);
-                        isLoggedIn.value = true;
-                    } else {
-                        loginError.value = "Invalid username or password.";
-                    }
-                } catch (err) {
-                    console.error("Login or data fetch failed:", err);
-                    if (!loginError.value) loginError.value = "An error occurred. Please try again.";
-                } finally {
-                    loadingLogin.value = false;
-                }
-            };
-
-            const logout = (isAutoLogout = false) => {
-                const performLogout = () => {
-                    isLoggedIn.value = false;
-                    tableLoaded.value = false;
-                    loggedInUsername.value = "";
-                    username.value = "";
-                    password.value = "";
-                    loginError.value = "";
-                    tableData.value = [];
-                    searchTerm.value = "";
-                    currentPage.value = 1;
-                    isSuperUser.value = false;
-                    currentView.value = 'pending';
-                };
-                if (isAutoLogout) {
-                    alert("You have been automatically logged out due to 10 minutes of inactivity.");
-                    performLogout();
-                } else if (confirm("Are you sure you want to log out?")) {
-                    performLogout();
-                }
-            };
-
-            const nextPage = () => {
-                if (currentPage.value < totalPages.value) currentPage.value++;
-            };
-            const prevPage = () => {
-                if (currentPage.value > 1) currentPage.value--;
-            };
-
-            const showPending = () => {
-                currentView.value = 'pending';
-            };
-            const showApproved = () => {
-                currentView.value = 'approved';
-            };
+            /* Card Styles */
+            .card {
+                border: none;
+                border-radius: var(--bs-border-radius-lg);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                background-color: #fff;
+                transition: transform 0.2s ease;
+            }
             
-            // ADDED: Method to change view to 'disapproved'
-            const showDisapproved = () => {
-                currentView.value = 'disapproved';
-            };
+            .card.grey-highlight-shadow {
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            }
 
-            const inactivityTimer = ref(null);
-            const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
+            /* Table Styles */
+            .table-wrapper {
+                max-height: 70vh;
+                overflow-y: auto;
+                overflow-x: auto;
+                border: 1px solid var(--soft-border);
+                border-radius: var(--bs-border-radius-lg);
+                background-color: white;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+                -webkit-overflow-scrolling: touch;
+            }
 
-            const resetInactivityTimer = () => {
-                clearTimeout(inactivityTimer.value);
-                inactivityTimer.value = setTimeout(() => { logout(true); }, INACTIVITY_TIMEOUT_MS);
-            };
+            .table {
+                margin-bottom: 0;
+                width: 100%;
+                min-width: 1200px; 
+            }
 
-            watch(searchTerm, () => { currentPage.value = 1; });
-            watch(currentView, () => { currentPage.value = 1; });
+            thead th {
+                position: sticky;
+                top: 0;
+                background-color: var(--light-bg) !important;
+                color: #495057;
+                z-index: 10;
+                text-align: center;
+                vertical-align: middle;
+                font-weight: 600;
+                font-size: 0.85rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                box-shadow: 0 1px 0 var(--soft-border);
+                white-space: nowrap;
+                padding: 1rem 0.5rem;
+            }
 
-            watch(isLoggedIn, (loggedIn) => {
-                const activityEvents = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
-                if (loggedIn) {
-                    resetInactivityTimer();
-                    activityEvents.forEach(event => window.addEventListener(event, resetInactivityTimer, { passive: true }));
-                } else {
-                    clearTimeout(inactivityTimer.value);
-                    activityEvents.forEach(event => window.removeEventListener(event, resetInactivityTimer));
+            tbody td {
+                padding: 0.75rem;
+                text-align: center;
+                vertical-align: top;
+                font-size: 0.9rem;
+            }
+
+            tbody tr:hover {
+                background-color: #f8f9fa;
+            }
+
+            /* Specific Column Formatting */
+            .narrow-column {
+                min-width: 100px;
+                max-width: 140px;
+            }
+
+            .extra-wide-column {
+                min-width: 300px;
+                max-width: 450px;
+                text-align: left !important;
+                white-space: normal;
+                word-wrap: break-word;
+            }
+            
+            /* Toast Notifications */
+            .toast-container {
+                position: fixed;
+                z-index: 1070;
+                top: 1rem;
+                right: 1rem;
+                width: auto;
+                max-width: 350px;
+                pointer-events: none;
+            }
+
+            .toast-item {
+                pointer-events: auto;
+                margin-bottom: 0.75rem;
+                border-radius: 8px;
+                border: none;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                font-size: 0.9rem;
+                animation: slideIn 0.3s ease-out;
+            }
+
+            @keyframes slideIn {
+                from { transform: translateY(-20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+
+            /* Buttons & Inputs */
+            .btn {
+                border-radius: 6px;
+                padding: 0.5rem 1rem;
+                font-weight: 500;
+                transition: all 0.2s;
+            }
+            .form-control {
+                padding: 0.6rem 1rem;
+                border-radius: 8px;
+            }
+            
+            .btn-group-mobile-stack { display: flex; }
+
+            /* Modal Styling Tweaks */
+            .modal-content {
+                border: none;
+                border-radius: var(--bs-border-radius-lg);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            }
+            .modal-header { border-bottom: 1px solid var(--soft-border); }
+            .modal-footer { border-top: 1px solid var(--soft-border); }
+
+            /* Mobile Adjustments */
+            @media (max-width: 768px) {
+                #app { padding: 0.5rem; }
+                .btn-group-mobile-stack { flex-direction: column; width: 100%; }
+                .btn-group-mobile-stack .btn { width: 100%; border-radius: 6px !important; margin-bottom: 0.25rem; }
+                .card-body { padding: 1rem; }
+            }
+            
+            /* Fade Transition */
+            .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+            .fade-enter-from, .fade-leave-to { opacity: 0; }
+        </style>
+    </head>
+
+    <body>
+        <div id="app" class="container-fluid px-0 px-md-3">
+            
+            <!-- Toast Container -->
+            <div class="toast-container">
+                <div v-for="toast in toasts" :key="toast.id" class="alert toast-item d-flex align-items-center" :class="{ 'alert-info': toast.status === 'info', 'alert-success': toast.status === 'success', 'alert-danger': toast.status === 'error', 'alert-warning': toast.status === 'warning' }" role="alert">
+                    <div class="flex-grow-1 text-break">{{ toast.message }}</div>
+                    <button type="button" class="btn-close ms-2 small" @click="removeToast(toast.id)"></button>
+                </div>
+            </div>
+
+            <!-- LOGOUT MODAL -->
+            <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true" ref="logoutModalRef">
+                <div class="modal-dialog modal-dialog-centered modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="logoutModalLabel">Confirm Logout</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-secondary">
+                            Are you sure you want to end your session?
+                        </div>
+                        <div class="modal-footer bg-light rounded-bottom">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger btn-sm" @click="confirmLogout">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Header -->
+            <header class="text-center mb-4 mt-2">
+                <img src="https://raw.githubusercontent.com/mrjeronluther/Memo-Routing-Landing-Page/main/WhatsApp%20Image%202025-06-05%20at%2015.44.42_3fc69535.jpg" alt="Header Image" class="img-fluid shadow-sm" style="max-height: 120px; width: auto;" />
+            </header>
+
+            <!-- LOGIN FORM -->
+            <transition name="fade" mode="out-in">
+                <div v-if="!isLoggedIn" class="row justify-content-center align-items-center min-vh-50" key="login-form">
+                    <div class="col-12 col-md-8 col-lg-5 col-xl-4">
+                        <div class="card grey-highlight-shadow">
+                            <div class="card-body p-4">
+                                <h3 class="card-title text-center mb-2 fw-bold text-primary">MCD Document Finder</h3>
+                                <p class="text-center text-muted mb-4">Please sign in to search records</p>
+                                
+                                <form @submit.prevent="login">
+                                    <div class="mb-3">
+                                        <label for="username" class="form-label small fw-bold text-secondary">Username</label>
+                                        <input v-model="username" id="username" type="text" class="form-control form-control-lg bg-light" placeholder="Enter username" required />
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label for="password" class="form-label small fw-bold text-secondary">Password</label>
+                                        <div class="input-group">
+                                            <input v-model="password" :type="showPassword ? 'text' : 'password'" class="form-control form-control-lg bg-light" placeholder="Enter password" required />
+                                            <button class="btn btn-outline-secondary" type="button" @click="showPassword = !showPassword" tabindex="-1">
+                                                {{ showPassword ? 'Hide' : 'Show' }}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" :disabled="!isFormValid || loadingLogin" class="btn btn-primary w-100 btn-lg shadow-sm">
+                                        <span v-if="loadingLogin" class="spinner-border spinner-border-sm me-2"></span>
+                                        {{ loadingLogin ? 'Verifying & Loading Data...' : 'Login' }}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DASHBOARD CONTENT -->
+                <div v-else-if="isLoggedIn && tableLoaded" class="fade-in" key="dashboard">
+                    <!-- Top Bar -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded shadow-sm sticky-top" style="z-index: 100;">
+                        <div>
+                            <h6 class="mb-0 fw-bold text-primary">{{ loggedInUsername }}</h6>
+                            <small class="text-muted">Document Finder Access</small>
+                        </div>
+                        <button @click="showLogoutModal()" class="btn btn-outline-danger btn-sm px-3">Logout</button>
+                    </div>
+
+                    <div class="d-none d-md-block text-center mb-3">
+                        <h4 class="fw-bold">Document Finder Dashboard</h4>
+                    </div>
+
+                    <!-- Controls: Search & Filter -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">🔍</span>
+                                <input v-model="searchTerm" type="text" class="form-control border-start-0 ps-0" placeholder="Search Reference No, Subject..." />
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="btn-group btn-group-mobile-stack w-100" role="group">
+                                <button @click="currentView = 'pending'" type="button" class="btn" :class="{'btn-primary': currentView === 'pending', 'btn-outline-primary': currentView !== 'pending'}">
+                                    Pending <span class="badge bg-white text-primary ms-1 rounded-pill">{{ pendingCount }}</span>
+                                </button>
+                                <button @click="currentView = 'approved'" type="button" class="btn" :class="{'btn-success': currentView === 'approved', 'btn-outline-success': currentView !== 'approved'}">
+                                    Approved <span class="badge bg-white text-success ms-1 rounded-pill">{{ approvedCount }}</span>
+                                </button>
+                                <button @click="currentView = 'disapproved'" type="button" class="btn" :class="{'btn-danger': currentView === 'disapproved', 'btn-outline-danger': currentView !== 'disapproved'}">
+                                    Disapproved <span class="badge bg-white text-danger ms-1 rounded-pill">{{ disapprovedCount }}</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DATA TABLE -->
+                    <div class="card mb-3 overflow-hidden">
+                        <div class="table-wrapper">
+                            <!-- SAFE GUARD: Only render table if data actually exists -->
+                            <div v-if="filteredData.length <= 1" class="text-center text-muted p-5">
+                                 <div class="mb-2" style="font-size: 2rem;">📭</div>
+                                 <span v-if="searchTerm">No records found matching "{{ searchTerm }}"</span>
+                                 <span v-else>No {{ currentView }} records found.</span>
+                            </div>
+                            
+                            <!-- Check filteredData[0] to prevent accessing undefined header -->
+                            <table v-else-if="filteredData.length > 1 && filteredData[0]" class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <!-- Header Loop -->
+                                        <th v-for="(col, index) in filteredData[0]" 
+                                            :key="'header-' + index"
+                                            :class="{'extra-wide-column': index === 4 || index === 5, 'narrow-column': index === 1}">
+                                            {{ col }}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(row, rowIndex) in filteredData.slice(1)" :key="'row-' + rowIndex">
+                                        <td v-for="(cell, colIndex) in row" 
+                                            :key="'cell-' + rowIndex + '-' + colIndex"
+                                            :class="{'extra-wide-column': colIndex === 4 || colIndex === 5, 'narrow-column': colIndex === 1}">
+
+                                            <!-- Formatting Logic -->
+                                            <template v-if="colIndex === 9">
+                                                <a v-if="cell" :href="cell" target="_blank" rel="noopener" class="btn btn-sm btn-outline-info text-nowrap">🔗 Status Page</a>
+                                                <span v-else class="text-muted small">—</span>
+                                            </template>
+                                            <template v-else-if="colIndex === 8">
+                                                <a v-if="cell" :href="cell" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary text-nowrap">📄 View Memo</a>
+                                                <span v-else class="text-muted small">—</span>
+                                            </template>
+                                            <div v-else-if="colIndex === 5" class="text-start small lh-sm" v-html="formatCellWithLineBreaks(cell)"></div>
+                                            <template v-else-if="colIndex === 1 && cell">{{ formatDate(cell) }}</template>
+                                            <template v-else>
+                                                <span v-if="cell !== undefined && cell !== null && cell !== ''">{{ cell }}</span>
+                                                <span v-else class="text-muted small">—</span>
+                                            </template>
+
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Footer / Pagination -->
+                        <div v-if="filteredData.length > 1" class="card-footer bg-white d-flex flex-column flex-sm-row justify-content-between align-items-center py-3">
+                            <span class="text-muted small mb-2 mb-sm-0">Page {{ currentPage }} of {{ totalPages }}</span>
+                            <div class="btn-group" role="group">
+                                <button @click="prevPage()" :disabled="currentPage === 1" class="btn btn-outline-secondary btn-sm px-3">Previous</button>
+                                <button @click="nextPage()" :disabled="currentPage >= totalPages" class="btn btn-outline-secondary btn-sm px-3">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+        </div>
+
+        <script>
+            const { createApp, ref, computed, watch, onMounted } = Vue;
+
+            const FORMATTER_NAMES = [ "Graham Coates", "Rosalyn Segura", "Michael Lao", "Tinay Villanueva", "Lorence Aurello", "Jaye Trich Pizarro", "Joy Melitante", "Alex Flores", "Aurora Pastolero", "Mariano Caleja", "Brix Valdenarro", "Ernesto Andrade", "Dustin Sta. Maria", "Jenel Ann Cruzgarcia", "Doreen Penilla", "Frances Armian", "Denisse Malong", "Kevin Lin", "Juvi Masilungan", "Jhoanalyn Gatdula", "Mary Arceo", "Annalee Pine", "Arralen Batallones", "Ma Dulce Cuenca", "Aizelle Anne Yalong", "Henedina Viado", "Oauie Banagan", "Michelle Ong", "Ma Fatima Bausin", "Melanie Lingon", "Stephen Sumilang", "Patricia Mari Quierez", "Rosa Cecilia Salvador", "Janice Cadog", "Camsy Elvina", "Mikee Vivo", "Vanessa Vicente", "Tyrone Tan","Cynthyia Jison","Jody Arante","Carlo Gianan", "Gigi Dela Vega" ];
+
+            createApp({
+                setup() {
+                    const isLoggedIn = ref(false);
+                    const loadingLogin = ref(false);
+                    const username = ref("");
+                    const password = ref("");
+                    const showPassword = ref(false);
+                    const loggedInUsername = ref("");
+                    const isSuperUser = ref(false);
+                    const tableData = ref([]);
+                    const tableLoaded = ref(false);
+                    const searchTerm = ref("");
+
+                    const currentPage = ref(1);
+                    const rowsPerPage = 30;
+
+                    const currentView = ref('pending');
+                    const toasts = ref([]);
+                    let toastIdCounter = 0;
+
+                    const logoutModalRef = ref(null);
+                    let logoutModalObj = null;
+
+                    const isFormValid = computed(() => {
+                        return username.value.trim() !== "" && password.value.trim() !== "";
+                    });
+
+                    // Toast Logic
+                    const showToast = (message, status = "info") => {
+                        const id = toastIdCounter++;
+                        toasts.value.unshift({ id, status, message });
+                        setTimeout(() => removeToast(id), 5000);
+                    };
+                    const removeToast = (id) => (toasts.value = toasts.value.filter((t) => t.id !== id));
+
+                    // Safer Data Computations
+                    const userFilteredRows = computed(() => {
+                        // Strict check: if data isn't loaded or format is wrong, return empty
+                        if (!tableData.value || !Array.isArray(tableData.value) || tableData.value.length <= 1) return [];
+                        
+                        let rows = tableData.value.slice(1);
+                        rows = rows.filter(row => row && row[0] !== undefined && row[0] !== null && row[0] !== '');
+                        
+                        if (!isSuperUser.value) {
+                            const user = loggedInUsername.value.toLowerCase();
+                            rows = rows.filter((row) => {
+                                const col2 = row[2];
+                                const col3 = row[3];
+                                return (col2 && col2.toString().toLowerCase() === user) || (col3 && col3.toString().toLowerCase() === user);
+                            });
+                        }
+                        return rows;
+                    });
+
+                    const pendingCount = computed(() => userFilteredRows.value.filter(row => row[6] && row[6].toString().toLowerCase() === 'pending').length);
+                    const approvedCount = computed(() => userFilteredRows.value.filter(row => row[6] && row[6].toString().toLowerCase() === 'approved').length);
+                    const disapprovedCount = computed(() => userFilteredRows.value.filter(row => row[6] && row[6].toString().toLowerCase() === 'disapproved').length);
+
+                    const allFilteredRows = computed(() => {
+                         // Strict check: ensures header exists
+                        if (!tableData.value || tableData.value.length === 0) return [];
+                        const header = tableData.value[0];
+                        if (!header) return [];
+
+                        let rowsToFilter = userFilteredRows.value;
+                        if (currentView.value === 'pending') {
+                            rowsToFilter = rowsToFilter.filter(row => row[6] && row[6].toString().toLowerCase() === 'pending');
+                        } else if (currentView.value === 'approved') {
+                            rowsToFilter = rowsToFilter.filter(row => row[6] && row[6].toString().toLowerCase() === 'approved');
+                        } else if (currentView.value === 'disapproved') {
+                            rowsToFilter = rowsToFilter.filter(row => row[6] && row[6].toString().toLowerCase() === 'disapproved');
+                        }
+
+                        const search = searchTerm.value.trim().toLowerCase();
+                        if (search) {
+                            rowsToFilter = rowsToFilter.filter((row) => row.some(cell => cell && cell.toString().toLowerCase().includes(search)));
+                        }
+                        return [header, ...rowsToFilter];
+                    });
+
+                    const filteredData = computed(() => {
+                        const rows = allFilteredRows.value;
+                        // Extra safety check before slicing
+                        if (!rows || rows.length <= 1) return rows || []; 
+                        
+                        const header = rows[0];
+                        const dataRows = rows.slice(1);
+                        const start = (currentPage.value - 1) * rowsPerPage;
+                        const end = start + rowsPerPage;
+                        return [header, ...dataRows.slice(start, end)];
+                    });
+
+                    const totalPages = computed(() => {
+                        const rows = allFilteredRows.value;
+                        if (!rows) return 1;
+                        const totalRows = rows.length - 1;
+                        if (totalRows <= 0) return 1;
+                        return Math.ceil(totalRows / rowsPerPage);
+                    });
+
+                    // Formatters
+                    const formatDate = (value) => {
+                        if (!value) return "";
+                        const date = new Date(value);
+                        if (isNaN(date.getTime())) return value;
+                        return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+                    };
+
+                    const formatCellWithLineBreaks = (text) => {
+                        if (typeof text !== "string" || !text.trim()) return "";
+                        const escapedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        let processedText = escapedText.replace(/\bApproved:/g, "<br><strong class='text-success'>Approved:</strong>").replace(/\bPending:/g, "<br><strong class='text-warning'>Pending:</strong>");
+                        let approvedBlock = "", pendingBlock = "";
+                        const approvedMatch = processedText.match(/<strong class='text-success'>Approved:<\/strong>([\s\S]*?)(?=<br><strong class='text-warning'>Pending:<\/strong>|$)/);
+                        if (approvedMatch && approvedMatch[1]) approvedBlock = approvedMatch[1];
+                        const pendingMatch = processedText.match(/<strong class='text-warning'>Pending:<\/strong>([\s\S]*)/);
+                        if (pendingMatch && pendingMatch[1]) pendingBlock = pendingMatch[1];
+                        let foundApprovedNames = false, foundPendingNames = false;
+                        FORMATTER_NAMES.forEach((name) => {
+                            const escapedName = name.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+                            const regex = new RegExp(`\\b(${escapedName})\\b`, "g");
+                            const replacement = "<br>• <strong>$1</strong>";
+                            if (approvedBlock.match(regex)) { foundApprovedNames = true; approvedBlock = approvedBlock.replace(regex, replacement); }
+                            if (pendingBlock.match(regex)) { foundPendingNames = true; pendingBlock = pendingBlock.replace(regex, replacement); }
+                        });
+                        if (!foundApprovedNames) approvedBlock += "<br><span class='text-muted small ms-2'>N/A</span>";
+                        if (!foundPendingNames) pendingBlock += "<br><span class='text-muted small ms-2'>N/A</span>";
+                        let finalHtml = `<strong class='text-success'>Approved:</strong>${approvedBlock}<br><br><strong class='text-warning'>Pending:</strong>${pendingBlock}`;
+                        finalHtml = finalHtml.replace(/\bRemarks\b/g, "<strong>Remarks</strong>").replace(/\bDate\b/g, "<strong>Date</strong>");
+                        if (finalHtml.startsWith("<br>")) finalHtml = finalHtml.substring(4);
+                        return finalHtml;
+                    };
+
+                    const runGoogleScript = (functionName, ...args) => {
+                        return new Promise((resolve, reject) => {
+                            if (typeof google === 'undefined' || !google.script?.run) {
+                                return reject(new Error("Google Script API is not available."));
+                            }
+                            google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[functionName](...args);
+                        });
+                    };
+
+                    // Data Fetching
+                    const fetchData = async (userEmail) => {
+                        // Reset table state before fetching
+                        tableLoaded.value = false; 
+                        tableData.value = []; 
+                        
+                        try {
+                            const selectedColumns = [8, 14, 2, 3, 4, 1, 5, 7, 22, 6];
+                            const data = await runGoogleScript('getSheetData', selectedColumns, 2, userEmail);
+                            
+                            // Ensure data is valid before saying "Loaded"
+                            if(Array.isArray(data) && data.length > 0) {
+                                tableData.value = data;
+                            } else {
+                                tableData.value = []; // Set empty array if no data
+                            }
+                            tableLoaded.value = true;
+                        } catch(err) {
+                            showToast("Could not load memo data. Please try again.", "error");
+                            throw err;
+                        }
+                    };
+
+                    // Login Sequence - ensures data is loaded BEFORE showing the dashboard
+                    const login = async () => {
+                        loadingLogin.value = true;
+                        try {
+                            // 1. Authenticate
+                            const result = await runGoogleScript('validateLogin', username.value, password.value);
+                            
+                            if (result && result.valid) {
+                                // 2. Store credentials
+                                loggedInUsername.value = result.actualName;
+                                isSuperUser.value = result.isSuperUser || false;
+                                
+                                // 3. FETCH DATA NOW (Still showing loading spinner)
+                                await fetchData(username.value); 
+                                
+                                // 4. Only after data arrives, show Dashboard
+                                isLoggedIn.value = true;
+                            } else {
+                                showToast("Invalid username or password.", "error");
+                            }
+                        } catch (err) {
+                            console.error("Login failed:", err);
+                            showToast("An error occurred during login. Please try again.", "error");
+                        } finally {
+                            loadingLogin.value = false;
+                        }
+                    };
+
+                    const showLogoutModal = () => {
+                        if (logoutModalRef.value && !logoutModalObj) {
+                            logoutModalObj = new bootstrap.Modal(logoutModalRef.value);
+                        }
+                        if (logoutModalObj) logoutModalObj.show();
+                    };
+
+                    const confirmLogout = () => {
+                        if (logoutModalObj) logoutModalObj.hide();
+                        performLogout();
+                        showToast("Logged out successfully.", "success");
+                    };
+
+                    const performLogout = () => {
+                        isLoggedIn.value = false;
+                        tableLoaded.value = false;
+                        loggedInUsername.value = "";
+                        username.value = "";
+                        password.value = "";
+                        tableData.value = [];
+                        searchTerm.value = "";
+                        currentPage.value = 1;
+                        isSuperUser.value = false;
+                        currentView.value = 'pending';
+                    };
+
+                    const logoutAuto = () => {
+                        performLogout();
+                        alert("You have been automatically logged out due to inactivity.");
+                    }
+
+                    const nextPage = () => { if (currentPage.value < totalPages.value) currentPage.value++; };
+                    const prevPage = () => { if (currentPage.value > 1) currentPage.value--; };
+
+                    const inactivityTimer = ref(null);
+                    const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
+                    const resetInactivityTimer = () => {
+                        clearTimeout(inactivityTimer.value);
+                        inactivityTimer.value = setTimeout(() => { logoutAuto(); }, INACTIVITY_TIMEOUT_MS);
+                    };
+
+                    watch(searchTerm, () => { currentPage.value = 1; });
+                    watch(currentView, () => { currentPage.value = 1; });
+
+                    watch(isLoggedIn, (loggedIn) => {
+                        const activityEvents = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
+                        if (loggedIn) {
+                            resetInactivityTimer();
+                            activityEvents.forEach(event => window.addEventListener(event, resetInactivityTimer, { passive: true }));
+                        } else {
+                            clearTimeout(inactivityTimer.value);
+                            activityEvents.forEach(event => window.removeEventListener(event, resetInactivityTimer));
+                        }
+                    });
+
+                    onMounted(() => { });
+
+                    return {
+                        username, password, showPassword, isLoggedIn, loadingLogin, loggedInUsername, tableLoaded,
+                        filteredData, searchTerm, currentView, pendingCount, approvedCount, disapprovedCount,
+                        currentPage, totalPages, nextPage, prevPage,
+                        login, logoutAuto, isFormValid,
+                        formatDate, formatCellWithLineBreaks,
+                        toasts, removeToast,
+                        logoutModalRef, showLogoutModal, confirmLogout
+                    };
                 }
-            });
-
-            return {
-                tableData, searchTerm, loadingLogin, isLoggedIn, tableLoaded, username, password,
-                loginError, loggedInUsername, isFormValid, filteredData, formatDate,
-                formatCellWithLineBreaks, login, logout, currentPage, totalPages, nextPage, prevPage,
-                currentView, pendingCount, approvedCount, showPending, showApproved,
-                // --- Exposing new properties/methods to the template ---
-                getColumnStyle,
-                // ADDED:
-                disapprovedCount,
-                showDisapproved
-            };
-        }
-    }).mount("#app");
-</script>
-  </body>
+            }).mount("#app");
+        </script>
+    </body>
 </html>
