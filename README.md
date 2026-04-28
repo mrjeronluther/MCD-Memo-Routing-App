@@ -1,96 +1,77 @@
-# MCD Memo Routing Web App
+# MCD Memo Routing App
 
 ## Introduction
-
-A web application built with Google Apps Script to submit, route, and approve MCD memos/documents using Google Sheets as the backend database. The application is intended for internal use within the MCD organization — for memo submitters, approvers, and administrators who manage workflows, tracking, and audit logs.
-
----
+MCD Memo Routing App is a lightweight web application for creating, routing, and tracking internal memos. It is designed for MCD teams who need a simple, auditable way to submit memos, assign recipients, and follow routing status within the organization.
 
 ## Installation Instructions
+Prerequisites:
+- Node.js (v16+ recommended) and npm or yarn
+- Git (to clone the repository)
 
-1. Prerequisites
-   - Google account with access to Google Apps Script and Google Drive
-   - Permissions to create and edit Google Sheets in your Google Workspace
-   - Optional: clasp (command-line tool) if you prefer local development
-
-2. Create the Google Sheets database
-   - Create a new Google Sheet to act as the database.
-   - Add the following sheets (tabs): `Memos`, `Approvals`, `Users` (optional), `Status Log` (optional).
-
-3. Create a Google Apps Script project
-   - Go to https://script.google.com and create a new project (or use clasp locally).
-   - Name it e.g., "MCD Memo Routing App".
-
-4. Add project files
-   - Copy the `.gs`, `.html`, and `.json` files from this repository into your Apps Script project.
-   - If using clasp, clone/pull the repo and push files via clasp.
-
-5. Configure the project
-   - Update constants in the `.gs` files (SHEET_ID, sheet names, admin emails, etc.).
-   - Confirm manifest (appsscript.json) runtime is V8 and required scopes are present.
-
-6. Authorize and test
-   - Run a setup or helper function once in the Apps Script editor to accept required scopes.
-   - Verify the script can read/write the target Google Sheet.
-
-7. Deploy as Web App
-   - In Apps Script editor: Deploy → New deployment → Web app.
-   - Set "Execute as" and "Who has access" according to your org policy.
-   - Deploy and copy the web app URL for users.
-
----
+Quick start:
+1. Clone the repository:
+   git clone https://github.com/mrjeronluther/MCD-Memo-Routing-App.git
+2. Change into the project directory:
+   cd MCD-Memo-Routing-App
+3. Install dependencies:
+   npm install
+   or
+   yarn install
+4. Run the development server:
+   npm start
+   or
+   yarn start
+5. Open your browser at:
+   http://localhost:3000
+(If this is a static build, you can also run: npm run build && npx serve build)
 
 ## Usage Examples
 
-1) Serve the landing page (Apps Script doGet)
+Basic HTML form (example)
+```html
+<form id="memoForm">
+  <input id="title" placeholder="Memo title" required />
+  <textarea id="body" placeholder="Memo body" required></textarea>
+  <input id="recipients" placeholder="Comma-separated recipients" />
+  <button type="submit">Send Memo</button>
+</form>
+```
+
+Example JavaScript usage (frontend)
 ```javascript
-function doGet(e) {
-  return HtmlService.createHtmlOutputFromFile('Landing Page')
-    .setTitle('MCD Memo Routing')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+// Example: routeMemo is a small helper that posts a memo to the app backend
+async function routeMemo(memo) {
+  const res = await fetch('/api/memos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(memo)
+  });
+  if (!res.ok) throw new Error('Failed to route memo');
+  return res.json();
 }
 
-2) Minimal addMemo example (append a new memo)
+// Usage:
+routeMemo({
+  title: 'Weekly Ops Update',
+  body: 'Please review attached targets and schedule.',
+  recipients: ['Store Manager', 'Regional Ops'],
+  priority: 'Normal'
+})
+  .then(response => console.log('Memo routed:', response))
+  .catch(err => console.error(err));
+```
 
-function addMemo(memoData) {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  const sheet = ss.getSheetByName(MEMO_SHEET_NAME);
-  const id = Utilities.getUuid();
-  const row = [
-    id,
-    memoData.title || '',
-    memoData.content || '',
-    memoData.submitter || '',
-    memoData.department || '',
-    new Date(),
-    memoData.priority || 'Medium',
-    'Pending',
-    memoData.routingPath || ''
-  ];
-  sheet.appendRow(row);
-  return id;
-}
+CLI (local test)
+```bash
+# start dev server
+npm start
 
-3. Minimal routeMemo example (set next approver & status)
+# run tests (if available)
+npm test
+```
 
+## Notes
+- Adjust API endpoints and scripts according to your deployment/backend setup.
+- Add authentication and access controls before deploying to production.
 
-function routeMemo(memoId, nextApproverEmail) {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  const sheet = ss.getSheetByName(MEMO_SHEET_NAME);
-  const data = sheet.getDataRange().getValues();
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === memoId) { // assuming ID is in column A
-      sheet.getRange(i + 1, /*col for Status*/ 8).setValue('Pending ' + nextApproverEmail);
-      sheet.getRange(i + 1, /*col for Current Approver*/ 9).setValue(nextApproverEmail);
-      return true;
-    }
-  }
-  return false;
-}
-
-
-Notes:
-
-The above snippets are simplified examples. Confirm column indices and exact function names in your repository before integrating them verbatim.
-Update SHEET_ID, MEMO_SHEET_NAME, and other constants before running.
-For MCD Internal Use Only
+- For MCD Internal Use Only
