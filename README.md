@@ -49,12 +49,6 @@ This system consists of four distinct Project Files. For each project (Submissio
 The following snippet demonstrates the standard pattern used within this app to send data from the Vue.js frontend to the Google Apps Script backend. Use this pattern for adding new features or custom validations.
 
 ```javascript
-/**
- * Copy-Paste Ready: Standard Submission Pattern
- * This function handles the asynchronous handshake between 
- * the browser and Google's servers.
- */
-
 function handleSubmission(payload) {
     console.log("Preparing to route memo...");
 
