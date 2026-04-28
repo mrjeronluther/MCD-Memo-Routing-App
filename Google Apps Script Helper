@@ -86,9 +86,10 @@ function onOpen() {
   
   ui.createMenu('Generate Approval/Disapproval Page')
     .addItem('Generate Final/Ongoing Comment Page', 'approvesda')
-    .addItem('Generate Disapproval Comment Page', 'disapproveds')
+    .addItem('Generate Disapproval Comment Page', 'generateDisapprovalPdfs')
     .addItem('Email Sender(Approved)', 'sendApprovalEmails')
     .addItem('Email Sender(Dispproved)', 'senddispprovalEmails')
+    .addItem('Update All Reviewer Statuses', 'processAllReviewerSheets')
     .addToUi();
 }
 
@@ -111,292 +112,278 @@ function runAutomatedProcesstwo() {
 }
 
 
+// --- CONFIGURATION OBJECT ---
+const CONFIG = {
+  sheetNames: { main: "Conso" },
+  folderId: '1Du8Gw9M6bilmraQ5kLX7URKez8XxffMS', 
+  columns: {
+    status: 0,        // Column A
+    pdfLink: 1,       // Column B
+    refNo: 4,         // Column E
+    subject: 10,      // Column K
+    approversStart: 8,// Column I
+    approversEnd: 82  // Column CD
+  },
+  maxDocsToCreateInOneRun: 30, // LIMIT: Stops after creating 30 PDFs to avoid daily limit errors
+  approverDetails: {
+    "CYNTHIA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Cynthia Jison",department:"MOSD",role:"sub",position:""},
+    "CARLO":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Carlo Gianan",department:"MOSD",role:"sub",position:""},
+    "JUDY":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Jody Arante",department:"MOSD",role:"sub",position:""},
+    "GIGI":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Gigi Dela Vega",department:"MOSD",role:"sub",position:""},
+    "VAN":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Vanessa Vicente",department:"MOSD",role:"sub",position:""},
+    "TYRON":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Tyrone Tan",department:"MOSD",role:"sub",position:""},
+    "MIKEE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Mikee Vivo",department:"MOSD",role:"sub",position:""},
+    "CAMSY":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Camsy Elvina",department:"MOSD",role:"sub",position:""},
+    "MGL":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"MICHAEL G. LAO",department:"MOSD",role:"head",position:"SAVP & Head, MCD | MOSD"},
+    "LDA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"LORENCE D. AURELIO",department:"LEASING",role:"head",position:"VP, Central Leasing Support"},
+    "KMV":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"KRISTINA MARIE M. VILLANUEVA",department:"BCM",role:"head",position:"SAVP and Head, BCM"},
+    "RCS":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"ROSALYN C. SEGURA",department:"RBG",role:"head",position:"AVP, Revenue Business Group"},
+    "JE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JEREMY S. RODRIGUEZ",department:"OD",role:"head",position:"Senior Manager, Organizational Development"},
+    "NOE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"NOE M.VERSOZA",department:"PROC",role:"head",position:"AVP & Head, Procurement"},
+    "GMC":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"GRACE M. CALINGASAN",department:"OD",role:"head",position:"SVP HR & Admin"},
+    "JAYE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JAYE TRICH PIZARRO",department:"MOSD",role:"sub",position:""},
+    "JOY":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JOCELYN MELITANTE",department:"MOSD",role:"sub",position:""},
+    "ALEX":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"ALEX FLORES",department:"MOSD",role:"sub",position:""},
+    "AU":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"AURORA PASTOLERO",department:"MOSD",role:"sub",position:""},
+    "BRIX":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"BRIX VALDENARRO",department:"MOSD",role:"sub",position:""},
+    "MAR":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"MARIANO CALEJA",department:"MOSD",role:"sub",position:""},
+    "EBA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"ERNESTO ANDRADE",department:"BCM",role:"sub",position:""},
+    "DSM":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"DUSTIN STA. MARIA",department:"BCM",role:"sub",position:""},
+    "JAC":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JENEL ANN CRUZGARCIA",department:"BCM",role:"sub",position:""},
+    "DP":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"DOREEN PENILLA",department:"BCM",role:"sub",position:""},
+    "FA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"FRANCES ARMIAN",department:"LEASING",role:"sub",position:""},
+    "DM":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"DENISSE MALONG",department:"LEASING",role:"sub",position:""},
+    "KL":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"KEVIN LIN",department:"LEASING",role:"sub",position:""},
+    "JM":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JUVI MASILUNGAN",department:"LEASING",role:"sub",position:""},
+    "JG":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JHOANALYN GATDULA",department:"LEASING",role:"sub",position:""},
+    "MA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"MARY ARCEO",department:"LEASING",role:"sub",position:""},
+    "ANNALEE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"ANNALEE PINE",department:"RBG",role:"sub",position:""},
+    "ARRA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"ARRALEN BATALLONES",department:"RBG",role:"sub",position:""},
+    "DULCE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"MA DULCE CUENCA",department:"RBG",role:"sub",position:""},
+    "AIZELLE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"AIZELLE ANNE YALONG",department:"RBG",role:"sub",position:""},
+    "VIA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"HENEDINA VIADO",department:"RBG",role:"sub",position:""},
+    "OAUIE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"OAUIE BANAGAN",department:"RBG",role:"sub",position:""},
+    "MICH":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"MICHELLE ONG",department:"RBG",role:"sub",position:""},
+    "FATIMA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"MA FATIMA BAUSIN",department:"RBG",role:"sub",position:""},
+    "MELANIE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"MELANIE LINGON",department:"RBG",role:"sub",position:""},
+    "STEPH":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"STEPHEN SUMILANG",department:"RBG",role:"sub",position:""},
+    "PAT":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"PATRICIA MARI QUIEREZ",department:"RBG",role:"sub",position:""},
+    "ROSA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"ROSA CECILIA SALVADOR",department:"RBG",role:"sub",position:""},
+    "JANICE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JANICE CADOG",department:"RBG",role:"sub",position:""}
+  }
+};
+
 function approvesda() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var mainSheet = ss.getSheetByName("Conso");
-  var data = mainSheet.getDataRange().getValues();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const mainSheet = ss.getSheetByName(CONFIG.sheetNames.main);
+  if (!mainSheet) return;
+  
+  const mainData = mainSheet.getDataRange().getValues();
+  const approverDataMap = preloadApproverData(ss, Object.keys(CONFIG.approverDetails));
 
-  var folderId = '1Du8Gw9M6bilmraQ5kLX7URKez8XxffMS'; // Destination folder
-  var folder = DriveApp.getFolderById(folderId);
+  let creationCount = 0;
 
-  var conditionsAndFiles = {
-    "MGL": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MICHAEL G. LAO", department: "MOSD", role: "head", position: "SAVP & Head, MCD | MOSD" },
-    "LDA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "LORENCE D. AURELIO", department: "LEASING", role: "head", position: "VP, Central Leasing Support" },
-    "KMV": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "KRISTINA MARIE M. VILLANUEVA", department: "BCM", role: "head", position: "SAVP and Head, BCM" },
-    "RCS": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ROSALYN C. SEGURA", department: "RBG", role: "head", position: "AVP, Revenue Business Group" },
-    "JE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JEREMY S. RODRIGUEZ", department: "OD", role: "head", position: "Senior Manager, Organizational Development" },
-    "NOE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "NOE M.VERSOZA", department: "PROC", role: "head", position: "AVP & Head, Procurement" },
+  for (let i = 1; i < mainData.length; i++) {
+    // PREVENT DAILY QUOTA ERROR
+    if (creationCount >= CONFIG.maxDocsToCreateInOneRun) {
+      Logger.log("Stopping after " + creationCount + " PDFs to save daily quota. Run again to process more.");
+      break; 
+    }
 
+    const rowData = mainData[i];
+    const pdfLink = rowData[CONFIG.columns.pdfLink];
+    const status = rowData[CONFIG.columns.status];
 
+    // SKIP LOGIC: Do not call the document service if the row already has a link
+    if (pdfLink && pdfLink.toString().trim() !== "") {
+       continue;
+    }
 
-    //MOSD
+    const rowIndexForSheet = i + 1;
+    const didCreate = processApprovalRow(rowData, rowIndexForSheet, mainSheet, approverDataMap);
+    
+    if (didCreate) {
+      creationCount++;
+    }
+  }
+}
 
-    "JAYE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JAYE TRICH PIZARRO", department: "MOSD", role: "sub", position: "" },
-    "JOY": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JOCELYN MELITANTE", department: "MOSD", role: "sub", position: "" },
-    "ALEX": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ALEX FLORES", department: "MOSD", role: "sub", position: "" },
-    "AU": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "AURORA PASTOLERO", department: "MOSD", role: "sub", position: "" },
-    "BRIX": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "BRIX VALDENARRO", department: "MOSD", role: "sub", position: "" },
-    "MAR": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MARIANO CALEJA", department: "MOSD", role: "sub", position: "" },
-
-    //BCM
-    "EBA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ERNESTO ANDRADE", department: "BCM", role: "sub", position: "" },
-    "DSM": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "DUSTIN STA. MARIA", department: "BCM", role: "sub", position: "" },
-    "JAC": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JENEL ANN CRUZGARCIA", department: "BCM", role: "sub", position: "" },
-    "DP": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "DOREEN PENILLA", department: "BCM", role: "sub", position: "" },
-
-    //LEASING
-    "FA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "FRANCES ARMIAN", department: "LEASING", role: "sub", position: "" },
-    "DM": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "DENISSE MALONG", department: "LEASING", role: "sub", position: "" },
-    "KL": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "KEVIN LIN", department: "LEASING", role: "sub", position: "" },
-    "JM": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JUVI MASILUNGAN", department: "LEASING", role: "sub", position: "" },
-    "JG": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JHOANALYN GATDULA", department: "LEASING", role: "sub", position: "" },
-    "MA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MARY ARCEO", department: "LEASING", role: "sub", position: "" },
-
-    //RBG
-    "ANNALEE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ANNALEE PINE", department: "RBG", role: "sub", position: "" },
-    "ARRA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ARRALEN BATALLONES", department: "RBG", role: "sub", position: "" },
-    "DULCE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MA DULCE CUENCA", department: "RBG", role: "sub", position: "" },
-    "AIZELLE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "AIZELLE ANNE YALONG", department: "RBG", role: "sub", position: "" },
-    "VIA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "HENEDINA VIADO", department: "RBG", role: "sub", position: "" },
-    "OAUIE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "OAUIE BANAGAN", department: "RBG", role: "sub", position: "" },
-    "MICH": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MICHELLE ONG", department: "RBG", role: "sub", position: "" },
-    "FATIMA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MA FATIMA BAUSIN", department: "RBG", role: "sub", position: "" },
-    "MELANIE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MELANIE LINGON", department: "RBG", role: "sub", position: "" },
-    "STEPH": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "STEPHEN SUMILANG", department: "RBG", role: "sub", position: "" },
-    "PAT": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "PATRICIA MARI QUIEREZ", department: "RBG", role: "sub", position: "" },
-    "ROSA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ROSA CECILIA SALVADOR", department: "RBG", role: "sub", position: "" },
-    "JANICE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JANICE CADOG", department: "RBG", role: "sub", position: "" }
-
-  };
-  var departments = ["MOSD", "LEASING", "BCM", "RBG", "OD", "PROC"];
-
-  for (var i = 1; i < data.length; i++) { // Start from row 2 (index 1) to skip header
-    try {
-      var row = data[i];
-      var approvalStatus = row[0]; // Column A
-      var pdfLink = row[1]; // Column B
-
-      // --- MODIFICATION 1: Process both APPROVED and PENDING statuses ---
-      // Continue to the next row if status is not APPROVED or PENDING, or if a PDF link already exists.
-      if ((approvalStatus !== "APPROVED" && approvalStatus !== "PENDING") || pdfLink) {
-        continue;
+function preloadApproverData(ss, approverCodes) {
+  const dataMap = {};
+  approverCodes.forEach(code => {
+    const sheet = ss.getSheetByName(code);
+    if (sheet) {
+      dataMap[code] = {};
+      const sheetData = sheet.getRange("A:J").getValues();
+      for (let i = 0; i < sheetData.length; i++) {
+        const refNo = sheetData[i][9]; // Col J
+        if (refNo) {
+          dataMap[code][refNo] = {
+            notes: sheetData[i][1] || null,    // Column B: Remarks
+            timestamp: sheetData[i][2] || null // Column C: Timestamp
+          };
+        }
       }
+    }
+  });
+  return dataMap;
+}
 
-      // --- MODIFICATION 2: Check for "RCS" from Column O to CA ---
-      // Column O is index 14, Column CA is index 78. We slice from 14 up to (but not including) 79.
-      var rcsCheckRange = row.slice(14, 82);
-      var hasRCS = rcsCheckRange.includes("RCS");
+function processApprovalRow(rowData, rowIndex, mainSheet, approverDataMap) {
+  const status = rowData[CONFIG.columns.status];
+  const pdfLink = rowData[CONFIG.columns.pdfLink];
+  const refNo = rowData[CONFIG.columns.refNo];
 
-      // --- MODIFICATION 3: Determine the status note based on the conditions ---
-      var statusNote = ""; // Default to no note
-      if (approvalStatus === "APPROVED") {
-        // If status is APPROVED, the note is always "Final Status", regardless of "RCS"
-        statusNote = "Final Status";
-      } else if (approvalStatus === "PENDING" && hasRCS) {
-        // If status is PENDING AND it has "RCS", the note is "Ongoing Status"
-        statusNote = "Ongoing Status";
+  if (!refNo || !status) return false;
+  
+  let generatePdfType = null;
+  const allApproversInRow = rowData.slice(CONFIG.columns.approversStart, CONFIG.columns.approversEnd)
+  .filter(code => code && CONFIG.approverDetails.hasOwnProperty(String(code).trim()));
+
+  // Status Logic
+  if (status === "APPROVED") {
+    generatePdfType = "FINAL";
+  } else if (status === "PENDING" && !pdfLink) {
+    const approversWithoutTimestamp = allApproversInRow.filter(code => {
+      return approverDataMap[code] && (!approverDataMap[code][refNo] || !approverDataMap[code][refNo].timestamp);
+    });
+    if (approversWithoutTimestamp.length === 1 && approversWithoutTimestamp[0] === "GMC") {
+      generatePdfType = "ONGOING";
+    }
+  }
+
+  if (!generatePdfType) return false;
+  
+  // PDF GENERATION START
+  try {
+    const folder = DriveApp.getFolderById(CONFIG.folderId);
+    const subject = rowData[CONFIG.columns.subject];
+    const departments = ["MOSD", "LEASING", "BCM", "RBG", "OD", "PROC"];
+    const departmentMap = {};
+    departments.forEach(d => departmentMap[d] = { subs: [], head: null });
+    
+    allApproversInRow.forEach(code => {
+      if (code === "GMC") return;
+      const entry = CONFIG.approverDetails[code];
+      if (entry) {
+        const fullEntry = { ...entry, code };
+        if (entry.role === "head") departmentMap[entry.department].head = fullEntry;
+        else departmentMap[entry.department].subs.push(fullEntry);
       }
+    });
 
-      // If a note needs to be added, but the conditions aren't met to generate a PDF, skip.
-      // (e.g., PENDING without RCS does not generate a PDF based on your rules).
-      if (!statusNote) {
-        continue;
-      }
+    const doc = DocumentApp.create(`Generated Approval - Row ${rowIndex}`);
+    const body = doc.getBody();
+    
+    // Maintain 21.6 margin from original
+    body.setMarginTop(21.6).setMarginBottom(21.6).setMarginLeft(21.6).setMarginRight(21.6);
+    
+    const header = doc.getHeader() || doc.addHeader();
+    header.appendParagraph(refNo).setAlignment(DocumentApp.HorizontalAlignment.RIGHT).setFontSize(9);
+    
+    const statusNote = (generatePdfType === "FINAL") ? "Final Status" : "Ongoing Status";
+    body.appendParagraph(statusNote).setAlignment(DocumentApp.HorizontalAlignment.CENTER).setBold(true).setFontSize(11);
+    body.appendParagraph("");
+    
+    const description = (generatePdfType === "FINAL")
+      ? "This document is the approval page for the memo with the foregoing details:"
+      : "This memo is not yet approved. This page shows current status of the memo at the time of printing for reference or what ever purpose it may serve.";
+    body.appendParagraph(description).setFontSize(7).setBold(true);
+    body.appendParagraph("");
+    
+    // Formatting Header info exactly as original script
+    var labels = ["Subject of Memo", "Date of Memo", "Upload Timestamp", "Preparer of Memo", "Preparer Email", "Uploader of Memo", "Uploader Email", "File link of Memo"];
+    var values = [rowData[10], rowData[11], rowData[5], rowData[8], rowData[9], rowData[6], rowData[7], rowData[13]];
+    
+    for (var j = 0; j < values.length; j++) {
+      var para = body.appendParagraph("");
+      var value = values[j];
+      var fontSize = (labels[j] === "Subject of Memo") ? 9 : 7;
       
-      var labelFromColumnA = row[4];
-      var subjectFromColumnF = row[10];
-
-      var departmentMap = {};
-      departments.forEach(d => departmentMap[d] = { subs: [], head: null });
-
-      var rowData = row.slice(8, 82).filter(String); // Columns I to CD
-      rowData.forEach(code => {
-        var entry = conditionsAndFiles[code];
-        if (entry) {
-          if (entry.role === "head") {
-            departmentMap[entry.department].head = { ...entry, code };
-          } else {
-            departmentMap[entry.department].subs.push({ ...entry, code });
-          }
-        }
-      });
-
-      var doc = DocumentApp.create("Generated Document - Row " + (i + 1));
-      var body = doc.getBody();
-
-      // Set narrow margins
-      body.setMarginTop(21.6).setMarginBottom(21.6).setMarginLeft(21.6).setMarginRight(21.6);
-      
-      // Add header with reference number
-      var header = doc.getHeader() || doc.addHeader();
-      header.appendParagraph(labelFromColumnA).setAlignment(DocumentApp.HorizontalAlignment.RIGHT).setFontSize(7);
-
-      // --- MODIFICATION 4: Add the status note to the PDF body ---
-      if (statusNote) {
-        var notePara = body.appendParagraph(statusNote);
-        notePara.setAlignment(DocumentApp.HorizontalAlignment.CENTER)
-                .setBold(true)
-                .setFontSize(11); // Apply common styles
-
-        // Conditionally set the text color
-        if (statusNote === "Final Status") {
-          notePara.setForegroundColor("#000000"); // Set to Black
-        } else if (statusNote === "Ongoing Status") {
-          notePara.setForegroundColor("#FF0000"); // Keep it Red for emphasis
-        }
-        
-        body.appendParagraph(""); // Add a spacer after the note
+      para.appendText(labels[j] + ": ").setBold(true).setFontSize(fontSize);
+      if ((labels[j].includes("Timestamp") || labels[j].includes("Date")) && value) {
+         para.appendText(Utilities.formatDate(new Date(value), Session.getScriptTimeZone(), "MMM d, yyyy HH:mm")).setBold(false).setFontSize(fontSize);
+      } else {
+         para.appendText(String(value || "")).setBold(false).setFontSize(fontSize);
       }
+    }
 
-      body.appendParagraph("This document is the approval page for the memo with the foregoing details: ")
-        .setFontSize(7).setBold(true);
-      body.appendParagraph("");
+    // Property / Coverage details logic
+    // Automatically gets all codes from your CONFIG and adds standard ignores
+var excludedValues = Object.keys(CONFIG.approverDetails).concat(["N/A", "NA", "DONE", "PENDING"]);
+    var coverageValues = rowData.slice(14, 56).filter(v => v && !excludedValues.includes(String(v).trim()) && !String(v).includes('.pdf') && !String(v).includes('https')).join(", ");
+    var propertyParagraph = body.appendParagraph("");
+    propertyParagraph.appendText("Property/Coverage: ").setBold(true).setFontSize(7);
+    propertyParagraph.appendText(coverageValues).setBold(false).setFontSize(7);
+    body.appendParagraph("");
 
-      // ... (The rest of your code for adding memo details and tables) ...
-      var labels = ["Subject of Memo", "Date of Memo", "Upload Timestamp", "Preparer of Memo", "Preparer Email", "Uploader of Memo", "Uploader Email", "File link of Memo"];
-      var values = [row[10], row[11], row[5], row[8], row[9], row[6], row[7], row[13]];
+    // SIG TABLE HEADER - Colors and styles maintained
+    var headerTable = body.appendTable();
+    var headerRow = headerTable.appendTableRow();
+    departments.forEach(dept => {
+      const cell = headerRow.appendTableCell(dept);
+      cell.setBackgroundColor('#A9A9A9'); // Original Grey color
+      cell.getChild(0).asParagraph().setAlignment(DocumentApp.HorizontalAlignment.CENTER).setBold(true);
+    });
+    headerTable.setBorderWidth(0);
 
-      for (var j = 0; j < values.length; j++) {
-        var para = body.appendParagraph("");
-        var labelText = para.appendText(labels[j] + ": ").setBold(true).setFontSize(7);
-        var value = values[j];
-        if (labels[j] === "Upload Timestamp" || labels[j] === "Date of Memo") {
-          var formattedTimestamp = Utilities.formatDate(new Date(value), Session.getScriptTimeZone(), "MMM d, yyyy HH:mm");
-          para.appendText(formattedTimestamp).setBold(false).setFontSize(7);
-        } else {
-          para.appendText(String(value)).setBold(false).setFontSize(7);
-        }
-      }
+    // SIG TABLE CONTENT - Loop to generate images, names, notes, and dates
+    var contentTable = body.appendTable();
+    var maxRows = Math.max(...departments.map(d => departmentMap[d].subs.length + (departmentMap[d].head ? 1 : 0)));
 
-      var excludedValues = ["CAMSY", "MIKEE", "VAN", "TYRON", "MGL","JE","NOE", "KMV", "LDA", "GMC", "RCS", "JAYE", "JOY", "ALEX", "AU", "BRIX", "MAR", "ANNALEE", "ARRA", "AIZELLE", "DULCE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "MA", "JG"];
-      var rowDatatwo = row.slice(14, 56);
-      var nonEmptyValues = [];
-      for (var k = 0; k < rowDatatwo.length; k++) {
-        if (rowDatatwo[k] === "" || rowDatatwo[k] === null) break;
-        nonEmptyValues.push(rowDatatwo[k]);
-      }
-      if (nonEmptyValues.length === rowDatatwo.length) {
-        nonEmptyValues = rowDatatwo.slice(0, 41);
-      }
-      var propertyCoverage = nonEmptyValues
-        .filter(value => value && !excludedValues.includes(String(value).trim()) && !String(value).includes('.pdf') && !String(value).includes('https'))
-        .join(", ");
-
-      var propertyParagraph = body.appendParagraph("");
-      propertyParagraph.appendText("Property/Coverage: ").setBold(true).setFontSize(7);
-      propertyParagraph.appendText(propertyCoverage).setBold(false).setFontSize(7);
-
-      body.appendParagraph("");
-
-      // ... (The rest of your table generation code) ...
-       // First table (Header table)
-      var headerTable = body.appendTable();
-      var headerRow = headerTable.appendTableRow();
+    for (var r = 0; r < maxRows; r++) {
+      var tableRow = contentTable.appendTableRow();
       departments.forEach(dept => {
-        var cell = headerRow.appendTableCell();
-        cell.appendParagraph(dept).setBold(true).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-        cell.setBackgroundColor('#A9A9A9');
-      });
-      headerTable.setBorderWidth(0);
-
-      // Second table (Content table)
-      var contentTable = body.appendTable();
-      var maxRows = Math.max(...departments.map(d => departmentMap[d].subs.length + (departmentMap[d].head ? 1 : 0)));
-
-      for (var r = 0; r < maxRows; r++) {
-        var tableRow = contentTable.appendTableRow();
-        departments.forEach(dept => {
-          var cell = tableRow.appendTableCell();
-          var entry = null;
-          var subs = departmentMap[dept].subs;
-          var head = departmentMap[dept].head;
-
-          if (r < subs.length) entry = subs[r];
-          else if (r === subs.length && head) entry = head;
-
-          if (entry) {
-            try {
-              var blob = DriveApp.getFileById(entry.id).getBlob();
-              cell.appendImage(blob).setWidth(50).setHeight(50).getParent().asParagraph().setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-              
-              cell.appendParagraph(String(entry.name)).setBold(true).setFontSize(6).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-
-              if (entry.position && entry.position.trim() !== "") {
-                cell.appendParagraph(String(entry.position)).setBold(false).setFontSize(6).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-              }
-              
-              var timestamp = getTimestampFromSheet(entry.code, labelFromColumnA, ss);
-              var timestampText = "Approved Date: " + (timestamp ? Utilities.formatDate(new Date(timestamp), Session.getScriptTimeZone(), "MMM d, yyyy HH:mm") : "N/A");
-              cell.appendParagraph(timestampText).setBold(false).setFontSize(6).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-
-              // *** Corrected function call from getNotess to getNotes ***
-              var notes = getNotes(entry.code, labelFromColumnA, ss);
-              var notesText = "Remarks: " + (notes ? String(notes) : "N/A");
-              cell.appendParagraph(notesText).setFontSize(6).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-
-            } catch (imgErr) {
-              cell.appendParagraph("Image error").setAlignment(DocumentApp.HorizontalAlignment.CENTER);
-              Logger.log("Image fetch error for " + entry.name + ": " + imgErr);
+        var cell = tableRow.appendTableCell();
+        var entry = (r < departmentMap[dept].subs.length) ? departmentMap[dept].subs[r] : ((r === departmentMap[dept].subs.length) ? departmentMap[dept].head : null);
+        
+        if (entry) {
+          try {
+            var blob = DriveApp.getFileById(entry.id).getBlob();
+            cell.appendImage(blob).setWidth(50).setHeight(50).getParent().asParagraph().setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+            
+            cell.appendParagraph(String(entry.name)).setBold(true).setFontSize(6).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+            if (entry.position) {
+              cell.appendParagraph(String(entry.position)).setBold(false).setFontSize(6).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
             }
+            
+            // Re-adding correctly pulled Remark and Timestamp details
+            const dataRecord = approverDataMap[entry.code] ? approverDataMap[entry.code][refNo] : null;
+            
+            const tsVal = (dataRecord && dataRecord.timestamp) 
+               ? Utilities.formatDate(new Date(dataRecord.timestamp), Session.getScriptTimeZone(), "MMM d, yyyy HH:mm") 
+               : "N/A";
+            cell.appendParagraph("Approved Date: " + tsVal).setBold(false).setFontSize(6).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+
+            const noteVal = (dataRecord && dataRecord.notes) ? dataRecord.notes : "N/A";
+            cell.appendParagraph("Remarks: " + noteVal).setFontSize(6).setBold(false).setAlignment(DocumentApp.HorizontalAlignment.CENTER);
+
+          } catch (imgErr) {
+            cell.appendParagraph("N/A").setAlignment(DocumentApp.HorizontalAlignment.CENTER);
           }
-        });
-      }
-      contentTable.setBorderWidth(0);
-
-
-      doc.saveAndClose();
-
-      var pdfBlob = DriveApp.getFileById(doc.getId()).getAs(MimeType.PDF);
-      pdfBlob.setName(subjectFromColumnF + ".pdf");
-      var pdfFile = folder.createFile(pdfBlob);
-
-      // Using the mainSheet variable we already have
-      mainSheet.getRange(i + 1, 2).setValue(pdfFile.getUrl());
-
-    } catch (err) {
-      Logger.log("Error in row " + (i + 1) + ": " + err);
-      // Using the mainSheet variable we already have
-      mainSheet.getRange(i + 1, 2).setValue("Error: " + err);
+        }
+      });
     }
+    contentTable.setBorderWidth(0);
+    
+    doc.saveAndClose();
+    
+    // PDF Save and Sheet update
+    const pdfBlob = DriveApp.getFileById(doc.getId()).getAs(MimeType.PDF);
+    pdfBlob.setName(`${subject}.pdf`);
+    const pdfFile = folder.createFile(pdfBlob);
+    
+    mainSheet.getRange(rowIndex, CONFIG.columns.pdfLink + 1).setValue(pdfFile.getUrl());
+    DriveApp.getFileById(doc.getId()).setTrashed(true);
+    
+    return true; 
+
+  } catch (err) {
+    Logger.log(`Failed at Row ${rowIndex}: ${err.message}`);
+    mainSheet.getRange(rowIndex, CONFIG.columns.pdfLink + 1).setValue(`Error: ${err.message}`);
+    return false;
   }
 }
-
-function getTimestampFromSheet(code, refNo, ss) {
-  try {
-    var sheet = ss.getSheetByName(code);
-    if (!sheet) return null;
-
-    var values = sheet.getRange("A:BK").getValues();
-
-    for (var i = 0; i < values.length; i++) {
-      if (values[i][9] == refNo) {
-        return values[i][2] || null;
-      }
-    }
-  } catch (e) {
-    Logger.log("Timestamp fetch error from sheet " + code + ": " + e);
-  }
-  return null;
-}
-
-function getNotes(code, refNo, ss) {
-  try {
-    var sheet = ss.getSheetByName(code);
-    if (!sheet) return null;
-
-    var values = sheet.getRange("A:BM").getValues();
-
-    for (var i = 0; i < values.length; i++) {
-      if (values[i][9] == refNo) {
-        return values[i][1] || null;
-      }
-    }
-  } catch (e) {
-    Logger.log("Notes fetch error from sheet " + code + ": " + e);
-  }
-  return null;
-}
-
 
 
 function disapproveds() {
