@@ -1,104 +1,102 @@
-MCD Document Routing System
-Introduction
+# MCD Document Routing System
 
-The MCD Document Routing System is a bespoke, Google Apps Script-powered workflow automation tool designed specifically for the MCD team. Its primary purpose is to digitize and streamline the traditional "inter-office envelope" process.
+## Introduction
+The **MCD Document Routing System** is an automated, web-based workflow solution built on the Google Workspace ecosystem. It is designed to replace traditional paper-based memo routing with a high-visibility, digital process.
 
-The system replaces manual signature chasing and physical paper shuffling with a secure, web-based platform that provides:
+### Core Features:
+*   **Submission Portal:** Allows users to upload PDFs/Images and define complex routing paths (CGMs, Group Heads, Department Heads, and Division Heads).
+*   **Approval Portal:** Provides a secure dashboard for managers to approve, disapprove, or dynamically add/remove reviewers mid-process.
+*   **Document Finder:** A real-time tracking tool for requestors to view the exact status and historical audit trail of their documents.
+*   **Automated Notifications:** Triggers email alerts to approvers and sends a final "Approval Page" PDF to the requestor upon completion.
 
-Submission Portal: A centralized form for uploading memos and assigning a routing path (CGMs, Group Heads, and Dept/Div Heads).
+---
 
-Approval Portal: A secure dashboard for managers to review documents, provide remarks, and approve/disapprove items.
+## Installation Instructions
 
-Document Finder: A real-time tracking tool for requestors to check the current status and audit trail of any submission.
+### 1. Spreadsheet Setup
+You require two primary Google Sheets:
+*   **Master Database:** Create a sheet named `Conso`. This will store all transaction data, file URLs, and status logs.
+*   **Reference Log:** Create a second spreadsheet with two sheets:
+    *   `referencenumber`: To track and prevent duplicate Ref IDs.
+    *   `DefaultEmail`: To map property selections to specific notification emails.
 
-Automated Audit Trail: Every action is timestamped and logged, generating a final "Approval Page" PDF upon completion.
+### 2. Google Drive Setup
+*   Create a folder in Google Drive to host all uploaded documents.
+*   Copy the **Folder ID** from the URL (the string of characters after `/folders/`).
 
-Installation Instructions
+### 3. Script Deployment
+This system consists of four distinct Project Files. For each project (Submission, Approver, Finder, Landing Page):
+1.  Open [Google Apps Script](https://script.google.com).
+2.  Create a **New Project**.
+3.  Copy the corresponding `.html` and `.js` code from the repository into the project editor.
+4.  **Crucial:** In the **Submission Project**, go to `Project Settings` > `Script Properties` and add:
+    *   `DRIVE_FOLDER_ID`
+    *   `SPREADSHEET_ID` (Master Database)
+    *   `REF_SHEET_ID` (Reference Log)
 
-This project is built using Google Apps Script (GAS), Vue.js 3, and Bootstrap 5. To deploy this system, follow these steps:
+### 4. Web App Deployment
+1.  Click **Deploy** > **New Deployment**.
+2.  Select **Web App**.
+3.  Execute As: **Me** (Admin account).
+4.  Who has access: **Anyone within [Your Organization]**.
+5.  Authorize all requested permissions (Drive, Gmail, and Sheets).
 
-Google Sheet Setup:
+---
 
-Create a Google Spreadsheet to act as your database.
+## Usage Examples
 
-Create a sheet named Conso for the master log.
+### Frontend to Backend Communication
+The following snippet demonstrates the standard pattern used within this app to send data from the Vue.js frontend to the Google Apps Script backend. Use this pattern for adding new features or custom validations.
 
-Create a second spreadsheet to act as the Reference Log and create a sheet named referencenumber and DefaultEmail.
-
-Google Drive Setup:
-
-Create a dedicated Google Drive folder where all uploaded memos will be stored. Note the Folder ID.
-
-Script Deployment:
-
-Open script.google.com and create three separate projects (Submission, Approver, and Finder).
-
-Copy the corresponding .html and .js code provided into each project.
-
-In the Submission Page project, go to Project Settings and add the following Script Properties:
-
-DRIVE_FOLDER_ID: Your Drive Folder ID.
-
-SPREADSHEET_ID: Your Master Spreadsheet ID.
-
-REF_SHEET_ID: Your Reference/Email Spreadsheet ID.
-
-Permissions & Deployment:
-
-Click Deploy > New Deployment.
-
-Select Web App.
-
-Set Execute as: Me (The Admin).
-
-Set Who has access: Anyone within [Your Domain].
-
-Authorize the script to access Drive, Sheets, and Gmail.
-
-Usage Examples
-
-Below is a "copy-paste ready" code snippet demonstrating how the frontend interacts with the backend logic. This pattern is used to submit data from the browser to the Google Sheet while handling the asynchronous response.
-
-code
-JavaScript
-download
-content_copy
-expand_less
+```javascript
 /**
- * Example: Triggering a Document Submission
- * This snippet demonstrates how the Vue.js frontend sends the 
- * sanitized payload to the processFormData Google Script function.
+ * Copy-Paste Ready: Standard Submission Pattern
+ * This function handles the asynchronous handshake between 
+ * the browser and Google's servers.
  */
 
-const submitToMCDSystem = (payload) => {
-  console.log("Initiating submission for:", payload.additionalMemoInfo);
+function handleSubmission(payload) {
+    console.log("Preparing to route memo...");
 
-  // Calling the Google Apps Script Backend
-  google.script.run
-    .withSuccessHandler((result) => {
-      // result contains the generated Reference Number
-      alert(`Success! Document logged as: ${result.refNumber}`);
-      console.log("Confirmation details:", result);
-    })
-    .withFailureHandler((error) => {
-      console.error("Submission failed:", error.message);
-      alert("Error: " + error.message);
-    })
-    .processFormData(payload); 
-    // 'processFormData' is the .gs function that handles File Upload & Sheet Logging
+    // This calls the .gs function 'processFormData'
+    google.script.run
+        .withSuccessHandler((response) => {
+            // response contains the generated REF Number
+            console.log("Success! Reference Number:", response.refNumber);
+            alert("Submission Successful. Your Reference is: " + response.refNumber);
+            
+            // Logic to clear form or redirect user
+            window.top.location.href = "YOUR_LANDING_PAGE_URL";
+        })
+        .withFailureHandler((error) => {
+            console.error("Critical Error:", error.message);
+            alert("System Error: " + error.message);
+        })
+        .processFormData(payload);
+}
+
+// Example Payload Object
+const myMemo = {
+    name: "Jeron Luther",
+    email: "jluther@megaworld-lifestyle.com",
+    memoSubject: "Equipment Requisition",
+    selectedCGM: ["CAMSY", "MIKEE"],
+    fileData: "BASE64_ENCODED_STRING", // Decoded on server via Utilities.base64Decode
+    fileMimeType: "application/pdf"
 };
+```
 
-// Example Payload Structure
-const samplePayload = {
-  name: "John Doe",
-  email: "jdoe@megaworld-lifestyle.com",
-  memoType: "Jane Smith",
-  dateType: "2025-06-15",
-  additionalMemoInfo: "Request for Budget Realignment",
-  selectedCGM: ["CAMSY"],
-  fileData: "BASE64_ENCODED_STRING_HERE",
-  fileMimeType: "application/pdf",
-  fileName: "Budget_Memo.pdf"
-};
+---
 
-For MCD Internal Use Only
+## Tech Stack
+*   **Backend:** Google Apps Script (V8 Runtime)
+*   **Frontend:** Vue.js 3 (Composition API)
+*   **Styling:** Bootstrap 5.3 & Bootstrap Icons
+*   **Database:** Google Sheets API
+*   **Storage:** Google Drive API
+
+---
+
+> **Warning**  
+> **- For MCD Internal Use Only**  
+> This application contains proprietary workflow logic and credential structures intended for internal organization use. Unauthorized distribution is prohibited.
