@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <title>MCD Memo Approval</title>
         <!-- Vue 3 from CDN -->
         <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -12,424 +12,555 @@
 
         <style>
             :root {
-                --bs-border-radius-lg: 8px;
+                --bs-border-radius-lg: 12px;
                 --light-bg: #f8f9fa;
-                --soft-border: #dcdcdc;
+                --soft-border: #e9ecef;
                 --accent-color: #0d6efd;
+                --header-height: 60px;
             }
 
             body {
-                font-family: "Segoe UI", sans-serif;
-                background-color: white;
+                font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+                background-color: #fdfdfd;
+                padding-bottom: 2rem;
             }
 
             #app {
-                padding: 1rem;
+                padding: 1rem 0.5rem;
+                max-width: 1400px;
+                margin: 0 auto;
             }
 
+            /* Responsive Image */
+            header img {
+                max-width: 100%;
+                height: auto;
+                border-radius: 8px;
+            }
+
+            /* Card Styles */
+            .card {
+                border: none;
+                border-radius: var(--bs-border-radius-lg);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                background-color: #fff;
+                transition: transform 0.2s ease;
+            }
+            
+            .card.grey-highlight-shadow {
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            }
+
+            /* Table Styles */
             .table-wrapper {
-                max-height: 60vh;
+                max-height: 65vh;
                 overflow-y: auto;
+                overflow-x: auto;
                 border: 1px solid var(--soft-border);
                 border-radius: var(--bs-border-radius-lg);
                 background-color: white;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+                -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+            }
+
+            .table {
+                margin-bottom: 0;
             }
 
             thead th {
                 position: sticky;
                 top: 0;
                 background-color: var(--light-bg) !important;
-                color: #333;
-                z-index: 2;
+                color: #495057;
+                z-index: 10;
                 text-align: center;
                 vertical-align: middle;
-                font-weight: 500;
-                font-size: 0.95rem;
+                font-weight: 600;
+                font-size: 0.85rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                box-shadow: 0 1px 0 var(--soft-border);
+                white-space: nowrap;
+                padding: 1rem 0.5rem;
             }
 
             tbody td {
-                padding: 0.65rem;
+                padding: 0.75rem;
                 text-align: center;
                 vertical-align: middle;
-                white-space: normal;
-                word-break: break-word;
                 font-size: 0.9rem;
+                min-width: 120px; /* Prevent crushing on mobile */
+            }
+
+            tbody tr:hover {
+                background-color: #f8f9fa;
+            }
+
+            /* Specific Column Widths */
+            .narrow-column {
+                min-width: 100px;
+                max-width: 140px;
+            }
+
+            .extra-wide-column {
+                min-width: 250px;
+                max-width: 400px;
+                text-align: left !important;
+                white-space: normal;
             }
 
             .wider-column {
                 text-align: left !important;
+                min-width: 180px;
             }
 
-            tbody tr:hover {
-                background-color: #f1f3f5;
-            }
-
+            /* Loading Spinner */
             .loading-spinner {
-                display: inline-block;
-                width: 1.75rem;
-                height: 1.75rem;
-                vertical-align: -0.125em;
-                border: 0.25em solid currentColor;
-                border-right-color: transparent;
-                border-radius: 50%;
-                animation: 0.75s linear infinite spinner-border;
+                width: 3rem;
+                height: 3rem;
+                color: var(--accent-color);
             }
 
-            @keyframes spinner-border {
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-
+            /* Toast Notifications */
             .toast-container {
                 position: fixed;
-                z-index: 1060;
+                z-index: 1070;
                 top: 1rem;
-                left: 1rem;
-                width: 360px;
-                max-width: 90vw;
+                right: 1rem;
+                width: auto;
+                max-width: 350px;
                 pointer-events: none;
+            }
+
+            /* Mobile Toast Adjustment */
+            @media (max-width: 576px) {
+                .toast-container {
+                    left: 50%;
+                    transform: translateX(-50%);
+                    right: auto;
+                    width: 90%;
+                    top: 10px;
+                }
             }
 
             .toast-item {
                 pointer-events: auto;
-                margin-bottom: 0.5rem;
-                border-radius: 6px;
+                margin-bottom: 0.75rem;
+                border-radius: 8px;
                 border: none;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                 font-size: 0.9rem;
+                animation: slideIn 0.3s ease-out;
             }
 
-            .card {
-                border: none;
-                border-radius: 10px;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-                background-color: #fff;
+            @keyframes slideIn {
+                from { transform: translateY(-20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
             }
 
-            .card-body {
-                padding: 1.5rem;
-            }
-
-            .card.grey-highlight-shadow {
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 0 0 2px rgba(240, 240, 240, 0.9);
-                border-radius: 10px;
-            }
-
-            input.form-control,
-            textarea.form-control {
-                border-radius: 6px;
-                border: 1px solid #ced4da;
-                font-size: 0.9rem;
-            }
-
+            /* Buttons & Inputs */
             .btn {
                 border-radius: 6px;
-                font-size: 0.875rem;
-            }
-
-            .btn-outline-info {
-                color: var(--accent-color);
-                border-color: var(--accent-color);
-            }
-
-            .btn-outline-info:hover {
-                background-color: var(--accent-color);
-                color: #fff;
-            }
-
-            .btn-sm {
-                padding: 0.35rem 0.75rem;
-            }
-
-            .modal-content {
-                border-radius: 10px;
-                border: none;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            }
-
-            .modal-header,
-            .modal-footer {
-                border: none;
-            }
-
-            .modal-title {
-                font-size: 1rem;
+                padding: 0.5rem 1rem;
                 font-weight: 500;
+                transition: all 0.2s;
             }
 
-            .form-check-input {
-                border-radius: 4px;
+            .btn:active {
+                transform: scale(0.98);
             }
 
-            .pagination-btns .btn {
-                min-width: 90px;
+            .form-control {
+                padding: 0.6rem 1rem;
+                border-radius: 8px;
             }
 
-            .lead {
-                font-size: 1rem;
-                color: #444;
+            .btn-group-mobile-stack {
+                display: flex;
             }
+            
+            /* Modal Styling Tweaks */
+            .modal-content {
+                border: none;
+                border-radius: var(--bs-border-radius-lg);
+                box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            }
+            .modal-header { border-bottom: 1px solid var(--soft-border); }
+            .modal-footer { border-top: 1px solid var(--soft-border); }
 
-            .alert {
-                font-size: 0.9rem;
-                padding: 0.75rem 1rem;
-            }
+            /* Mobile Specific Adjustments */
+            @media (max-width: 768px) {
+                #app {
+                    padding: 0.5rem;
+                }
+                
+                .btn-group-mobile-stack {
+                    flex-direction: column;
+                    width: 100%;
+                }
 
-            .text-muted {
-                font-size: 0.9rem;
-            }
+                .btn-group-mobile-stack .btn {
+                    width: 100%;
+                    border-radius: 6px !important;
+                    margin-bottom: 0.25rem;
+                }
 
-            /* --- ADD THESE NEW CSS RULES --- */
-            .narrow-column {
-                /* Sets a fixed width. Adjust the pixel value as needed. */
-                width: 210px;
+                .table-wrapper {
+                    max-height: 60vh; /* More space for content on mobile */
+                }
+                
+                .card-body {
+                    padding: 1rem;
+                }
             }
-
-            .extra-wide-column {
-                /* Uses a percentage for flexibility, with a minimum width. */
-                width: 30%;
-                min-width: 350px;
-                text-align: left !important;
-                /* Keep text left-aligned for readability */
-            }
-
-            /* You can now remove the old .wider-column rule if it's no longer used elsewhere,
-   or just leave it. The new classes will override it where applied. */
-            .wider-column {
-                text-align: left !important;
-            }
+            
+            .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+            .fade-enter-from, .fade-leave-to { opacity: 0; }
         </style>
     </head>
 
     <body>
-        <div id="app" class="container-fluid">
-            <!-- Toast Container for all notifications -->
+        <div id="app" class="container-fluid px-0 px-md-3">
+            
+            <!-- Toast Container -->
             <div class="toast-container">
                 <div
                     v-for="toast in toasts"
                     :key="toast.id"
-                    class="alert toast-item d-flex align-items-center shadow-sm"
+                    class="alert toast-item d-flex align-items-center"
                     :class="{ 'alert-info': toast.status === 'ongoing' || toast.status === 'info', 'alert-success': toast.status === 'success', 'alert-danger': toast.status === 'failure' || toast.status === 'danger', 'alert-warning': toast.status === 'warning' }"
                     role="alert"
                 >
-                    <div class="spinner-border spinner-border-sm me-2" v-if="toast.status === 'ongoing'" role="status">
+                    <div class="spinner-border spinner-border-sm me-3 flex-shrink-0" v-if="toast.status === 'ongoing'" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
-                    <div class="flex-grow-1">{{ toast.message }}</div>
+                    <div class="flex-grow-1 text-break">{{ toast.message }}</div>
+                    <button type="button" class="btn-close ms-2 small" @click="toasts = toasts.filter(t => t.id !== toast.id)"></button>
                 </div>
             </div>
 
-            <header class="text-center mb-4">
+            <!-- Header -->
+            <header class="text-center mb-4 mt-2">
                 <img
                     src="https://raw.githubusercontent.com/mrjeronluther/Memo-Routing-Landing-Page/main/WhatsApp%20Image%202025-06-05%20at%2015.44.42_3fc69535.jpg"
                     alt="Header Image"
-                    class="img-fluid"
-                    style="max-width: 100%; width: 600px;"
+                    class="img-fluid shadow-sm"
+                    style="max-height: 120px; width: auto;"
                 />
             </header>
 
-            <!-- LOGIN FORM -->
-            <div v-if="!user.isLoggedIn" class="d-flex justify-content-center align-items-center">
-                <div class="card p-4 grey-highlight-shadow" style="width: 100%; max-width: 500px;">
-                    <h2 class="text-center">MCD Document Approval</h2>
-                    <div class="card-body">
-                        <h3 class="card-title text-center mb-4">Login</h3>
-                        <div class="mb-3">
-                            <input v-model="loginForm.username" id="username" @keyup.enter="login" type="text" placeholder="Username" class="form-control" />
-                        </div>
-                        <div class="mb-3">
-                            <input v-model="loginForm.password" id="password" @keyup.enter="login" type="password" placeholder="Password" class="form-control" />
-                        </div>
-                        <button @click="login" :disabled="!isLoginFormValid || isLoggingIn" class="btn btn-primary w-100">
-                            <span v-if="isLoggingIn" class="spinner-border spinner-border-sm"></span>
-                            <span v-else>Login</span>
-                        </button>
-                        <div v-if="loginError" class="alert alert-danger mt-3 mb-0" role="alert">
-                            {{ loginError }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MAIN CONTENT -->
-            <div v-else>
-                <button @click="logout" :disabled="isProcessPending" class="btn btn-sm btn-outline-danger position-fixed top-0 end-0 m-3" style="z-index: 1050;" title="Logout">Logout</button>
-
-                <div class="mb-4">
-                    <p class="lead mb-0">{{ greetingMessage }}</p>
-                </div>
-
-                <h2 class="text-center">MCD Document Approval</h2>
-                <br />
-
-                <!-- UPDATED: Responsive Search and THREE View Toggle Buttons -->
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
-                    <input v-model="searchQuery" type="text" class="form-control mb-2 mb-md-0 me-md-2" placeholder="Search table..." />
-
-                    <div class="btn-group flex-shrink-0" role="group">
-                        <button @click="switchToPendingView" type="button" class="btn" :class="{'btn-primary': !showApprovedView && !showDisapprovedView, 'btn-outline-primary': showApprovedView || showDisapprovedView}">
-                            Pending <span class="badge bg-light text-dark ms-1">{{ pendingCount }}</span>
-                        </button>
-                        <button @click="switchToApprovedView" type="button" class="btn" :class="{'btn-primary': showApprovedView, 'btn-outline-primary': !showApprovedView}" :disabled="isApprovedDataLoading">
-                            <span v-if="isApprovedDataLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            <span v-else>Approved <span class="badge bg-light text-dark ms-1">{{ approvedCount }}</span></span>
-                        </button>
-                        <button @click="switchToDisapprovedView" type="button" class="btn" :class="{'btn-primary': showDisapprovedView, 'btn-outline-primary': !showDisapprovedView}" :disabled="isDisapprovedDataLoading">
-                            <span v-if="isDisapprovedDataLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                            <span v-else>Disapproved <span class="badge bg-light text-dark ms-1">{{ disapprovedCount }}</span></span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Loading Indicator -->
-                <div v-if="(!isDataLoaded && !showApprovedView) || (isApprovedDataLoading && showApprovedView)" class="text-center p-5">
-                    <div class="loading-spinner"></div>
-                    <p class="mt-2">Loading data...</p>
-                </div>
-
-                <div v-else>
-                    <!-- ================= START: NEW BULK ACTION FORM ================= -->
-                    <div v-if="!showApprovedView && !showDisapprovedView" class="card card-body mb-3">
-                        <h5 class="mb-2">Approve Multiple Document</h5>
-                        <p class="text-muted small mb-2">To select multiple items, you must first provide remarks below. These remarks will be applied to all selected items.</p>
-                        <textarea
-                            v-model="bulkRemarks"
-                            class="form-control"
-                            placeholder="Provide remarks here first to enable selection (min 5 chars)"
-                            rows="2"
-                            :disabled="activeAction.type !== null"
-                        ></textarea>
-                        <div class="d-flex justify-content-end align-items-center gap-2 mt-3" v-if="isAnyRowSelected">
-                            <span class="text-muted fst-italic me-auto">{{ selectedRows.length }} item(s) selected</span>
-                            <button @click="submitBulkApproval" :disabled="isSubmitting" class="btn btn-success">
-                                <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span>
-                                Approve Selected
-                            </button>
-                            <button @click="submitBulkDisapproval" :disabled="isSubmitting" class="btn btn-danger">
-                                <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span>
-                                Disapprove Selected
-                            </button>
-                        </div>
-                    </div>
-                    <!-- ================== END: NEW BULK ACTION FORM ================== -->
-
-                    <div class="table-responsive table-wrapper mb-2">
-                        <p v-if="filteredData.length === 0" class="text-center text-muted p-4">
-                            {{ showApprovedView ? 'No approved items found.' : 'No pending items available or matching your search.' }}
-                        </p>
-                        <table class="table table-bordered table-hover" v-else>
-                            <thead>
-                                <tr>
-                                    <!-- START: NEW CHECKBOX HEADER -->
-                                    <th v-if="!showApprovedView && !showDisapprovedView" style="width: 50px;">Select</th>
-                                    <!-- END: NEW CHECKBOX HEADER -->
-                                    <th v-for="header in headers" :key="header">{{ header }}</th>
-                                    <th v-if="!showApprovedView && !showDisapprovedView">DAYS SINCE</th>
-                                    <th v-if="!showApprovedView && !showDisapprovedView">ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="row in paginatedData" :key="row[0]">
-                                    <!-- START: NEW CHECKBOX CELL -->
-                                    <td v-if="!showApprovedView && !showDisapprovedView">
-                                        <div class="form-check d-flex justify-content-center">
-                                            <input
-                                                class="form-check-input"
-                                                type="checkbox"
-                                                :value="row[0]"
-                                                v-model="selectedRows"
-                                                :disabled="isBulkRemarksInvalid || activeAction.type !== null"
-                                                :title="isBulkRemarksInvalid ? 'Please provide bulk remarks first to enable selection' : ''"
-                                            />
-                                        </div>
-                                    </td>
-                                    <!-- END: NEW CHECKBOX CELL -->
-                                    <td v-for="(cell, i) in row" :key="i" :class="{ 'narrow-column': i === 4, 'extra-wide-column': i === 8 }">
-                                        <a v-if="i === 6 && cell" :href="cell" target="_blank">View Memo</a>
-                                        <a v-else-if="i === 7 && cell" :href="cell" target="_blank">View Page</a>
-                                        <template v-else-if="i === 1">{{ formatDateCell(cell) }}</template>
-                                        <div v-else-if="i === 8 && typeof cell === 'string'" class="text-start" v-html="formatCellWithLineBreaks(cell)"></div>
-                                        <template v-else>{{ cell }}</template>
-                                    </td>
-                                    <td v-if="!showApprovedView && !showDisapprovedView">{{ calculateDaysDifference(row[1]) }}</td>
-                                    <td v-if="!showApprovedView && !showDisapprovedView">
-                                        <div class="d-flex flex-column gap-2">
-                                            <!-- MODIFIED: Buttons are disabled if in bulk mode -->
-                                            <button @click="showApproval(row)" class="btn btn-success btn-sm" :disabled="isActionInProgress || selectedRows.length > 0">Approve</button>
-                                            <button @click="showDisapproval(row)" class="btn btn-danger btn-sm" :disabled="isActionInProgress || selectedRows.length > 0">Disapprove</button>
-                                            <button v-if="isPrivilegedUser" @click="showAddReviewer(row)" class="btn btn-warning btn-sm" :disabled="isActionInProgress || selectedRows.length > 0">Add Reviewer</button>
-                                            <button v-if="isPrivilegedUser" @click="showRemoveReviewer(row)" class="btn btn-secondary btn-sm" :disabled="isActionInProgress || selectedRows.length > 0">Remove Reviewer</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div v-if="totalPages > 1" class="d-flex flex-wrap justify-content-center align-items-center my-3 gap-2">
-                        <button @click="prevPage" :disabled="currentPage === 1" class="btn btn-outline-primary btn-sm">Previous</button>
-                        <span class="text-muted">Page {{ currentPage }} of {{ totalPages }}</span>
-                        <button @click="nextPage" :disabled="currentPage >= totalPages" class="btn btn-outline-primary btn-sm">Next</button>
-                    </div>
-
-                    <!-- Action Forms -->
-                    <div ref="actionFormsRef" class="mb-5" v-if="!showApprovedView">
-                        <div v-if="activeAction.type === 'approve'" class="card card-body">
-                            <h5>Approval Remarks for: <strong>{{ activeAction.label }}</strong></h5>
-                            <textarea v-model="activeAction.reason" class="form-control" placeholder="Please provide remarks for approval (required, 5-300 chars)" maxlength="300"></textarea>
-                            <div class="d-flex justify-content-end gap-2 mt-3">
-                                <button @click="cancelAction" class="btn btn-secondary">Cancel</button>
-                                <button @click="submitApproval" :disabled="isSubmitting || activeAction.reason.trim().length < 5" class="btn btn-success">
-                                    <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span> Submit Approval
-                                </button>
-                            </div>
-                        </div>
-                        <div v-if="activeAction.type === 'disapprove'" class="card card-body">
-                            <h5>Disapproval Reason for: <strong>{{ activeAction.label }}</strong></h5>
-                            <textarea v-model="activeAction.reason" class="form-control" placeholder="Please provide a reason (required, 5-300 chars)" maxlength="300"></textarea>
-                            <div class="d-flex justify-content-end gap-2 mt-3">
-                                <button @click="cancelAction" class="btn btn-secondary">Cancel</button>
-                                <button @click="submitDisapproval" :disabled="isSubmitting || activeAction.reason.trim().length < 5" class="btn btn-danger">
-                                    <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span> Submit Disapproval
-                                </button>
-                            </div>
-                        </div>
-                        <div v-if="['addReviewer', 'removeReviewer'].includes(activeAction.type)" class="card card-body">
-                            <h5>{{ activeAction.type === 'addReviewer' ? 'Add' : 'Remove' }} Reviewer for: <strong>{{ activeAction.label }}</strong></h5>
-                            <div v-if="activeAction.current.length > 0" class="mb-2"><strong>Current Reviewer/s:</strong> {{ activeAction.current.join(', ') }}</div>
-                            <strong>{{ activeAction.type === 'addReviewer' ? 'Available Reviewer/s:' : 'Check to Remove Reviewer/s:' }}</strong>
-                            <div v-for="option in availableReviewerOptions" :key="option.value" class="form-check">
-                                <input class="form-check-input" type="checkbox" :value="option.value" v-model="activeAction.selected" :id="`rev-${option.value}`" />
-                                <label class="form-check-label" :for="`rev-${option.value}`">{{ option.label }}</label>
-                            </div>
-                            <div class="d-flex justify-content-end gap-2 mt-3">
-                                <button @click="cancelAction" class="btn btn-secondary">Cancel</button>
-                                <button @click="submitReviewerChange" :disabled="isSubmitting || activeAction.selected.length === 0" class="btn btn-primary">
-                                    <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span> Submit Changes
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Confirmation Modal -->
-            <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true" ref="confirmationModalRef">
-                <div class="modal-dialog modal-dialog-centered">
+            <!-- LOGOUT MODAL -->
+            <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true" ref="logoutModalRef">
+                <div class="modal-dialog modal-dialog-centered modal-sm">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="confirmationModalLabel">{{ confirmation.title }}</h5>
+                            <h5 class="modal-title fw-bold" id="logoutModalLabel">Confirm Logout</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body">
+                        <div class="modal-body text-secondary">
+                            Are you sure you want to end your session?
+                        </div>
+                        <div class="modal-footer bg-light rounded-bottom">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-danger btn-sm" @click="confirmLogout">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <transition name="fade" mode="out-in">
+                <div v-if="!user.isLoggedIn" class="row justify-content-center align-items-center min-vh-50" key="login-view">
+                    <div class="col-12 col-md-8 col-lg-5 col-xl-4">
+                        <div class="card grey-highlight-shadow">
+                            <div class="card-body p-4">
+                                <h3 class="card-title text-center mb-2 fw-bold text-primary">MCD Document Approval</h3>
+                                <p class="text-center text-muted mb-4">Please sign in to continue</p>
+                                
+                                <form @submit.prevent="login">
+                                    <div class="mb-3">
+                                        <label for="username" class="form-label small fw-bold text-secondary">Username</label>
+                                        <input 
+                                            v-model="loginForm.username" 
+                                            id="username" 
+                                            name="username" 
+                                            autocomplete="username" 
+                                            type="text" 
+                                            class="form-control form-control-lg bg-light" 
+                                            placeholder="Enter your username"
+                                        />
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label for="password" class="form-label small fw-bold text-secondary">Password</label>
+                                        <div class="input-group">
+                                            <input 
+                                                v-model="loginForm.password" 
+                                                id="password" 
+                                                name="password" 
+                                                autocomplete="current-password" 
+                                                :type="showPassword ? 'text' : 'password'" 
+                                                class="form-control form-control-lg bg-light" 
+                                                placeholder="Enter your password"
+                                            />
+                                            <button 
+                                                class="btn btn-outline-secondary" 
+                                                type="button" 
+                                                @click="showPassword = !showPassword"
+                                                tabindex="-1"
+                                            >
+                                                <span v-if="showPassword">Hide</span>
+                                                <span v-else>Show</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" :disabled="!isLoginFormValid || isLoggingIn" class="btn btn-primary w-100 btn-lg shadow-sm">
+                                        <span v-if="isLoggingIn" class="spinner-border spinner-border-sm me-2"></span>
+                                        {{ isLoggingIn ? 'Verifying & Loading Data...' : 'Login' }}
+                                    </button>
+                                </form>
+                                
+                                <div v-if="loginError" class="alert alert-danger mt-3 mb-0 d-flex align-items-center" role="alert">
+                                    <span class="me-2">⚠️</span> {{ loginError }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MAIN CONTENT -->
+                <div v-else class="fade-in" key="dashboard-view">
+                    <!-- Top Bar: Greeting & Logout -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 bg-white p-3 rounded shadow-sm sticky-top" style="z-index: 100;">
+                        <div>
+                            <h6 class="mb-0 fw-bold text-primary">{{ user.displayName }}</h6>
+                            <small class="text-muted">{{ greetingMessage }}</small>
+                        </div>
+                        <!-- LOGOUT MODAL TRIGGER -->
+                        <button @click="showLogoutModal" :disabled="isProcessPending" class="btn btn-outline-danger btn-sm px-3">
+                            Logout
+                        </button>
+                    </div>
+
+                    <div class="d-none d-md-block text-center mb-3">
+                        <h4 class="fw-bold">Document Approval Dashboard</h4>
+                    </div>
+
+                    <!-- Controls: Search & View Toggles -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">🔍</span>
+                                <input v-model="searchQuery" type="text" class="form-control border-start-0 ps-0" placeholder="Search memos, subject, or dates..." />
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="btn-group btn-group-mobile-stack w-100" role="group">
+                                <button @click="switchToPendingView" type="button" class="btn" :class="{'btn-primary': !showApprovedView && !showDisapprovedView, 'btn-outline-primary': showApprovedView || showDisapprovedView}">
+                                    Pending <span class="badge bg-white text-primary ms-1 rounded-pill">{{ pendingCount }}</span>
+                                </button>
+                                <button @click="switchToApprovedView" type="button" class="btn" :class="{'btn-success': showApprovedView, 'btn-outline-success': !showApprovedView}" :disabled="isApprovedDataLoading">
+                                    <span v-if="isApprovedDataLoading" class="spinner-border spinner-border-sm"></span>
+                                    <span v-else>Approved <span class="badge bg-white text-success ms-1 rounded-pill">{{ approvedCount }}</span></span>
+                                </button>
+                                <button @click="switchToDisapprovedView" type="button" class="btn" :class="{'btn-danger': showDisapprovedView, 'btn-outline-danger': !showDisapprovedView}" :disabled="isDisapprovedDataLoading">
+                                    <span v-if="isDisapprovedDataLoading" class="spinner-border spinner-border-sm"></span>
+                                    <span v-else>Disapproved <span class="badge bg-white text-danger ms-1 rounded-pill">{{ disapprovedCount }}</span></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <!-- BULK ACTION CARD -->
+                        <div v-if="!showApprovedView && !showDisapprovedView" class="card mb-3 border-start border-4 border-primary">
+                            <div class="card-body">
+                                <h6 class="card-title fw-bold mb-2">Bulk Approval/Disapproval</h6>
+                                <p class="text-muted small mb-2">
+                                    Enter remarks below to enable selection checkboxes in the table.
+                                </p>
+                                <div class="row g-2">
+                                    <div class="col-12 col-lg-8">
+                                        <textarea
+                                            v-model="bulkRemarks"
+                                            class="form-control"
+                                            placeholder="Required: Remarks (min 5 chars) apply to all selected items."
+                                            rows="1"
+                                            style="resize: none;"
+                                            :disabled="activeAction.type !== null"
+                                        ></textarea>
+                                    </div>
+                                    <div class="col-12 col-lg-4 d-flex align-items-center justify-content-end gap-2" v-if="isAnyRowSelected">
+                                        <span class="badge bg-secondary me-auto">{{ selectedRows.length }} Selected</span>
+                                        <button @click="submitBulkApproval" :disabled="isSubmitting" class="btn btn-success btn-sm flex-grow-1">
+                                            Approve
+                                        </button>
+                                        <button @click="submitBulkDisapproval" :disabled="isSubmitting" class="btn btn-danger btn-sm flex-grow-1">
+                                            Disapprove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DATA TABLE -->
+                        <div class="card mb-3 overflow-hidden">
+                            <div class="table-responsive table-wrapper">
+                                <!-- Empty State -->
+                                <div v-if="filteredData.length === 0" class="text-center text-muted p-5">
+                                    <div class="mb-2" style="font-size: 2rem;">📭</div>
+                                    <span v-if="isDataLoaded">{{ showApprovedView ? 'No approved items found.' : 'No pending items available.' }}</span>
+                                    <span v-else>Loading Data...</span>
+                                </div>
+                                
+                                <!-- SAFE TABLE RENDERING: Guard with filteredData check -->
+                                <table class="table table-hover align-middle mb-0" v-else-if="filteredData.length > 0 && headers.length > 0">
+                                    <thead>
+                                        <tr>
+                                            <th v-if="!showApprovedView && !showDisapprovedView" style="min-width: 60px;">Select</th>
+                                            <th v-for="header in headers" :key="header">{{ header }}</th>
+                                            <th v-if="!showApprovedView && !showDisapprovedView" style="min-width: 100px;">Aging</th>
+                                            <th v-if="!showApprovedView && !showDisapprovedView" style="min-width: 140px;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="row in paginatedData" :key="row[0]">
+                                            <td v-if="!showApprovedView && !showDisapprovedView">
+                                                <div class="form-check d-flex justify-content-center">
+                                                    <input
+                                                        class="form-check-input"
+                                                        type="checkbox"
+                                                        :value="row[0]"
+                                                        v-model="selectedRows"
+                                                        :disabled="isBulkRemarksInvalid || activeAction.type !== null"
+                                                        style="cursor: pointer; transform: scale(1.2);"
+                                                    />
+                                                </div>
+                                            </td>
+                                            <td v-for="(cell, i) in row" :key="i" :class="{ 'narrow-column': i === 4, 'extra-wide-column': i === 8, 'wider-column': i > 1 }">
+                                                <!-- Logic to render links or text -->
+                                                <a v-if="i === 6 && cell" :href="cell" target="_blank" class="btn btn-sm btn-outline-info text-nowrap">📄 Memo</a>
+                                                <a v-else-if="i === 7 && cell" :href="cell" target="_blank" class="btn btn-sm btn-outline-secondary text-nowrap">🔗 Page</a>
+                                                <!-- Add the column indexes that are dates into the array -->
+                                                <span v-else-if="[1, 5].includes(i)" class="text-nowrap">{{ formatDateCell(cell) }}</span>
+                                                <div v-else-if="i === 8 && typeof cell === 'string'" class="text-start small lh-sm" v-html="formatCellWithLineBreaks(cell)"></div>
+                                                <template v-else>{{ cell }}</template>
+                                            </td>
+                                            <td v-if="!showApprovedView && !showDisapprovedView" class="fw-bold text-muted small">
+                                                {{ calculateDaysDifference(row[1]) }}
+                                            </td>
+                                            <td v-if="!showApprovedView && !showDisapprovedView">
+                                                <div class="d-flex flex-column gap-1">
+                                                    <button @click="showApproval(row)" class="btn btn-success btn-sm w-100" :disabled="isActionInProgress || selectedRows.length > 0">✓ Approve</button>
+                                                    <button @click="showDisapproval(row)" class="btn btn-outline-danger btn-sm w-100" :disabled="isActionInProgress || selectedRows.length > 0">✕ Disapprove</button>
+                                                    <div v-if="isPrivilegedUser" class="btn-group w-100 mt-1" role="group">
+                                                        <button @click="showAddReviewer(row)" class="btn btn-light border btn-sm" title="Add Reviewer" :disabled="isActionInProgress || selectedRows.length > 0">Add Reviewer</button>
+                                                        <button @click="showRemoveReviewer(row)" class="btn btn-light border btn-sm" title="Remove Reviewer" :disabled="isActionInProgress || selectedRows.length > 0">Remove Reviewer</button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Footer / Pagination -->
+                            <div v-if="filteredData.length > 0" class="card-footer bg-white d-flex flex-column flex-sm-row justify-content-between align-items-center py-3">
+                                <span class="text-muted small mb-2 mb-sm-0">Showing page {{ currentPage }} of {{ totalPages }}</span>
+                                <div class="btn-group" role="group">
+                                    <button @click="prevPage" :disabled="currentPage === 1" class="btn btn-outline-secondary btn-sm px-3">Previous</button>
+                                    <button @click="nextPage" :disabled="currentPage >= totalPages" class="btn btn-outline-secondary btn-sm px-3">Next</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ACTION INPUT AREA (Scrolls into view) -->
+                        <div ref="actionFormsRef" class="mb-5 pb-5" v-if="!showApprovedView && activeAction.type">
+                            <div class="card shadow-lg border-top border-4" :class="activeAction.type === 'approve' ? 'border-success' : activeAction.type === 'disapprove' ? 'border-danger' : 'border-warning'">
+                                <div class="card-body">
+                                    <h5 class="card-title d-flex justify-content-between align-items-center">
+                                        <span>
+                                            {{ activeAction.type === 'approve' ? '✅ Approve' : activeAction.type === 'disapprove' ? '🛑 Disapprove' : '👤 Update Reviewers' }}
+                                        </span>
+                                        <button @click="cancelAction" class="btn-close"></button>
+                                    </h5>
+                                    <p class="text-muted small mb-2">Target: <strong>{{ activeAction.label }}</strong></p>
+
+                                    <!-- Text Reason Input -->
+                                    <div v-if="['approve', 'disapprove'].includes(activeAction.type)">
+                                        <textarea 
+                                            v-model="activeAction.reason" 
+                                            class="form-control mb-3" 
+                                            rows="4" 
+                                            :placeholder="activeAction.type === 'approve' ? 'Remarks for approval (Required, min 5 chars)' : 'Reason for disapproval (Required, min 5 chars)'"
+                                            maxlength="300"
+                                        ></textarea>
+                                        
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                            <button @click="cancelAction" class="btn btn-light">Cancel</button>
+                                            <button 
+                                                @click="activeAction.type === 'approve' ? submitApproval() : submitDisapproval()" 
+                                                :disabled="isSubmitting || activeAction.reason.trim().length < 5" 
+                                                class="btn"
+                                                :class="activeAction.type === 'approve' ? 'btn-success' : 'btn-danger'"
+                                            >
+                                                <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-1"></span>
+                                                Submit Decision
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Reviewer Selection Input -->
+                                    <div v-if="['addReviewer', 'removeReviewer'].includes(activeAction.type)">
+                                        <div class="bg-light p-3 rounded mb-3">
+                                            <div v-if="activeAction.current.length > 0" class="mb-2 small">
+                                                <strong>Current:</strong> {{ activeAction.current.join(', ') }}
+                                            </div>
+                                            <div v-else class="mb-2 small text-muted">No specific reviewers assigned yet.</div>
+                                        </div>
+                                        
+                                        <label class="form-label fw-bold">{{ activeAction.type === 'addReviewer' ? 'Select to Add:' : 'Select to Remove:' }}</label>
+                                        <div class="row g-2 mb-3">
+                                            <div v-for="option in availableReviewerOptions" :key="option.value" class="col-12 col-sm-6">
+                                                <div class="form-check p-2 border rounded bg-white h-100 position-relative">
+                                                    <input class="form-check-input ms-1" type="checkbox" :value="option.value" v-model="activeAction.selected" :id="`rev-${option.value}`" />
+                                                    <label class="form-check-label ms-2 w-75 stretched-link" :for="`rev-${option.value}`">{{ option.label }}</label>
+                                                </div>
+                                            </div>
+                                            <div v-if="availableReviewerOptions.length === 0" class="col-12 text-muted fst-italic">
+                                                No options available for this action.
+                                            </div>
+                                        </div>
+
+                                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                            <button @click="cancelAction" class="btn btn-light">Cancel</button>
+                                            <button @click="submitReviewerChange" :disabled="isSubmitting || activeAction.selected.length === 0" class="btn btn-warning text-dark">
+                                                <span v-if="isSubmitting" class="spinner-border spinner-border-sm"></span> Update Reviewers
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- Confirmation Modal (Generic) -->
+            <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true" ref="confirmationModalRef">
+                <div class="modal-dialog modal-dialog-centered modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title fw-bold" id="confirmationModalLabel">{{ confirmation.title }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-secondary">
                             {{ confirmation.message }}
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="button" class="btn" :class="confirmation.confirmButtonClass" @click="confirmAction">Confirm</button>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-sm" :class="confirmation.confirmButtonClass" @click="confirmAction">Confirm</button>
                         </div>
                     </div>
                 </div>
@@ -441,89 +572,28 @@
 
             createApp({
                 setup() {
-                    // =================================================================================
-                    // 1. CONSTANTS AND CONFIGURATION
-                    // =================================================================================
-                    const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes for auto-logout
+                    // ... CONSTANTS ...
+                    const INACTIVITY_TIMEOUT_MS = 10 * 60 * 1000;
                     const RESTRICTED_USERS = [
-                        "Jaye Trich Pizarro",
-                        "Brix Valdenarro",
-                        "Jocelyn Melitante",
-                        "Alex Flores",
-                        "Aurora Pastolero",
-                        "Mariano Caleja",
-                        "Ernesto Andrade",
-                        "Dustin Sta. Maria",
-                        "Jenel Ann Cruzgarcia",
-                        "Doreen Penilla",
-                        "Denisse Malong",
-                        "Kevin Lin",
-                        "Juvi Masilungan",
-                        "Jhoanalyn Gatdula",
-                        "Mary Arceo",
-                        "Annalee Pine ",
-                        "Arralen Batallones",
-                        "Ma Dulce Cuenca ",
-                        "Aizelle Anne Yalong",
-                        "Henedina Viado",
-                        "Oauie Banagan",
-                        "Michelle Ong",
-                        "Ma Fatima Bausin",
-                        "Melanie Lingon",
-                        "Stephen Sumilang",
-                        "Patricia Mari Quierez",
-                        "Rosa Cecilia Salvador",
-                        "Janice Cadog",
-                        "Camsy Elvina",
-                        "Mikee Vivo",
-                        "Vanessa Vicente",
-                        "Tyrone Tan",
-                        "Rodalyn Landoy",
-                        "Fermila Pacampara",
-                        "Lorraine Cicat",
+                        "Jaye Trich Pizarro", "Brix Valdenarro", "Jocelyn Melitante", "Alex Flores", "Aurora Pastolero",
+                        "Mariano Caleja", "Ernesto Andrade", "Dustin Sta. Maria", "Jenel Ann Cruzgarcia", "Doreen Penilla",
+                        "Denisse Malong", "Kevin Lin", "Juvi Masilungan", "Jhoanalyn Gatdula", "Mary Arceo", "Annalee Pine ",
+                        "Arralen Batallones", "Ma Dulce Cuenca ", "Aizelle Anne Yalong", "Henedina Viado", "Oauie Banagan",
+                        "Michelle Ong", "Ma Fatima Bausin", "Melanie Lingon", "Stephen Sumilang", "Patricia Mari Quierez",
+                        "Rosa Cecilia Salvador", "Janice Cadog", "Camsy Elvina", "Mikee Vivo", "Vanessa Vicente", "Tyrone Tan",
+                        "Rodalyn Landoy", "Fermila Pacampara", "Lorraine Cicat", "Cynthia Jison", "Carlo Gianan", "Jody Arante",
+                        "Gigi Dela Vega"
                     ];
                     const SPECIAL_FORMAT_USERS = ["Louise Piamonte", "Rodalyn Landoy", "Frances Armian", "Zelfa Valderrama", "Allyzza Tolosa", "Fermila Pacampara", "Grace Guarico", "Lorraine Cicat", "Andrea Buro"];
                     const FORMATTER_NAMES = [
-                        "Graham Coates",
-                        "Rosalyn Segura",
-                        "Michael Lao",
-                        "Jeremy Rodriguez",
-                        "Noe Versoza",
-                        "Tinay Villanueva",
-                        "Lorence Aurello",
-                        "Jaye Trich Pizarro",
-                        "Jocelyn Melitante",
-                        "Alex Flores",
-                        "Aurora Pastolero",
-                        "Mariano Caleja",
-                        "Brix Valdenarro",
-                        "Ernesto Andrade",
-                        "Dustin Sta. Maria",
-                        "Jenel Ann Cruzgarcia",
-                        "Doreen Penilla",
-                        "Frances Armian",
-                        "Denisse Malong",
-                        "Kevin Lin",
-                        "Juvi Masilungan",
-                        "Jhoanalyn Gatdula",
-                        "Mary Arceo",
-                        "Annalee Pine",
-                        "Arralen Batallones",
-                        "Ma Dulce Cuenca",
-                        "Aizelle Anne Yalong",
-                        "Henedina Viado",
-                        "Oauie Banagan",
-                        "Michelle Ong",
-                        "Ma Fatima Bausin",
-                        "Melanie Lingon",
-                        "Stephen Sumilang",
-                        "Patricia Mari Quierez",
-                        "Rosa Cecilia Salvador",
-                        "Janice Cadog",
-                        "Camsy Elvina",
-                        "Mikee Vivo",
-                        "Vanessa Vicente",
-                        "Tyrone Tan",
+                        "Graham Coates", "Rosalyn Segura", "Michael Lao", "Jeremy Rodriguez", "Noe Versoza", "Tinay Villanueva",
+                        "Lorence Aurello", "Jaye Trich Pizarro", "Jocelyn Melitante", "Alex Flores", "Aurora Pastolero",
+                        "Mariano Caleja", "Brix Valdenarro", "Ernesto Andrade", "Dustin Sta. Maria", "Jenel Ann Cruzgarcia",
+                        "Doreen Penilla", "Frances Armian", "Denisse Malong", "Kevin Lin", "Juvi Masilungan", "Jhoanalyn Gatdula",
+                        "Mary Arceo", "Annalee Pine", "Arralen Batallones", "Ma Dulce Cuenca", "Aizelle Anne Yalong", "Henedina Viado",
+                        "Oauie Banagan", "Michelle Ong", "Ma Fatima Bausin", "Melanie Lingon", "Stephen Sumilang", "Patricia Mari Quierez",
+                        "Rosa Cecilia Salvador", "Janice Cadog", "Camsy Elvina", "Mikee Vivo", "Vanessa Vicente", "Tyrone Tan",
+                        "Cynthia Jison", "Carlo Gianan", "Jody Arante", "Gigi Dela Vega"
                     ];
                     const APPROVER_LISTS = {
                         MGL: [
@@ -620,13 +690,13 @@
                         ],
                     };
 
-                    // =================================================================================
-                    // 2. REACTIVE STATE MANAGEMENT
-                    // =================================================================================
+                    // ... STATE REFS ...
                     const user = reactive({ isLoggedIn: false, sheetName: "", displayName: "" });
                     const loginForm = reactive({ username: "", password: "" });
                     const isLoggingIn = ref(false);
                     const loginError = ref("");
+                    
+                    const showPassword = ref(false); 
 
                     const isDataLoaded = ref(false);
                     const isSubmitting = ref(false);
@@ -640,10 +710,8 @@
                     const showDisapprovedView = ref(false);
                     const isDisapprovedDataLoading = ref(false);
 
-                    // --- START: New state for bulk actions ---
                     const selectedRows = ref([]);
                     const bulkRemarks = ref("");
-                    // --- END: New state for bulk actions ---
 
                     const activeAction = reactive({ type: null, row: null, label: "", reason: "", selected: [], current: [] });
                     const confirmation = reactive({ title: "", message: "", onConfirm: null, confirmButtonClass: "btn-primary" });
@@ -658,10 +726,10 @@
                     const actionFormsRef = ref(null);
                     const confirmationModalRef = ref(null);
                     let confirmationModal = null;
+                    const logoutModalRef = ref(null);
+                    let logoutModal = null;
 
-                    // =================================================================================
-                    // 3. COMPUTED PROPERTIES
-                    // =================================================================================
+                    // ... COMPUTED ...
                     const isProcessPending = computed(() => toasts.value.some((t) => t.status === "ongoing"));
                     const isLoginFormValid = computed(() => loginForm.username.trim() !== "" && loginForm.password.trim() !== "");
                     const greetingMessage = computed(() => `${new Date().getHours() < 12 ? "Good Morning" : new Date().getHours() < 18 ? "Good Afternoon" : "Good Evening"}, ${user.displayName}!`);
@@ -685,11 +753,8 @@
 
                     const isPrivilegedUser = computed(() => !RESTRICTED_USERS.includes(user.displayName));
                     const isActionInProgress = computed(() => activeAction.type !== null);
-
-                    // --- START: New computed properties for bulk actions ---
                     const isBulkRemarksInvalid = computed(() => bulkRemarks.value.trim().length < 5);
                     const isAnyRowSelected = computed(() => selectedRows.value.length > 0);
-                    // --- END: New computed properties for bulk actions ---
 
                     const allApproverOptions = computed(() => {
                         const userMap = { "Michael Lao": "MGL", "Louise Piamonte": "MLP", "Graham Coates": "GMC", "Rosalyn Segura": "RCS", "Tinay Villanueva": "KMV", "Lorence Aurelio": "LDA", "Jeremy Rodriguez": "JE", "Noe Versoza": "NOE" };
@@ -703,9 +768,7 @@
                         return [];
                     });
 
-                    // =================================================================================
-                    // 4. CORE FUNCTIONS
-                    // =================================================================================
+                    // ... FUNCTIONS ...
 
                     const runGoogleScript = (name, ...args) => new Promise((resolve, reject) => {
                         if (typeof google === "undefined" || !google.script?.run) {
@@ -714,6 +777,7 @@
                         google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[name](...args);
                     });
 
+                    // MODIFIED: Login now awaits data fetch before enabling user view
                     const login = async () => {
                         if (!isLoginFormValid.value) return;
                         isLoggingIn.value = true;
@@ -721,9 +785,16 @@
                         try {
                             const userData = await runGoogleScript("authenticateUser", loginForm.username, loginForm.password);
                             if (userData && userData.sheet) {
-                                Object.assign(user, { isLoggedIn: true, sheetName: userData.sheet, displayName: userData.displayName || loginForm.username });
-                                localStorage.setItem("mcd-user", JSON.stringify({ ...user, expires: Date.now() + INACTIVITY_TIMEOUT_MS }));
+                                // Prepare user object but DO NOT set isLoggedIn true yet to keep loading UI
+                                user.sheetName = userData.sheet;
+                                user.displayName = userData.displayName || loginForm.username;
+                                
+                                // Fetch data sequentially or in parallel while still on "Loading..." button
                                 await Promise.all([refreshData(), fetchApprovedData(true), fetchDisapprovedData(true)]);
+                                
+                                // Now switch to dashboard
+                                user.isLoggedIn = true;
+                                localStorage.setItem("mcd-user", JSON.stringify({ ...user, expires: Date.now() + INACTIVITY_TIMEOUT_MS }));
                                 resetIdleTimer();
                             } else {
                                 loginError.value = "Invalid username or password.";
@@ -735,12 +806,22 @@
                         }
                     };
 
+                    // MODIFIED: Show Logout Modal
+                    const showLogoutModal = () => {
+                        if (logoutModal) logoutModal.show();
+                    };
+
+                    // MODIFIED: Confirm Logout
+                    const confirmLogout = () => {
+                        if (logoutModal) logoutModal.hide();
+                        logout(); // Proceed with logout logic
+                    };
+
                     const logout = () => {
                         if (isProcessPending.value) return showSimpleToast("Please wait for processes to complete before logging out.", "warning");
-                        showConfirmation("Confirm Logout", "Are you sure you want to log out?", () => {
-                            showSimpleToast("You have successfully logged out.", "success", 5000);
-                            forceLogout();
-                        }, "btn-danger");
+                        // Logic moved from prompt to direct execution since Modal handles the prompt
+                        showSimpleToast("You have successfully logged out.", "success", 5000);
+                        forceLogout();
                     };
 
                     const forceLogout = () => {
@@ -857,7 +938,9 @@
                     const showDisapproval = (row) => showActionUI("disapprove", row);
                     const showAddReviewer = (row) => showActionUI("addReviewer", row);
                     const showRemoveReviewer = (row) => showActionUI("removeReviewer", row);
-                    const cancelAction = () => (activeAction.type = null);
+                    const cancelAction = () => {
+                        Object.assign(activeAction, { type: null, row: null, label: "", reason: "", selected: [], current: [] });
+                    };
 
                     const submitApproval = async () => {
                         const trimmedReason = activeAction.reason.trim();
@@ -945,7 +1028,6 @@
                         }
                     };
 
-                    // --- START: New bulk action submission logic ---
                     const submitBulkAction = (actionType) => {
                         const isApproving = actionType === 'APPROVED';
                         const actionName = isApproving ? 'Approval' : 'Disapproval';
@@ -994,7 +1076,6 @@
 
                     const submitBulkApproval = () => submitBulkAction('APPROVED');
                     const submitBulkDisapproval = () => submitBulkAction('DISAPPROVED');
-                    // --- END: New bulk action submission logic ---
 
                     const showSimpleToast = (message, status = "info", duration = 7000) => {
                         const id = toastIdCounter++;
@@ -1030,12 +1111,16 @@
                         if (confirmationModal) confirmationModal.hide();
                     };
 
-                    const formatDateCell = (value) => (!value ? "" : new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }));
-                    const calculateDaysDifference = (dateStr) => (!dateStr ? "" : `${Math.floor((Date.now() - new Date(dateStr).getTime()) / 864e5)} day(s)`);
+                    // Changed "short" to "long" to display the full month name
+                    const formatDateCell = (value) => (!value ? "" : new Date(value).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }));
+                    const calculateDaysDifference = (dateStr) => (!dateStr ? "" : `${Math.floor((Date.now() - new Date(dateStr).getTime()) / 864e5)}d`);
                     const formatCellWithLineBreaks = (text) => {
                         if (typeof text !== "string" || !text.trim()) return "";
                         let processedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                        processedText = processedText.replace(/\bApproved:/gi, "<strong>Approved:</strong>").replace(/\bPending:/gi, "<br><br><strong>Pending:</strong>");
+                        processedText = processedText
+                        .replace(/\bApproved:/gi, '<strong class="text-success">Approved:</strong>')
+                        .replace(/\bPending:/gi, '<br><br><strong class="text-warning">Pending:</strong>');
+
                         FORMATTER_NAMES.forEach((name) => {
                             const regex = new RegExp(`\\b(${name.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")})\\b`, "g");
                             processedText = processedText.replace(regex, `<br> • <strong>$1</strong>`);
@@ -1073,9 +1158,12 @@
                             }
                         }
 
-                        // CORRECTED LINE: Explicitly use 'window.bootstrap' to ensure the global object is found.
                         if (confirmationModalRef.value) {
                             confirmationModal = new window.bootstrap.Modal(confirmationModalRef.value);
+                        }
+                        // Initialize Logout Modal
+                        if (logoutModalRef.value) {
+                            logoutModal = new window.bootstrap.Modal(logoutModalRef.value);
                         }
 
                         const activityEvents = ["mousemove", "keydown", "click", "scroll"];
@@ -1098,6 +1186,7 @@
                         loginForm,
                         isLoggingIn,
                         loginError,
+                        showPassword,
                         isDataLoaded,
                         isSubmitting,
                         headers,
@@ -1149,6 +1238,9 @@
                         switchToDisapprovedView,
                         actionFormsRef,
                         confirmationModalRef,
+                        logoutModalRef, 
+                        showLogoutModal, 
+                        confirmLogout,   
                     };
                 },
             }).mount("#app");
