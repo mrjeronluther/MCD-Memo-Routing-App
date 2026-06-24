@@ -1,22 +1,3 @@
-// appsscript.json
-{
-  "timeZone": "Asia/Manila",
-  "dependencies": {},
-  "exceptionLogging": "STACKDRIVER",
-  "runtimeVersion": "V8",
-  "webapp": {
-    "executeAs": "USER_DEPLOYING",
-    "access": "MYSELF"
-  },
-  "oauthScopes": [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive",
-    "https://www.googleapis.com/auth/documents",
-    "https://www.googleapis.com/auth/script.container.ui"
-  ]
-}
-
-// MainOnOpen.gs
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
 
@@ -74,7 +55,13 @@ const CONFIG = {
   },
   // This is the same approver configuration object from your original script.
   approverDetails: {
-    "VAN":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Vanessa Vicente",department:"CGM",role:"sub",position:""},"TYRON":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Tyrone Tan",department:"CGM",role:"sub",position:""},"MIKEE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Mikee Vivo",department:"CGM",role:"sub",position:""},"CAMSY":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Camsy Elvina",department:"CGM",role:"sub",position:""},"MGL":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"MICHAEL G. LAO",department:"MOSD",role:"head",position:"SAVP & Head, MCD | MOSD"},"LDA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"LORENCE D. AURELIO",department:"LEASING",role:"head",position:"VP, Central Leasing Support"},"KMV":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"KRISTINA MARIE M. VILLANUEVA",department:"BCM",role:"head",position:"SAVP and Head, BCM"},"RCS":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"ROSALYN C. SEGURA",department:"RBG",role:"head",position:"AVP, Revenue Business Group"},"JE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JEREMY S. RODRIGUEZ",department:"OD",role:"head",position:"Senior Manager, Organizational Development"},"NOE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"NOE M.VERSOZA",department:"PROC",role:"head",position:"AVP & Head, Procurement"},"GMC":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"GRACE M. CALINGASAN",department:"OD",role:"head",position:"SVP HR & Admin"},
+
+    "CYNTHIA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Cynthia Jison",department:"MOSD",role:"sub",position:""},
+    "CARLO":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Carlo Gianan",department:"MOSD",role:"sub",position:""},
+    "JODY":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Jody Arante",department:"MOSD",role:"sub",position:""},
+    "GIGI":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Gigi Dela Vega",department:"MOSD",role:"sub",position:""},
+
+    "VAN":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Vanessa Vicente",department:"MOSD",role:"sub",position:""},"TYRON":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Tyrone Tan",department:"MOSD",role:"sub",position:""},"MIKEE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Mikee Vivo",department:"MOSD",role:"sub",position:""},"CAMSY":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Camsy Elvina",department:"MOSD",role:"sub",position:""},"MGL":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"MICHAEL G. LAO",department:"MOSD",role:"head",position:"SAVP & Head, MCD | MOSD"},"LDA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"LORENCE D. AURELIO",department:"LEASING",role:"head",position:"VP, Central Leasing Support"},"KMV":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"KRISTINA MARIE M. VILLANUEVA",department:"BCM",role:"head",position:"SAVP and Head, BCM"},"RCS":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"ROSALYN C. SEGURA",department:"RBG",role:"head",position:"AVP, Revenue Business Group"},"JE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JEREMY S. RODRIGUEZ",department:"OD",role:"head",position:"Senior Manager, Organizational Development"},"NOE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"NOE M.VERSOZA",department:"PROC",role:"head",position:"AVP & Head, Procurement"},"GMC":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"GRACE M. CALINGASAN",department:"OD",role:"head",position:"SVP HR & Admin"},
     "JAYE":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JAYE TRICH PIZARRO",department:"MOSD",role:"sub",position:""},"JOY":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JOCELYN MELITANTE",department:"MOSD",role:"sub",position:""},"ALEX":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"ALEX FLORES",department:"MOSD",role:"sub",position:""},"AU":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"AURORA PASTOLERO",department:"MOSD",role:"sub",position:""},"BRIX":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"BRIX VALDENARRO",department:"MOSD",role:"sub",position:""},"MAR":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"MARIANO CALEJA",department:"MOSD",role:"sub",position:""},
     "EBA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"ERNESTO ANDRADE",department:"BCM",role:"sub",position:""},"DSM":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"DUSTIN STA. MARIA",department:"BCM",role:"sub",position:""},"JAC":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JENEL ANN CRUZGARCIA",department:"BCM",role:"sub",position:""},"DP":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"DOREEN PENILLA",department:"BCM",role:"sub",position:""},
     "FA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"FRANCES ARMIAN",department:"LEASING",role:"sub",position:""},"DM":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"DENISSE MALONG",department:"LEASING",role:"sub",position:""},"KL":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"KEVIN LIN",department:"LEASING",role:"sub",position:""},"JM":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JUVI MASILUNGAN",department:"LEASING",role:"sub",position:""},"JG":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"JHOANALYN GATDULA",department:"LEASING",role:"sub",position:""},"MA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"MARY ARCEO",department:"LEASING",role:"sub",position:""},
@@ -189,7 +176,7 @@ function processApprovalRow(rowData, rowIndex, mainSheet, approverDataMap) {
   try {
     const folder = DriveApp.getFolderById(CONFIG.folderId);
     const subject = rowData[CONFIG.columns.subject];
-    const departments = ["CGM","MOSD", "LEASING", "BCM", "RBG", "OD", "PROC"];
+    const departments = ["MOSD", "LEASING", "BCM", "RBG", "OD", "PROC"];
 
     const departmentMap = {};
     departments.forEach(d => departmentMap[d] = { subs: [], head: null });
@@ -246,7 +233,7 @@ function processApprovalRow(rowData, rowIndex, mainSheet, approverDataMap) {
       }
     }
 
-    var excludedValues = ["CAMSY","MIKEE","VAN","TYRON","MGL","JE","NOE","KMV","LDA","GMC","RCS","JAYE","JOY","ALEX","AU","BRIX","MAR","ANNALEE","ARRA","AIZELLE","DULCE","VIA","OAUIE","MICH","FATIMA","MELANIE","STEPH","PAT","ROSA","JANICE","EBA","DSM","JAC","DP","FA","DM","KL","JM","MA","JG", "NA"];
+    var excludedValues = ["CAMSY","MIKEE","VAN","TYRON","MGL","JE","NOE","KMV","LDA","GMC","RCS","JAYE","JOY","ALEX","AU","BRIX","MAR","ANNALEE","ARRA","AIZELLE","DULCE","VIA","OAUIE","MICH","FATIMA","MELANIE","STEPH","PAT","ROSA","JANICE","EBA","DSM","JAC","DP","FA","DM","KL","JM","MA","JG", "N/A", "CYNTHIA", "CARLO", "JODY", "GIGI", "NA"];
     var coverageValues = rowData.slice(14, 56).filter(v => v && !excludedValues.includes(String(v).trim()) && !String(v).includes('.pdf') && !String(v).includes('https')).join(", ");
     var propertyParagraph = body.appendParagraph("");
     propertyParagraph.appendText("Property/Coverage: ").setBold(true).setFontSize(7);
@@ -323,7 +310,7 @@ function processApprovalRow(rowData, rowIndex, mainSheet, approverDataMap) {
   }
 }
 
-// disapproveds.gs
+
 
 /**
  * Main function to iterate through the "Conso" sheet and trigger the disapproval PDF generation process for each row.
@@ -438,8 +425,16 @@ function processRowForDisapproval(rowData, rowIndex, helperMap, ss, mainSheet, h
     const folder = DriveApp.getFolderById(folderId);
 
     const conditionsAndFiles = {
+
+      //ROD
+
+       "CYNTHIA":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Cynthia Jison",department:"MOSD",role:"sub",position:""},
+    "CARLO":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Carlo Gianan",department:"MOSD",role:"sub",position:""},
+    "JODY":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Jody Arante",department:"MOSD",role:"sub",position:""},
+    "GIGI":{id:"1okUOUCZcsPv2VaCXBZTfCn453px147pr",name:"Gigi Dela Vega",department:"MOSD",role:"sub",position:""},
+    
       //CGM
-      "VAN": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "Vanessa Vicente", department: "CGM", role: "sub", position: "" }, "TYRON": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "Tyrone Tan", department: "CGM", role: "sub", position: "" }, "MIKEE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "Mikee Vivo", department: "CGM", role: "sub", position: "" }, "CAMSY": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "Camsy Elvina", department: "CGM", role: "sub", position: "" }, "MGL": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MICHAEL G. LAO", department: "MOSD", role: "head", position: "SAVP & Head, MCD | MOSD" }, "LDA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "LORENCE D. AURELIO", department: "LEASING", role: "head", position: "VP, Central Leasing Support" }, "KMV": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "KRISTINA MARIE M. VILLANUEVA", department: "BCM", role: "head", position: "SAVP and Head, BCM" }, "RCS": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ROSALYN C. SEGURA", department: "RBG", role: "head", position: "AVP, Revenue Business Group" }, "JE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JEREMY S. RODRIGUEZ", department: "OD", role: "head", position: "Senior Manager, Organizational Development" }, "NOE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "NOE M.VERSOZA", department: "PROC", role: "head", position: "AVP & Head, Procurement" },
+      "VAN": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "Vanessa Vicente", department: "MOSD", role: "sub", position: "" }, "TYRON": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "Tyrone Tan", department: "MOSD", role: "sub", position: "" }, "MIKEE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "Mikee Vivo", department: "MOSD", role: "sub", position: "" }, "CAMSY": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "Camsy Elvina", department: "MOSD", role: "sub", position: "" }, "MGL": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MICHAEL G. LAO", department: "MOSD", role: "head", position: "SAVP & Head, MCD | MOSD" }, "LDA": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "LORENCE D. AURELIO", department: "LEASING", role: "head", position: "VP, Central Leasing Support" }, "KMV": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "KRISTINA MARIE M. VILLANUEVA", department: "BCM", role: "head", position: "SAVP and Head, BCM" }, "RCS": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ROSALYN C. SEGURA", department: "RBG", role: "head", position: "AVP, Revenue Business Group" }, "JE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JEREMY S. RODRIGUEZ", department: "OD", role: "head", position: "Senior Manager, Organizational Development" }, "NOE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "NOE M.VERSOZA", department: "PROC", role: "head", position: "AVP & Head, Procurement" },
       //MOSD
       "JAYE": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JAYE TRICH PIZARRO", department: "MOSD", role: "sub", position: "" }, "JOY": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "JOCELYN MELITANTE", department: "MOSD", role: "sub", position: "" }, "ALEX": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "ALEX FLORES", department: "MOSD", role: "sub", position: "" }, "AU": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "AURORA PASTOLERO", department: "MOSD", role: "sub", position: "" }, "BRIX": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "BRIX VALDENARRO", department: "MOSD", role: "sub", position: "" }, "MAR": { id: "1okUOUCZcsPv2VaCXBZTfCn453px147pr", name: "MARIANO CALEJA", department: "MOSD", role: "sub", position: "" },
       //BCM
@@ -492,7 +487,7 @@ function processRowForDisapproval(rowData, rowIndex, helperMap, ss, mainSheet, h
       para.appendText(valueText).setBold(false).setFontSize(currentFontSize);
     }
     
-    var excludedValues=["CAMSY","MIKEE","VAN","TYRON","MGL","KMV","LDA","GMC","RCS","JE","NOE","JAYE","JOY","ALEX","AU","BRIX","MAR","ANNALEE","ARRA","AIZELLE","DULCE","VIA","OAUIE","MICH","FATIMA","MELANIE","STEPH","PAT","ROSA","JANICE","EBA","DSM","JAC","DP","FA","DM","KL","JM","MA","JG"];
+    var excludedValues=["CAMSY","MIKEE","VAN","TYRON","MGL","KMV","LDA","GMC","RCS","JE","NOE","JAYE","JOY","ALEX","AU","BRIX","MAR","ANNALEE","ARRA","AIZELLE","DULCE","VIA","OAUIE","MICH","FATIMA","MELANIE","STEPH","PAT","ROSA","JANICE","EBA","DSM","JAC","DP","FA","DM","KL","JM","MA","JG","N/A", "CYNTHIA", "CARLO", "JODY", "GIGI", "NA"];
     var coverageValues = rowData.slice(14, 56);
     var properties = [];
     for (var c = 0; c < coverageValues.length; c++) {
@@ -597,7 +592,7 @@ function getNotess(code, refNo, ss) {
   return null;
 }
 
-// sendApprovalEmails.gs
+
 
 function sendApprovalEmails() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -700,110 +695,6 @@ function sendApprovalEmails() {
 }
 
 
-// sendApprovalEmails.gs
-
-function sendApprovalEmails() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("Conso");
-  var summarySheet = ss.getSheetByName("EMAIL SUMMARY");
-
-  if (!summarySheet) {
-    summarySheet = ss.insertSheet("EMAIL SUMMARY");
-    summarySheet.appendRow([
-      "Date Emailed",
-      "Recipient Name",
-      "To Email",
-      "CC Email",
-      "Reference Number",
-      "Upload Timestamp",
-      "Subject of Memo"
-    ]);
-  }
-
-  var data = sheet.getDataRange().getValues();
-  var summaryData = summarySheet.getDataRange().getValues();
-
-  // Create a set of already emailed reference numbers from EMAIL SUMMARY (col E = index 4)
-  var emailedRefNumbers = new Set();
-  for (var i = 1; i < summaryData.length; i++) {
-    emailedRefNumbers.add(summaryData[i][4]);
-  }
-
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0] === "APPROVED") { // Col A
-      var referenceNumber = data[i][4]; // Col E
-      var colHValue = data[i][7]; // Col H
-
-      // If already emailed AND col H is TRUE, skip
-      if (emailedRefNumbers.has(referenceNumber) && colHValue === true) {
-        continue;
-      }
-
-      var toEmail = data[i][7]; // Col H
-      var ccEmail = data[i][9]; // Col J
-      var recipientName = data[i][6]; // Col G
-      var uploadTimestamp = data[i][5]; // Col F
-      var subjectOfMemo = data[i][10]; // Col K
-      var fileUrl = "https://script.google.com/macros/s/AKfycbwdtLmaxc61t1jsPprCz8XBEkUTSaldhHR3qeJ45VHXTYxWF9W0Sn2QhTzriMw9ykpXkg/exec";
-
-      const subject = `For Approval: ${subjectOfMemo} (Ref: ${referenceNumber})`;
-    
-      var body =
-      '<div style="background-color: #ffffff; padding: 24px; font-family: Arial, sans-serif; color: #222; line-height: 1.6;">' +
-        '<table width="100%" style="margin-bottom: 20px;">' +
-          '<tr>' +
-            '<td align="center">' +
-              '<img src="https://raw.githubusercontent.com/mrjeronluther/Memo-Routing-Landing-Page/main/WhatsApp%20Image%202025-06-05%20at%2015.44.42_3fc69535.jpg" ' +
-              'alt="Header Image" style="max-width: 600px; width: 100%; height: auto; display: block;">' +
-            '</td>' +
-          '</tr>' +
-        '</table>' +
-
-        `<p>Dear ${recipientName},</p>` +
-        '<p>Your submitted memo has been <b>APPROVED</b>. The approval page is now ready to download in our Memo Finder App.</p>' +
-        '<p>Attach the approval page to the original copy of the memo and submit this as necessary.</p>' +
-
-        '<table style="border-collapse: collapse; margin-top: 20px;">' +
-          `<tr><td style="padding: 6px 12px; font-weight: bold;">REFERENCE NUMBER:</td><td style="padding: 6px 12px;">${referenceNumber}</td></tr>` +
-          `<tr><td style="padding: 6px 12px; font-weight: bold;">UPLOAD TIMESTAMP:</td><td style="padding: 6px 12px;">${uploadTimestamp}</td></tr>` +
-          `<tr><td style="padding: 6px 12px; font-weight: bold;">SUBJECT OF THE MEMO:</td><td style="padding: 6px 12px;">${subjectOfMemo}</td></tr>` +
-        '</table>' +
-
-        `<p style="margin-top: 16px;">Link to Memo Finder App: <a href="${fileUrl}" target="_blank">Click here</a>.</p>` +
-
-        '<p style="margin-top: 30px;">Thank you,<br><strong>MCD Document Routing System</strong></p>' +
-
-        '<hr style="margin-top: 30px; border: none; border-top: 1px solid #eee;">' +
-        '<small style="color: #888;">This is an automated message. Please do not reply to this email.</small>' +
-      '</div>';
-
-
-
-      if (toEmail && ccEmail) {
-        MailApp.sendEmail({
-          to: toEmail,
-          cc: ccEmail,
-          subject: subject,
-          htmlBody: body,
-          name: "MCD Memo Submission Notification"
-        });
-
-        summarySheet.appendRow([
-          new Date(),
-          recipientName,
-          toEmail,
-          ccEmail,
-          referenceNumber,
-          uploadTimestamp,
-          subjectOfMemo
-        ]);
-      }
-    }
-  }
-}
-
-
-// senddispprovalEmails.gs
 
 function senddispprovalEmails() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -904,7 +795,6 @@ function senddispprovalEmails() {
 }
 
 
-// finalstatusgenerator.gs
 
 /**
  * A high-performance function to check approval statuses across multiple sheets for very large datasets.
@@ -941,8 +831,8 @@ function checkApprovalStatus_Optimized() {
     }
 
     // --- Define Your Configuration ---
-    const validSheets = ["GMC", "RCS", "MGL", "KMV", "LDA", "JAYE", "BRIX", "JOY", "ALEX", "AU", "MAR", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "JG", "MA", "ANNALEE", "ARRA", "DULCE", "AIZELLE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "CAMSY", "MIKEE", "VAN", "TYRON"];
-    const coreSheets = ["GMC", "MGL", "RCS", "KMV", "LDA", "CAMSY", "MIKEE", "VAN", "TYRON"];
+    const validSheets = ["GMC", "RCS", "MGL", "KMV", "LDA", "JAYE", "BRIX", "JOY", "ALEX", "AU", "MAR", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "JG", "MA", "ANNALEE", "ARRA", "DULCE", "AIZELLE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "CAMSY", "MIKEE", "VAN", "TYRON", "CYNTHIA", "CARLO", "JODY", "GIGI"];
+    const coreSheets = ["GMC", "MGL", "RCS", "KMV", "LDA", "CAMSY", "MIKEE", "VAN", "TYRON", ];
     
     // --- STEP 1: CACHE DATA FROM ALL SOURCE SHEETS ---
     console.log("Caching data from source sheets...");
@@ -1077,7 +967,7 @@ function checkApprovalStatus_Optimized() {
   }
 }
 
-// whodisapprovedgenerator.gs
+
 /**
  * A high-performance function to find the first "disapproving" sheet for each row.
  * This script is an optimized replacement for the complex array formula.
@@ -1132,7 +1022,7 @@ function findFirstDisapprovingSheet_Optimized(resultColumnLetter = 'C') {
     
     // Using the same sheet list as the previous script for consistency.
     // This is more efficient than scanning the sheet for all unique names.
-    const validSheets = ["GMC", "RCS", "MGL", "KMV", "LDA", "JAYE", "BRIX", "JOY", "ALEX", "AU", "MAR", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "JG", "MA", "ANNALEE", "ARRA", "DULCE", "AIZELLE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "CAMSY", "MIKEE", "VAN", "TYRON"];
+    const validSheets = ["GMC", "RCS", "MGL", "KMV", "LDA", "JAYE", "BRIX", "JOY", "ALEX", "AU", "MAR", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "JG", "MA", "ANNALEE", "ARRA", "DULCE", "AIZELLE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "CAMSY", "MIKEE", "VAN", "TYRON", "CYNTHIA", "CARLO", "JODY", "GIGI"];
 
     // --- STEP 1: CACHE DATA (Identical to the previous function's caching logic) ---
     console.log("Caching data from source sheets...");
@@ -1211,8 +1101,6 @@ function findFirstDisapprovingSheet_Optimized(resultColumnLetter = 'C') {
 }
 
 
-// disapproveremarksgenerator.gs
-
 /**
  * A high-performance function to find the first "disapproval reason" from a series of sheets.
  * The disapproval reason is sourced from Column B of the target sheet.
@@ -1263,7 +1151,7 @@ function findFirstDisapprovalReason_Optimized(resultColumnLetter = 'D') {
     }
 
     // This list should contain all possible sheets that could ever be referenced.
-    const validSheets = ["GMC", "RCS", "MGL", "KMV", "LDA", "JAYE", "BRIX", "JOY", "ALEX", "AU", "MAR", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "JG", "MA", "ANNALEE", "ARRA", "DULCE", "AIZELLE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "CAMSY", "MIKEE", "VAN", "TYRON"];
+    const validSheets = ["GMC", "RCS", "MGL", "KMV", "LDA", "JAYE", "BRIX", "JOY", "ALEX", "AU", "MAR", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "JG", "MA", "ANNALEE", "ARRA", "DULCE", "AIZELLE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "CAMSY", "MIKEE", "VAN", "TYRON", "CYNTHIA", "CARLO", "JODY", "GIGI"];
 
     // --- STEP 1: CACHE DATA FROM SOURCE SHEETS (Now includes Column B) ---
     console.log("Caching Status and Reason data from source sheets...");
@@ -1348,8 +1236,6 @@ function findFirstDisapprovalReason_Optimized(resultColumnLetter = 'D') {
 }
 
 
-// importAndArchiveByValue.gs
-
 function importAndArchiveByValue() {
   // --- START CONFIGURATION ---
 
@@ -1407,6 +1293,11 @@ function importAndArchiveByValue() {
 'CAMSY':'CAMSY',
 'VAN':'VAN',
 'TYRON':'TYRON',
+
+'CYNTHIA':'CYNTHIA',
+'CARLO':'CARLO',
+'JODY':'JODY',
+'GIGI':'GIGI',
 
     //'JOHN': 'JOHN_Data',
     //'JANE': 'JANE_Data'
@@ -1488,9 +1379,6 @@ function importAndArchiveByValue() {
 }
 
 
-
-// processAllReviewerSheets.gs
-
 // =================== CONFIGURATION ===================
 // --- Set the column letters for all reviewer sheets. ---
 const ID_COLUMN = 'J'; // Column with the IDs to look up
@@ -1529,8 +1417,8 @@ function processAllReviewerSheets() {
   // SpreadsheetApp.getUi().alert('Processing Started', 'This may take a moment. You will be notified when it is complete.', SpreadsheetApp.getUi().ButtonSet.OK);
 
   // Define the reviewers and their full names
-  const reviewers = ["GMC", "RCS", "MGL", "JE", "NOE", "KMV", "LDA", "JAYE", "BRIX", "JOY", "ALEX", "AU", "MAR", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "JG", "MA", "ANNALEE", "ARRA", "DULCE", "AIZELLE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "CAMSY", "MIKEE", "VAN", "TYRON"];
-  const names = ["Graham Coates", "Rosalyn Segura", "Michael Lao", "Jeremy Rodriguez", "Noe Versoza", "Tinay Villanueva", "Lorence Aurello", "Jaye Trich Pizarro", "Brix Valdenarro", "Joy Melitante", "Alex Flores", "Aurora Pastolero", "Mariano Caleja", "Ernesto Andrade", "Dustin Sta. Maria", "Jenel Ann Cruzgarcia", "Doreen Penilla", "Frances Armian", "Denisse Malong", "Kevin Lin", "Juvi Masilungan", "Jhoanalyn Gatdula", "Mary Arceo", "Annalee Pine", "Arralen Batallones", "Ma Dulce Cuenca", "Aizelle Anne Yalong", "Henedina Viado", "Oauie Banagan", "Michelle Ong", "Ma Fatima Bausin", "Melanie Lingon", "Stephen Sumilang", "Patricia Mari Quierez", "Rosa Cecilia Salvador", "Janice Cadog", "Camsy Elvina", "Mikee Vivo", "Vanessa Vicente", "Tyrone Tan"];
+  const reviewers = ["GMC", "RCS", "MGL", "JE", "NOE", "KMV", "LDA", "JAYE", "BRIX", "JOY", "ALEX", "AU", "MAR", "EBA", "DSM", "JAC", "DP", "FA", "DM", "KL", "JM", "JG", "MA", "ANNALEE", "ARRA", "DULCE", "AIZELLE", "VIA", "OAUIE", "MICH", "FATIMA", "MELANIE", "STEPH", "PAT", "ROSA", "JANICE", "CAMSY", "MIKEE", "VAN", "TYRON", "CYNTHIA","CARLO","JODY","GIGI"];
+  const names = ["Graham Coates", "Rosalyn Segura", "Michael Lao", "Jeremy Rodriguez", "Noe Versoza", "Tinay Villanueva", "Lorence Aurello", "Jaye Trich Pizarro", "Brix Valdenarro", "Joy Melitante", "Alex Flores", "Aurora Pastolero", "Mariano Caleja", "Ernesto Andrade", "Dustin Sta. Maria", "Jenel Ann Cruzgarcia", "Doreen Penilla", "Frances Armian", "Denisse Malong", "Kevin Lin", "Juvi Masilungan", "Jhoanalyn Gatdula", "Mary Arceo", "Annalee Pine", "Arralen Batallones", "Ma Dulce Cuenca", "Aizelle Anne Yalong", "Henedina Viado", "Oauie Banagan", "Michelle Ong", "Ma Fatima Bausin", "Melanie Lingon", "Stephen Sumilang", "Patricia Mari Quierez", "Rosa Cecilia Salvador", "Janice Cadog", "Camsy Elvina", "Mikee Vivo", "Vanessa Vicente", "Tyrone Tan", "Cynthia Jison", "Carlo Gianan", "Jody Arante", "Gigi Dela Vega"];
 
   // --- 1. PRE-LOADING PHASE ---
   const reviewerDataCache = {};
@@ -1610,7 +1498,7 @@ function processAllReviewerSheets() {
   console.log('All reviewer sheets have been updated successfully.'); // Optional: Log completion for debugging.
 }
 
-// AutoEmailWhenGMCLeftinPending.gs
+
 
 /**
  * Scans the 'Conso' sheet to find rows where 'Graham Coates' is the sole pending person,
@@ -1715,9 +1603,3 @@ function findAndEmailPendingMemos() {
     console.error(`A critical error occurred: ${e.message}`);
   }
 }
-
-
-
-
-
-
