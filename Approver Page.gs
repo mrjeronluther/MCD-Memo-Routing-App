@@ -37,6 +37,10 @@ const RESTRICTED_USERS = [
     "Rodalyn Landoy",
     "Fermila Pacampara",
     "Lorraine Cicat",
+    "Cynthia Jison",
+    "Carlo Gianan",
+    "Jody Arante",
+    "Gigi Dela Vega"
 ];
 
 function isUserPrivileged(displayName) {
@@ -544,83 +548,66 @@ function updateRowStatusWithValidation(rowData, status, reason, approvalReason, 
         throw new Error("Failed to update row: " + error.message);
     }
 }
+/**
+ * Authenticates a user by checking the "MRA" tab in the external spreadsheet.
+ * Matches input against either "UserID" or "email".
+ */
 function authenticateUser(username, password) {
     if (!username || !password) {
         throw new Error("Username or password is missing.");
     }
 
-    const users = {
-        GMC: { password: "pass1", displayName: "Graham Coates", sheet: "GMC", email: "gmcoates@megaworld-lifestyle.com" },
-        GRACE: { password: "grace123", displayName: "Grace Guarico", sheet: "GMC", email: "gdguarico@megaworld-lifestyle.com" },
-        RCS: { password: "pass2", displayName: "Rosalyn Segura", sheet: "RCS", email: "rosalyn.segura@example.com" },
-        ALY: { password: "pass2", displayName: "Allyzza Tolosa", sheet: "RCS", email: "allyzza.tolosa@example.com" },
-        JE: { password: "je123", displayName: "Jeremy Rodriguez", sheet: "JE", email: "jeremy.rodriguez@example.com" },
-        NOE: { password: "noe123", displayName: "Noe Versoza", sheet: "NOE", email: "noe.versoza@example.com" },
-        MGL: { password: "pass3", displayName: "Michael Lao", sheet: "MGL", email: "mglao@megaworld-lifestyle.com" },
-        MLP: { password: "pass3a", displayName: "Louise Piamonte", sheet: "MGL", email: "mppiamonte@megaworld-lifestyle.com" },
-        KMV: { password: "pass4", displayName: "Tinay Villanueva", sheet: "KMV", email: "tinay.villanueva@example.com" },
-        ZELFA: { password: "zelfa123", displayName: "Zelfa Valderrama", sheet: "KMV", email: "zelfa.valderrama@example.com" },
-        LDA: { password: "pass5", displayName: "Lorence Aurelio", sheet: "LDA", email: "lorence.aurelio@example.com" },
-        FA: { password: "pass16", displayName: "Frances Armian", sheet: "LDA", email: "frances.armian@example.com" },
-        JAYE: { password: "pass6", displayName: "Jaye Trich Pizarro", sheet: "JAYE", email: "jmpizarro@megaworld-lifestyle.com" },
-        ANDREA: { password: "@Fornis022920", displayName: "Andrea Buro", sheet: "JAYE", email: "burofornisandrea30@gmail.com" },
-        JOY: { password: "pass7", displayName: "Jocelyn Melitante", sheet: "JOY", email: "jcmelitante@megaworld-lifestyle.com" },
-        ALEX: { password: "pass8", displayName: "Alex Flores", sheet: "ALEX", email: "apflores@megaworld-lifestyle.com" },
-        AU: { password: "pass9", displayName: "Aurora Palostero", sheet: "AU", email: "mdpastolero@megaworld-lifestyle.com" },
-        SHIENA: { password: "Sh!iena_2017", displayName: "Shiena Candido", sheet: "AU", email: "stcandido@megaworld-lifestyle.com" },
-        MAR: { password: "pass10", displayName: "Mariano Caleja", sheet: "MAR", email: "mbcaleja@megaworld-lifestyle.com" },
-        BRIX: { password: "brixton20", displayName: "Jan Brix V. Valdenarro", sheet: "BRIX", email: "bvvaldenarro@megaworld-lifestyle.com" },
-        EBA: { password: "pass12", displayName: "Ernesto Andrade", sheet: "EBA", email: "ernesto.andrade@example.com" },
-        DSM: { password: "pass13", displayName: "Dustin Sta. Maria", sheet: "DSM", email: "dustin.stamaria@example.com" },
-        JAC: { password: "pass14", displayName: "Jenel Ann Cruzgarcia", sheet: "JAC", email: "jenel.cruzgarcia@example.com" },
-        DP: { password: "pass15", displayName: "Doreen Penilla", sheet: "DP", email: "doreen.penilla@example.com" },
-        DM: { password: "pass17", displayName: "Denisse Malong", sheet: "DM", email: "denisse.malong@example.com" },
-        KL: { password: "pass18", displayName: "Kevin Lin", sheet: "KL", email: "kevin.lin@example.com" },
-        JM: { password: "pass19", displayName: "Juvi Masilungan", sheet: "JM", email: "juvi.masilungan@example.com" },
-        JG: { password: "pass20", displayName: "Jhoanalyn Gatdula", sheet: "JG", email: "jhoanalyn.gatdula@example.com" },
-        MA: { password: "pass21", displayName: "Mary Arceo", sheet: "MA", email: "mary.arceo@example.com" },
-        JLC: { password: "luther2024", displayName: "Jeron Luther Castro", sheet: "GMC", email: "jeron.castro@example.com" },
-        ANNALEE: { password: "pass22", displayName: "Annalee Pine ", sheet: "ANNALEE", email: "annalee.pine@example.com" },
-        ARRA: { password: "pass23", displayName: "Arralen Batallones", sheet: "ARRA", email: "arralen.batallones@example.com" },
-        DULCE: { password: "pass24", displayName: "Ma Dulce Cuenca", sheet: "DULCE", email: "dulce.cuenca@example.com" },
-        AIZELLE: { password: "pass25", displayName: "Aizelle Anne Yalong", sheet: "AIZELLE", email: "aizelle.yalong@example.com" },
-        VIA: { password: "pass26", displayName: "Henedina Viado", sheet: "VIA", email: "henedina.viado@example.com" },
-        OAUIE: { password: "pass27", displayName: "Oauie Banagan", sheet: "OAUIE", email: "oauie.banagan@example.com" },
-        MICH: { password: "pass28", displayName: "Michelle Ong", sheet: "MICH", email: "michelle.ong@example.com" },
-        FATIMA: { password: "pass29", displayName: "Ma Fatima Bausin", sheet: "FATIMA", email: "fatima.bausin@example.com" },
-        MELANIE: { password: "pass30", displayName: "Melanie Lingon", sheet: "MELANIE", email: "melanie.lingon@example.com" },
-        STEPH: { password: "pass31", displayName: "Stephen Sumilang", sheet: "STEPH", email: "stephen.sumilang@example.com" },
-        PAT: { password: "pass32", displayName: "Patricia Mari Quierez", sheet: "PAT", email: "patricia.quierez@example.com" },
-        ROSA: { password: "pass33", displayName: "Rosa Cecilia Salvador", sheet: "ROSA", email: "rosa.salvador@example.com" },
-        JANICE: { password: "pass34", displayName: "Janice Cadog", sheet: "JANICE", email: "janice.cadog@example.com" },
-        CAMSY: { password: "camsy123", displayName: "Camsy Elvina", sheet: "CAMSY", email: "celvina@megaworld-lifestyle.com" },
-        LORRAINE: { password: "earaine2017", displayName: "Lorraine Ann B. Cicat", sheet: "CAMSY", email: "lbcicat@megaworld-lifestyle.com" },
-        MIKEE: { password: "mikee123", displayName: "Mikee Vivo", sheet: "MIKEE", email: "mvvivo@megaworld-lifestyle.com" },
-        FERMIE: { password: "fermie123", displayName: "Fermila Pacampara", sheet: "MIKEE", email: "frpacampara@megaworld-lifestyle.com" },
-        VAN: { password: "vanessa123", displayName: "Vanessa Vicente", sheet: "VAN", email: "vrvicente@megaworld-lifestyle.com" },
-        TYRON: { password: "CGMOps@888", displayName: "Tyrone Jason S Tan", sheet: "TYRON", email: "tstan@megaworld-lifestyle.com" },
-        RODA: { password: "Mcd@123", displayName: "Rodalyn Landoy", sheet: "TYRON", email: "rrlandoy@megaworld-lifestyle.com" },
+    const ssId = "1dBO8ThI7FEKb24D9sPVWokfXLuWUx5aCQvisrT9wBvI";
+    const sheetName = "MRA";
+    
+    // Open the spreadsheet and get the data
+    const ss = SpreadsheetApp.openById(ssId);
+    const sheet = ss.getSheetByName(sheetName);
+    const data = sheet.getDataRange().getValues();
+
+    // 1. Map headers to column indices
+    const headers = data[0];
+    const col = {
+        userId: headers.indexOf("UserID"),
+        password: headers.indexOf("password"),
+        displayName: headers.indexOf("displayName"),
+        sheet: headers.indexOf("sheet"),
+        email: headers.indexOf("email")
     };
 
-    let user;
+    // Safety check: Ensure headers exist
+    if (Object.values(col).includes(-1)) {
+        throw new Error("Required column headers (UserID, password, etc.) were not found in the MRA sheet.");
+    }
 
-    // Check if the input is a username
-    if (users[username]) {
-        user = users[username];
-    } else {
-        // If not a username, check if it's an email
-        const usernameFound = Object.keys(users).find(key => users[key].email === username);
-        if (usernameFound) {
-            user = users[usernameFound];
+    let authenticatedUser = null;
+
+    // 2. Iterate through data rows (start at index 1 to skip header)
+    for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        
+        const rowUserID = String(row[col.userId]).trim();
+        const rowEmail = String(row[col.email]).trim();
+        const rowPassword = String(row[col.password]).trim();
+
+        // Check if the input username matches either UserID column or Email column
+        // And ensure the password matches
+        if ((username === rowUserID || username === rowEmail) && password === rowPassword) {
+            authenticatedUser = {
+                displayName: row[col.displayName],
+                sheet: row[col.sheet]
+            };
+            break; // Stop loop once found
         }
     }
 
-    if (!user || user.password !== password) {
-        throw new Error(`Unauthorized Account.`);
+    // 3. Logic check
+    if (!authenticatedUser) {
+        throw new Error("Unauthorized Account.");
     }
 
-    Logger.log(`Authenticated: ${user.displayName}`);
-    return { displayName: user.displayName, sheet: user.sheet };
+    Logger.log(`Authenticated: ${authenticatedUser.displayName}`);
+    return authenticatedUser;
 }
 
 function validateAndSanitizeInputs(data, requiredFields = []) {
